@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <color name="pressed1">#385A74</color>
+    <color name="pressed2">#385A74</color>
+
+    <color name="focused1">#FFBFDDEA</color>
+    <color name="focused2">#FF3F6683</color>
+
+    <color name="default1">#FF446F8E</color>
+    <color name="default2">#FF6191B4</color>
+
+    <color name="stroke">#FF8CC8D2</color>
+
+    <color name="lightGray">#FFaaaaaa</color>
+</resources>
