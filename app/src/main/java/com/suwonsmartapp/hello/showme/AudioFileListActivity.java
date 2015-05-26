@@ -239,17 +239,18 @@ public class AudioFileListActivity extends AppCompatActivity
                 MediaStore.MediaColumns.DATA
         };
 
-        String selection = MediaStore.Audio.Media.DATA + " like ? OR " + MediaStore.Audio.Media.DATA + " like ? ";
+        String selection = MediaStore.Audio.Media.DATA + " like ? ";
         String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
 
 //      we support mp3, wav, ogg, wma, flac, tta, cue, ape, alac, and wv types.
         mCursor = getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 pro, selection,
-                new String[] {"%"}, sortOrder);
+                new String[] {requestedPathname + "/%"}, sortOrder);
 
         if (mCursor != null) {
             mCursor.moveToFirst();              // from the start of data base
 
+            showLog(String.valueOf(mCursor.getCount()));
             for (int i = 0; i < mCursor.getCount(); i++) {
                 mCursor.moveToPosition(i);      // get next row of data base
 
