@@ -88,6 +88,8 @@ public class AudioMessengerService extends Service
 
     @Override
     public void onCreate() {
+        showLog("onCreate");
+
         mNotiManager = NotificationManagerCompat.from(getApplicationContext());
 
         registerCallReceiverService();
@@ -103,6 +105,7 @@ public class AudioMessengerService extends Service
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        showLog("onStartCommand");
 
         if (setSongList == false) {
             mAudioFileInfoList = intent.getParcelableArrayListExtra("songInfoList");
@@ -129,13 +132,15 @@ public class AudioMessengerService extends Service
 
         showMusicNotification();
 
-        playSong();
+        playMusic();
 
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void onPrepared(MediaPlayer mp) {
+        showLog("onPrepared");
+
         if (doRestart == false) {
             mp.start();
             if (mp.isPlaying()) {
@@ -148,6 +153,8 @@ public class AudioMessengerService extends Service
     // we return an interface to our messenger for sending messages to the service
     @Override
     public IBinder onBind(Intent intent) {
+        showLog("onBind");
+
         if (intent == null) {
             return mMessenger.getBinder();
         }
@@ -167,36 +174,40 @@ public class AudioMessengerService extends Service
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        nextSongSet();
+        setNextMusic();
     }
 
-    private void previousSongSet() {
+    private void setPreviousMusic() {
+        showLog("setPreviousMusic");
+
         if (mCurrentPosition > 0 && mCurrentPosition < mAudioFileInfoList.size()) {
             mCurrentPosition  -= 1;
-            songSet();
+            setMusic();
         } else if (mCurrentPosition == 0) {                     // wrap around
             mCurrentPosition = mAudioFileInfoList.size() - 1;
-            songSet();
+            setMusic();
         }
     }
 
-    private void nextSongSet() {
+    private void setNextMusic() {
+        showLog("setNextMusic");
+
         if (mCurrentPosition >= 0 && mCurrentPosition < mAudioFileInfoList.size()) {
             mCurrentPosition  += 1;
-            songSet();
+            setMusic();
         } else if (mCurrentPosition >= mAudioFileInfoList.size()) {     // wrap around
             mCurrentPosition = 0;
-            songSet();
+            setMusic();
         }
     }
 
-    private void songSet() {
-        Log.d(TAG, String.valueOf(mCurrentPosition));
+    private void setMusic() {
+        showLog("setMusic : " + String.valueOf(mCurrentPosition));
 
         if (mCurrentPosition >= 0 && mCurrentPosition < mAudioFileInfoList.size()){
             mPlayAudioFileInfo = mAudioFileInfoList.get(mCurrentPosition);
             mPlayAudioFileInfo.setAlbumArt(getAlbumArt(mPlayAudioFileInfo.getAlbumId()));
-            playSong();
+            playMusic();
 
             sendMessageToPlayerActivity();
 
@@ -208,7 +219,7 @@ public class AudioMessengerService extends Service
                 mCurrentPosition = 0;       // wrap around
                 mPlayAudioFileInfo = mAudioFileInfoList.get(mCurrentPosition);
                 mPlayAudioFileInfo.setAlbumArt(getAlbumArt(mPlayAudioFileInfo.getAlbumId()));
-                playSong();
+                playMusic();
 
                 sendMessageToPlayerActivity();
 
@@ -219,7 +230,8 @@ public class AudioMessengerService extends Service
         }
     }
 
-    private void playSong() {
+    private void playMusic() {
+        showLog("playMusic");
 
         if (mMediaPlayer.isPlaying()) {
             mMediaPlayer.stop();
@@ -239,6 +251,8 @@ public class AudioMessengerService extends Service
 
     @Override
     public void onDestroy() {
+        showLog("onDestroy");
+
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
             mMediaPlayer.release();
@@ -252,6 +266,8 @@ public class AudioMessengerService extends Service
     }
 
     private void sendMessageToPlayerActivity() {
+        showLog("sendMessageToPlayerActivity");
+
         Message msg = Message.obtain(null, AudioMessengerService.MSG_GET_MP, 0, 0);
         msg.obj = mMediaPlayer;
         try {
@@ -262,6 +278,8 @@ public class AudioMessengerService extends Service
     }
 
     private void sendMessageArgsToSongListActivity() {
+        showLog("sendMessageArgsToSongListActivity");
+
         Message msg = Message.obtain(null, AudioMessengerService.MSG_GET_MP_IN_LIST, 0, 0);
         msg.obj = mMediaPlayer;
         msg.arg1 = mCurrentPosition;
@@ -274,6 +292,8 @@ public class AudioMessengerService extends Service
     }
 
     private void sendMessageStopService() {
+        showLog("sendMessageStopService");
+
         Message msg = Message.obtain(null, AudioMessengerService.MSG_STOP_SERVICE, 0, 0);
         try {
             mMessenger.send(msg);
@@ -314,6 +334,7 @@ public class AudioMessengerService extends Service
     });
 
     private void showMusicNotification() {
+        showLog("showMusicNotification");
 
         Intent intent = new Intent(getApplicationContext(), AudioFileListActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -349,6 +370,8 @@ public class AudioMessengerService extends Service
     }
 
     private void setNotificationUI() {
+        showLog("setNotificationUI");
+
         if (mPlayAudioFileInfo.getAlbumArt() != null) {
             mRemoteViews.setBitmap(R.id.messenger_album_picture, "setImageBitmap", mPlayAudioFileInfo.getAlbumArt());
         } else {
@@ -377,9 +400,9 @@ public class AudioMessengerService extends Service
                         mRemoteViews.setImageViewResource(R.id.ib_messenger_play, android.R.drawable.ic_media_play);
                     }
                 } else if ((HOME + "AudioMessengerService.Previous").equals(action)) {
-                    previousSongSet();
+                    setPreviousMusic();
                 } else if ((HOME + "AudioMessengerService.Next").equals(action)) {
-                    nextSongSet();
+                    setNextMusic();
                 }
                 setNotificationUI();
                 mNotiBuilder.setContent(mRemoteViews);
@@ -389,6 +412,8 @@ public class AudioMessengerService extends Service
     };
 
     private void registerCallReceiverService(){
+        showLog("registerCallReceiverService");
+
         if(!mIsCloseReceiverRegistered){
             IntentFilter filter = new IntentFilter();
             filter.addAction(HOME + "AudioMessengerService.Close");
@@ -402,6 +427,8 @@ public class AudioMessengerService extends Service
     }
 
     private void unregisterCallReceiverService(){
+        showLog("unregisterCallReceiverService");
+
         if(mIsCloseReceiverRegistered){
             unregisterReceiver(mButtonBroadcastReceiver);
             mIsCloseReceiverRegistered = false;
@@ -409,10 +436,14 @@ public class AudioMessengerService extends Service
     }
 
     private Bitmap getAlbumArt(int albumId) {
+        showLog("getAlbumArt");
+
         return AudioPlayerAlbumImage.getArtworkQuick(getApplicationContext(), albumId, 300, 300);
     }
 
     private void stopMusicService() {
+        showLog("stopMusicService");
+
         Intent playerActivity = new Intent(HOME + "AudioPlayerActivity.STOP");
         sendBroadcast(playerActivity);
         Intent songListActivity = new Intent(HOME + "AudioFileListActivity.STOP");

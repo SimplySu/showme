@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.ParcelFileDescriptor;
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.suwonsmartapp.hello.R;
@@ -20,6 +21,9 @@ import java.lang.ref.WeakReference;
 
 public class AudioLoadBitmap {
 
+    private static final String TAG = AudioLoadBitmap.class.getSimpleName();
+    private void showLog(String msg) { Log.d(TAG, msg); }
+
     private Context mContext;
     private AudioImageCache mAudioImageCache;
 
@@ -29,9 +33,10 @@ public class AudioLoadBitmap {
     }
 
     public void loadBitmap(int albumId, ImageView imageView) {
+        showLog("loadBitmap");
 
         final String imageKey = String.valueOf(albumId);
-        final Bitmap bitmap = getBitmapFromMemCache(imageKey);
+        final Bitmap bitmap = getBitmapFromMemoryCache(imageKey);
 
         if (bitmap != null) {
             imageView.setImageBitmap(bitmap);
@@ -93,12 +98,16 @@ public class AudioLoadBitmap {
     }
 
     public void addBitmapToMemoryCache(String albumIdKey, Bitmap bitmap) {
-        if (getBitmapFromMemCache(albumIdKey) == null) {
+        showLog("addBitmapToMemoryCache");
+
+        if (getBitmapFromMemoryCache(albumIdKey) == null) {
             mAudioImageCache.getmMemoryCache().put(albumIdKey, bitmap);
         }
     }
 
-    public Bitmap getBitmapFromMemCache(String albumIdKey) {
+    public Bitmap getBitmapFromMemoryCache(String albumIdKey) {
+        showLog("getBitmapFromMemoryCache");
+
         return mAudioImageCache.getmMemoryCache().get(albumIdKey);
     }
 
@@ -157,6 +166,8 @@ public class AudioLoadBitmap {
     }
 
     private Bitmap getArtworkQuick(int album_id, int w, int h) {
+        showLog("getArtworkQuick");
+
         BitmapFactory.Options sBitmapOptionsCache = new BitmapFactory.Options();
         Uri artworkUri = Uri.parse("content://media/external/audio/albumart");
 

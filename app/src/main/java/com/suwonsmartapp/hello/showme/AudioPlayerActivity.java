@@ -65,6 +65,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
         super.onCreate(savedInstanceState);
         setContentView(R.layout.audio_main_player);
 
+        showLog("onCreate");
+
         // fix the screen for portrait
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
@@ -95,6 +97,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
 //        });
 
         // connect event handler on the seekbar
+        mSbAudioPlayerSeekbar = (SeekBar) findViewById(R.id.audio_player_seekbar);
         mSbAudioPlayerSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -114,9 +117,10 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void setupViews() {
+        showLog("setupViews");
+
         mIvAudioPlayerPicture = (ImageView) findViewById(R.id.audio_player_picture);
         mTvAudioPlayerTitle = (TextView) findViewById(R.id.audio_player_title);
-        mSbAudioPlayerSeekbar = (SeekBar) findViewById(R.id.audio_player_seekbar);
         mTvAudioPlayerTimeLeft = (TextView) findViewById(R.id.auido_player_time_left);
         mTvAudioPlayerTimeRight = (TextView) findViewById(R.id.audio_player_time_right);
 
@@ -138,6 +142,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     @Override
     protected void onStart() {
         super.onStart();
+        showLog("onStart");
 
         // setup index of current song on the list and audio file list
         Intent serviceIPC = new Intent(getApplicationContext(), AudioMessengerService.class);
@@ -155,7 +160,9 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     @Override
     protected void onResume() {
         super.onResume();
+        showLog("onResume");
 
+//        For volume control...
 //        AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
 //        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
     }
@@ -163,6 +170,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        showLog("onDestroy");
 
         if (mBoundMessenger) {
             unbindService(mConnectionMessenger);
@@ -197,6 +205,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     };
 
     private void setMusicUI() {
+        showLog("setMusicUI");
+
         mTvAudioPlayerTitle.setText(mPlayAudioFileInfo.getTitle() + " - " + mPlayAudioFileInfo.getArtist());
         mPlayAudioFileInfo.setAlbumArt(getAlbumArt(mPlayAudioFileInfo.getAlbumId()));
 
@@ -213,6 +223,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     }
 
     private Bitmap getAlbumArt(int albumId) {
+        showLog("getAlbumArt");
+
         return AudioPlayerAlbumImage.getArtworkQuick(getApplicationContext(), albumId, 300, 300);
     }
 
@@ -287,7 +299,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.audio_player_play:
-                restartOrpause();
+                restartOrPause();
                 break;
 
             case R.id.audio_player_forward:
@@ -304,22 +316,30 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
         }
     }
 
-    private void restartOrpause() {
+    private void restartOrPause() {
+        showLog("restartOrPause");
+
         Intent songListActivity = new Intent(HOME + "AudioMessengerService.Play");
         sendBroadcast(songListActivity);
     }
 
     private void previous() {
+        showLog("previous");
+
         Intent songListActivity = new Intent(HOME + "AudioMessengerService.Previous");
         sendBroadcast(songListActivity);
     }
 
     private void next() {
+        showLog("next");
+
         Intent songListActivity = new Intent(HOME + "AudioMessengerService.Next");
         sendBroadcast(songListActivity);
     }
 
     private void backToList() {
+        showLog("backToList");
+
         Intent intent = new Intent();
         setResult(RESULT_OK, intent);
         finish();
@@ -328,7 +348,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     private BroadcastReceiver mBRPlayer = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            showLog("onReceive_" + intent.getAction());
+            showLog("Broadcast Receiver : " + intent.getAction());
 
             String action = intent.getAction();
             if ((HOME + "AudioPlayerActivity.STOP").equals(action)) {
@@ -346,6 +366,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     };
 
     private void registerCallReceiver() {
+        showLog("registerCallReceiver");
+
         if(!mIsReceiverRegistered){
             IntentFilter filter = new IntentFilter();
             filter.addAction(HOME + "AudioPlayerActivity.STOP");
@@ -357,6 +379,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void unregisterCallReceiver() {
+        showLog("unregisterCallReceiver");
+
         if(mIsReceiverRegistered){
             unregisterReceiver(mBRPlayer);
             mIsReceiverRegistered = false;
