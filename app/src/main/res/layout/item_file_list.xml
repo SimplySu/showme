@@ -6,11 +6,22 @@
 
     <TextView
         android:id="@+id/tv_filename"
+        android:singleLine="true"
+        android:focusable="false"
         android:text="file name"
-        android:padding="10dp"
         android:layout_weight="1"
         android:layout_width="0dp"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:focusableInTouchMode="true" />
+    <!--android:ellipsize="marquee"-->
+    <!--android:marqueeRepeatLimit="marquee_forever"-->
+    <!--android:scrollHorizontally="true"-->
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=" "/>
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -18,14 +29,18 @@
 
         <TextView
             android:id="@+id/tv_filesize"
-            android:text="160"
-            android:padding="10dp"
+            android:text="0"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
         <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" "/>
+
+        <TextView
             android:id="@+id/tv_modified"
-            android:text="2000.10.10 오후 05:50"
+            android:text="001010 05:50"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
     </LinearLayout>

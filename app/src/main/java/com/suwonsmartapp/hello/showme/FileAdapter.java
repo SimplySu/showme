@@ -31,7 +31,7 @@ public class FileAdapter extends BaseAdapter {
     private List<File> mData;
     private Context mContext;
 
-    SimpleDateFormat mDateFormat = new SimpleDateFormat("yy.MM.dd a KK:mm");
+    SimpleDateFormat mDateFormat = new SimpleDateFormat("yyMMdd kk:mm");
     DecimalFormat mDecimalFormat = new DecimalFormat("#,###");
 
     public FileAdapter(Context context, List<File> data) {
@@ -80,7 +80,6 @@ public class FileAdapter extends BaseAdapter {
 
         // position 위치의 데이터를 취득
         File file = (File) getItem(position);
-
         holder.fileName.setText(file.getName());
 
         // 디렉토리인지 아닌지
@@ -92,9 +91,9 @@ public class FileAdapter extends BaseAdapter {
         } else {
             long size = file.length() / 1024;
             if (size == 0) {
-                holder.fileSize.setText(String.valueOf(file.length()) + " b");
+                holder.fileSize.setText(String.valueOf(file.length()) + "b");
             } else {
-                holder.fileSize.setText(mDecimalFormat.format(size) + " k");
+                holder.fileSize.setText(mDecimalFormat.format(size) + "k");
             }
             holder.fileName.setTextColor(Color.parseColor("#C7C7C7"));
             holder.fileSize.setTextColor(Color.parseColor("#C7C7C7"));

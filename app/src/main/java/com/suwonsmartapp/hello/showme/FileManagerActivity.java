@@ -1,13 +1,14 @@
-
 package com.suwonsmartapp.hello.showme;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,6 +24,7 @@ import com.suwonsmartapp.hello.R;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -33,48 +35,61 @@ import java.util.Stack;
 public class FileManagerActivity extends AppCompatActivity implements
         AdapterView.OnItemClickListener {
 
+    private static final String TAG = FileManagerActivity.class.getSimpleName();
+    private void showLog(String msg) { Log.d(TAG, msg); }
+    private void showToast(String toast_msg) { Toast.makeText(this, toast_msg, Toast.LENGTH_LONG).show(); }
+
     public static final String sPathRoot = "/";
     public static final String sPathSdcard = Environment.getExternalStorageDirectory().getAbsolutePath();
-//    public static final String sPathSdcard = "/sdcard";
-    public static final String sPathExtSdcard = "/storage/extSdCard";
     public static final String sPathMusic = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).getAbsolutePath();
+    public static final String sPathMovie = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getAbsolutePath();
     public static final String sPathDCIM = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath();
     public static final String sPathPicture = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath();
-    public static final String sPathDocument = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath();
     public static final String sPathDownload = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();;
+    public static final String sPathDocument = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath();
 
     private ListView mListView;
 
-    // 첫 화면
+    // we will use default simple adapter
     private ArrayList<Map<String, String>> mTitleList;
     private SimpleAdapter mAdapter;
 
-    // 히스토리 관리 : 다음 화면으로 가기 전에 현재 mCurrentPath 를 push
-    // mCurrentPath = 다음 화면 path
+    // history management : push current path (mCurrentPath) before going to the next screen
+    // mCurrentPath = next screen path
     private Stack<String> mFileStack;
 
-    // 현재의 full path
+    // current full path
     private String mCurrentPath = "";
 
     private TextView mTvCurrentPath;
+
+    private static final int ActivityForAudio = 0x0001;
+    private static final int ActivityForVideo = 0x0010;
+    private static final int ActivityForImage = 0x0100;
+    private static final int ActivityForReserve = 0x1000;
+
+    private String externalSdCard = null;
+    private File fileCur = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_file_manager);
 
+        // fix the screen for portrait
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
         mListView = (ListView) findViewById(R.id.lv_filetree);
         mTvCurrentPath = (TextView) findViewById(R.id.tv_currentPath);
 
         mFileStack = new Stack<>();
 
-        setUpHome();
+        setupHome();    // display categorized initial screen
     }
 
-    /**
-     * 첫 번째 화면 구성
-     */
-    private void setUpHome() {
+    private void setupHome() {
+        findExtSd();    // setup path name on externalSdCard if secondary SD card exists
+
         Map<String, String> root = new HashMap<>();
         root.put("title", "루트");
         root.put("path", sPathRoot);
@@ -84,12 +99,18 @@ public class FileManagerActivity extends AppCompatActivity implements
         sdcard.put("path", sPathSdcard);
 
         Map<String, String> extsdcard = new HashMap<>();
-        sdcard.put("title", "확장 메모리");
-        sdcard.put("path", sPathExtSdcard);
+        if (externalSdCard != null) {
+            extsdcard.put("title", "확장 메모리");
+            extsdcard.put("path", externalSdCard);
+        }
 
         Map<String, String> music = new HashMap<>();
         music.put("title", "음악");
         music.put("path", sPathMusic);
+
+        Map<String, String> movie = new HashMap<>();
+        movie.put("title", "동영상");
+        movie.put("path", sPathMovie);
 
         Map<String, String> dcim = new HashMap<>();
         dcim.put("title", "사진");
@@ -99,45 +120,65 @@ public class FileManagerActivity extends AppCompatActivity implements
         picture.put("title", "그림");
         picture.put("path", sPathPicture);
 
-        Map<String, String> document = new HashMap<>();
-        document.put("title", "문서");
-        document.put("path", sPathDocument);
-
         Map<String, String> download = new HashMap<>();
         download.put("title", "다운로드");
         download.put("path", sPathDownload);
 
-        mTitleList = new ArrayList<>();
-        mTitleList.add(root);
-        mTitleList.add(sdcard);
-        mTitleList.add(extsdcard);
-        mTitleList.add(music);
-        mTitleList.add(dcim);
-        mTitleList.add(picture);
-        mTitleList.add(document);
-        mTitleList.add(download);
+        Map<String, String> document = new HashMap<>();
+        document.put("title", "문서");
+        document.put("path", sPathDocument);
 
         // Pair<String, String> root = new Pair<>("루트", sPathRoot);
         // Pair<String, String> sdcard = new Pair<>("SD Card", sPathSdcard);
         // Pair<String, String> extsdcard = new Pair<>("확장 메모리", sPathExtSdcard);
         // Pair<String, String> music = new Pair<>("음악", sPathMusic);
+        // Pair<String, String> movie = new Pair<>("동영상", sPathMovie);
         // Pair<String, String> dcim = new Pair<>("사진", sPathDCIM);
         // Pair<String, String> picture = new Pair<>("그림", sPathPicture);
-        // Pair<String, String> document = new Pair<>("문서", sPathDocument);
         // Pair<String, String> download = new Pair<>("다운로드", sPathDownload);
+        // Pair<String, String> document = new Pair<>("문서", sPathDocument);
+
+        mTitleList = new ArrayList<>();
+        mTitleList.add(root);
+        mTitleList.add(sdcard);
+        if (externalSdCard != null) {
+            mTitleList.add(extsdcard);
+        }
+        mTitleList.add(music);
+        mTitleList.add(movie);
+        mTitleList.add(dcim);
+        mTitleList.add(picture);
+        mTitleList.add(download);
+        mTitleList.add(document);
 
         mAdapter = new SimpleAdapter(getApplicationContext(),
                 mTitleList,
                 android.R.layout.simple_list_item_2,
-                new String[] {
-                        "title", "path"
-                },
-                new int[] {
-                        android.R.id.text1, android.R.id.text2
-                });
+                new String[] {"title", "path"},
+                new int[] {android.R.id.text1, android.R.id.text2});
 
         mListView.setAdapter(mAdapter);
         mListView.setOnItemClickListener(this);
+    }
+
+    private void findExtSd() {
+        for( String sPathCur : Arrays.asList("ext_card", "external_sd", "ext_sd", "external", "extSdCard", "externalSdCard", "external_SD", "sdcard1")) {
+            fileCur = new File( "/mnt/", sPathCur);
+            if( fileCur.isDirectory() && fileCur.canWrite()) {
+                externalSdCard = fileCur.getAbsolutePath();
+                break;
+            }
+        }
+
+        if (externalSdCard == null) {
+            for( String sPathCur : Arrays.asList("external_SD", "sdcard1", "ext_card", "external_sd", "ext_sd", "external", "extSdCard", "externalSdCard")) {
+                fileCur = new File( "/storage/", sPathCur);
+                if( fileCur.isDirectory() && fileCur.canWrite()) {
+                    externalSdCard = fileCur.getAbsolutePath();
+                    break;
+                }
+            }
+        }
     }
 
     @Override
@@ -175,25 +216,79 @@ public class FileManagerActivity extends AppCompatActivity implements
 
             showFileList(path);
         } else if (item instanceof File) {
-            // 디렉토리를 클릭했을 때는 그 안으로 들어간다
+            // whenever click directory, go to the directory inside
             File fileData = (File) item;
             if (fileData.isDirectory()) {
 
-                // 히스토리에 path 를 삽입
+                // insert path on the history
                 mFileStack.push(mCurrentPath);
                 setCurrentPath(fileData.getAbsolutePath());
 
                 showFileList(fileData.getAbsolutePath());
             } else {
-                try {
-                    // 파일인 경우, 해당 파일의 MIME TYPE 을 설정하여 chooser를 호출
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setDataAndType(Uri.fromFile(fileData), getMimeType(fileData.getAbsolutePath()));
-                    startActivity(Intent.createChooser(intent, "파일선택..."));
-                } catch (ActivityNotFoundException e) {
-                    Toast.makeText(getApplicationContext(), "실행할 앱이 없습니다.", Toast.LENGTH_SHORT).show();
-                }
+                    String mimeType = getMimeType(fileData.getAbsolutePath());
+                    String myType = mimeType.substring(0,5);
+
+                     // myType = audio, video, image, null...
+                    switch (myType) {
+                        case "":
+                            showToast("실행할 수 없습니다.");
+                            break;
+
+                        case "audio":
+                            Intent iAudio = new Intent(this, AudioFileListActivity.class);
+                            iAudio.setData(Uri.fromFile(fileData));
+                            startActivityForResult(iAudio, ActivityForAudio);
+                            break;
+
+                        case "video":
+                            Intent iVideo = new Intent(this, VideoPlayerActivity.class);
+                            iVideo.setData(Uri.fromFile(fileData));
+                            startActivityForResult(iVideo, ActivityForVideo);
+                            break;
+
+                        case "image":
+                            Intent iImage = new Intent(this, ViewPagerActivity.class);
+                            iImage.setData(Uri.fromFile(fileData));
+                            startActivityForResult(iImage, ActivityForImage);
+                            break;
+
+                        default:
+                            try {
+                                // if the extension is not audio, video, or image, use chooser for user selection
+                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                intent.setDataAndType(Uri.fromFile(fileData), mimeType);
+                                startActivity(Intent.createChooser(intent, "파일선택..."));
+                            } catch (ActivityNotFoundException e) {
+                                showToast("실행할 앱이 없습니다.");
+                                break;
+                            }
+                    }
             }
+        }
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+
+        switch (requestCode) {
+            case ActivityForAudio:
+                if (resultCode == RESULT_OK) {
+                    intent.getExtras().getInt("data");
+                }
+                break;
+
+            case ActivityForVideo:
+                if (resultCode == RESULT_OK) {
+                    intent.getExtras().getInt("data");
+                }
+                break;
+
+            case ActivityForImage:
+                if (resultCode == RESULT_OK) {
+                    intent.getExtras().getInt("data");
+                }
+                break;
         }
     }
 
@@ -207,7 +302,8 @@ public class FileManagerActivity extends AppCompatActivity implements
                     .setMessage("파일/폴더를 열 수 없습니다!")
                     .setPositiveButton("확인", null)
                     .show();
-            mFileStack.pop();
+            String pathBack = mFileStack.pop();
+            setCurrentPath(pathBack);
             return;
         }
 
@@ -226,7 +322,6 @@ public class FileManagerActivity extends AppCompatActivity implements
         Collections.sort(fileList, mFolderAscComparator);
 
         FileAdapter fileAdapter = new FileAdapter(getApplicationContext(), fileList);
-
         mListView.setAdapter(fileAdapter);
     }
 
@@ -235,7 +330,6 @@ public class FileManagerActivity extends AppCompatActivity implements
         public int compare(File lhs, File rhs) {
             String left = lhs.getName();
             String right = rhs.getName();
-
             return right.compareTo(left);
         }
     };
@@ -260,24 +354,21 @@ public class FileManagerActivity extends AppCompatActivity implements
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-
         if (keyCode == KeyEvent.KEYCODE_BACK) {
 
-            // 스택이 비었으면 (뒤로 갈 게 없다) --> 죽인다
+            // if the stack is empty (no more backward), kill this process
             if (!mFileStack.empty()) {
-                // 스택이 안 비었으면, 뒤로 간다
+                // if something is in the stack, go back
                 String prevPath = mFileStack.pop();
                 setCurrentPath(prevPath);
                 if (prevPath.equals("")) {
-                    setUpHome();
+                    setupHome();
                 } else {
                     showFileList(prevPath);
                 }
                 return false;
             }
-
         }
-
         return super.onKeyDown(keyCode, event);
     }
 
@@ -288,7 +379,9 @@ public class FileManagerActivity extends AppCompatActivity implements
 
     public static String getMimeType(String url) {
         String type = null;
-        String extension = MimeTypeMap.getFileExtensionFromUrl(url);
+        String ext = url.substring(url.lastIndexOf('.'));
+        String extension = MimeTypeMap.getFileExtensionFromUrl(ext);
+
         if (extension != null) {
             MimeTypeMap mime = MimeTypeMap.getSingleton();
             type = mime.getMimeTypeFromExtension(extension.toLowerCase());

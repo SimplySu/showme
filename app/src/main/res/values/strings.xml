@@ -1,5 +1,21 @@
 <resources>
     <string name="app_name">ShowMe</string>
     <string name="action_settings">Settings</string>
-    <string name="title_activity_file">FileManagerActivity</string>
+    <string name="title_activity_file">ShowMe(File)</string>
+    <string name="title_activity_audio">ShowMe(Audio)</string>
+    <string name="title_activity_video">ShowMe(Video)</string>
+    <string name="title_activity_image">ShowMe(Image)</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_media_player">MediaPlayerActivity</string>
+
+    <string name="title_activity_start">StartActivity</string>
+
+    <string name="title_activity_notification">ShowMe(Notification)</string>
+    <string name="title_activity_pending_intent_target">ShowMe(PendingIntent)</string>
+
+    <string name="title_audio_file_list_activity">ShowMe(File)</string>
+    <string name="title_audio_player_activity">ShowMe(Audio)</string>
+    <string name="local_service_started">ShowMe(service)</string>
+
 </resources>

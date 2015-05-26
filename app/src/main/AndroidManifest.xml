@@ -2,12 +2,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.suwonsmartapp.hello" >
 
+    <!-- 진동 권한 -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- audio -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Contact 커미션 -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+
     <!-- 웹브라우저 화면 구성 -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- 구글 맵을 위해 추가 -->
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- 외장  -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
     <!--
          The following two permissions are not required to use
          Google Maps Android API v2, but are recommended.
@@ -40,6 +51,34 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".showme.VideoPlayerActivity"
+            android:label="@string/title_activity_video" >
+        </activity>
+
+        <activity
+            android:name=".showme.VideoPlayer"
+            android:label="@string/title_activity_video" >
+        </activity>
+
+        <activity
+            android:name=".showme.ViewPagerActivity"
+            android:label="@string/title_activity_image" >
+        </activity>
+
+        <activity android:name=".showme.AudioFileListActivity"
+            android:label="@string/title_audio_file_list_activity">
+        </activity>
+
+        <activity android:name=".showme.AudioPlayerActivity"
+            android:label="@string/title_audio_player_activity">
+        </activity>
+
+        <service
+            android:name=".showme.AudioMessengerService"
+            android:enabled="true"
+            android:exported="true" >
+        </service>
 
     </application>
 
