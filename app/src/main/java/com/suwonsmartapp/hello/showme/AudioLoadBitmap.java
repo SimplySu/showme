@@ -149,7 +149,7 @@ public class AudioLoadBitmap {
                     }
                 } else {
                     if (this == bitmapWorkerTask && imageView != null) {
-                        imageView.setImageResource(R.drawable.audio_headphone_small);
+                        imageView.setImageResource(R.drawable.audio_music_small);
                     }
                 }
             }

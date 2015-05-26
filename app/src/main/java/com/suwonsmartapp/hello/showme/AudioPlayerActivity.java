@@ -203,7 +203,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
         if (mPlayAudioFileInfo.getAlbumArt() != null) {
             mIvAudioPlayerPicture.setImageBitmap(mPlayAudioFileInfo.getAlbumArt());
         } else {
-            mIvAudioPlayerPicture.setImageResource(R.drawable.audio_headphone_large);
+            mIvAudioPlayerPicture.setImageResource(R.drawable.audio_music_large);
         }
 
         if (mMediaPlayer != null) {

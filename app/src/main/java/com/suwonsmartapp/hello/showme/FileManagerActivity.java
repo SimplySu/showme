@@ -162,8 +162,8 @@ public class FileManagerActivity extends AppCompatActivity implements
     }
 
     private void findExtSd() {
-        for( String sPathCur : Arrays.asList("ext_card", "external_sd", "ext_sd", "external", "extSdCard", "externalSdCard", "external_SD", "sdcard1")) {
-            fileCur = new File( "/mnt/", sPathCur);
+        for( String sPathCur : Arrays.asList("external_SD", "sdcard1", "ext_card", "external_sd", "ext_sd", "external", "extSdCard", "externalSdCard")) {
+            fileCur = new File( "/storage/", sPathCur);
             if( fileCur.isDirectory() && fileCur.canWrite()) {
                 externalSdCard = fileCur.getAbsolutePath();
                 break;
@@ -171,8 +171,8 @@ public class FileManagerActivity extends AppCompatActivity implements
         }
 
         if (externalSdCard == null) {
-            for( String sPathCur : Arrays.asList("external_SD", "sdcard1", "ext_card", "external_sd", "ext_sd", "external", "extSdCard", "externalSdCard")) {
-                fileCur = new File( "/storage/", sPathCur);
+            for( String sPathCur : Arrays.asList("ext_card", "external_sd", "ext_sd", "external", "extSdCard", "externalSdCard", "external_SD", "sdcard1")) {
+                fileCur = new File( "/mnt/", sPathCur);
                 if( fileCur.isDirectory() && fileCur.canWrite()) {
                     externalSdCard = fileCur.getAbsolutePath();
                     break;

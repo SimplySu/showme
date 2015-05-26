@@ -101,15 +101,17 @@ public class AudioFileListActivity extends AppCompatActivity
         prepareTitleToPlay();               // setup titles for playing
 
         mAudioListAdapter = new AudioListAdapter(getApplicationContext(), mAudioFileInfoList, mCurrentPosition);
+        mLvMusicList = (ListView) findViewById(R.id.lv_music_list);
         mLvMusicList.setAdapter(mAudioListAdapter);
-        mLvMusicList.setOnItemClickListener(this);      // whenever user select title directly on the lists
+        mLvMusicList.setOnItemClickListener(this);      // handle if user selected title directly
 
         // connect event handler on the seekbar
+        mSbMiniPlayer = (SeekBar) findViewById(R.id.mini_audio_player_seekbar);
         mSbMiniPlayer.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    mMediaPlayer.seekTo(progress);      // whenever user changed seekbar
+                    mMediaPlayer.seekTo(progress);      // change progress if user changed seekbar
                 }
             }
 
@@ -125,6 +127,7 @@ public class AudioFileListActivity extends AppCompatActivity
 
         mCurrentPosition = searchTitleIndex();      // search title index which was specified by user
         updateTitleListView();
+        mLvMusicList.smoothScrollToPosition(mCurrentPosition);
 
         Intent initialIntent = new Intent(getApplicationContext(), AudioPlayerActivity.class);
         initialIntent.putExtra("currentPosition", mCurrentPosition);       // current title position
@@ -136,7 +139,6 @@ public class AudioFileListActivity extends AppCompatActivity
         showLog("setupViews");
         mAudioFileInfoList = new ArrayList<>();         // create audio file lists
 
-        mLvMusicList = (ListView) findViewById(R.id.lv_music_list);
         mLlMiniMiniPlayer = (LinearLayout) findViewById(R.id.mini_audio_player);
         mIvAlbum = (ImageView) findViewById(R.id.mini_audio_player_icon);
         mTvSongTitle = (TextView) findViewById(R.id.mini_audio_player_title);
@@ -144,15 +146,15 @@ public class AudioFileListActivity extends AppCompatActivity
 
         mTvMiniPlayerStartTime = (TextView) findViewById(R.id.mini_audio_player_time_left);
         mTvMiniPlayerFinalTime = (TextView) findViewById(R.id.mini_audio_player_time_right);
-        mSbMiniPlayer = (SeekBar) findViewById(R.id.mini_audio_player_seekbar);
 
         mBtnPrevious = (Button) findViewById(R.id.btn_previous_song);
-        mBtnPlay = (Button) findViewById(R.id.btn_play_song);
-        mBtnNext = (Button) findViewById(R.id.btn_next_song);
+        mBtnPrevious.setOnClickListener(this);      // setup listener for previous button
 
-        mBtnPrevious.setOnClickListener(this);      // setup listener for prev, play, next button
-        mBtnPlay.setOnClickListener(this);
-        mBtnNext.setOnClickListener(this);
+        mBtnPlay = (Button) findViewById(R.id.btn_play_song);
+        mBtnPlay.setOnClickListener(this);          // setup listener for play button
+
+        mBtnNext = (Button) findViewById(R.id.btn_next_song);
+        mBtnNext.setOnClickListener(this);          // setup listener for next button
     }
 
     // search matched title with specified by user
@@ -228,29 +230,34 @@ public class AudioFileListActivity extends AppCompatActivity
         // query : syncronized processing (can be slow)
         // loader : asyncronized processing
 
-        String[] pro = {
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.ARTIST,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.DATA,
-                MediaStore.Audio.Media.DISPLAY_NAME,
-                MediaStore.Audio.Media.DURATION,
-                MediaStore.Audio.Media.ALBUM_ID,
+        String[] projection = {
+                MediaStore.Audio.Media._ID,                 // album ID
+                MediaStore.Audio.Media.ARTIST,              // artist
+                MediaStore.Audio.Media.TITLE,               // title
+                MediaStore.Audio.Media.DATA,                // full pathname
+                MediaStore.Audio.Media.DISPLAY_NAME,        // filename
+                MediaStore.Audio.Media.DURATION,            // play time
+                MediaStore.Audio.Media.ALBUM_ID,            // album ID
                 MediaStore.MediaColumns.DATA
         };
 
-        String selection = MediaStore.Audio.Media.DATA + " like ? ";
+        String selection = MediaStore.Audio.Media.DATA + " like ?";
         String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
 
-//      we support mp3, wav, ogg, wma, flac, tta, cue, ape, alac, and wv types.
-        mCursor = getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                pro, selection,
-                new String[] {requestedPathname + "/%"}, sortOrder);
+        mCursor = getContentResolver()
+                .query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,    // The content URI of the words table
+                        projection,                 // The columns to return for each row
+                        selection,                  //  selection criteria
+                        new String[] {requestedPathname + "/%"},        // Selection criteria
+                        sortOrder);                 // The sort order for the returned rows
+
+        showLog("query result : " + String.valueOf(mCursor));
 
         if (mCursor != null) {
             mCursor.moveToFirst();              // from the start of data base
 
-            showLog(String.valueOf(mCursor.getCount()));
+            showLog("searched file count : " + String.valueOf(mCursor.getCount()));
+
             for (int i = 0; i < mCursor.getCount(); i++) {
                 mCursor.moveToPosition(i);      // get next row of data base
 
@@ -285,6 +292,8 @@ public class AudioFileListActivity extends AppCompatActivity
         int j = fullPath.length();                      // get fullpath's length
         String pathname = fullPath.substring(0, i);     // get pathname only
         String filename = fullPath.substring(i + 1, j); // get filename only
+
+        showLog(filename);
 
         int k = requestedPathname.length();             // get requested path length
         int l = pathname.length();                      // get current pathname length
@@ -422,7 +431,7 @@ public class AudioFileListActivity extends AppCompatActivity
         if (albumArt != null) {
             mIvAlbum.setImageBitmap(albumArt);      // album icon found
         } else {
-            mIvAlbum.setImageResource(R.drawable.audio_headphone_small);    // draw default icon (headphone)
+            mIvAlbum.setImageResource(R.drawable.audio_music_small);    // draw default icon (headphone)
         }
 
         mLlMiniMiniPlayer.setVisibility(View.VISIBLE);

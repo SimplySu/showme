@@ -352,7 +352,7 @@ public class AudioMessengerService extends Service
         if (mPlayAudioFileInfo.getAlbumArt() != null) {
             mRemoteViews.setBitmap(R.id.messenger_album_picture, "setImageBitmap", mPlayAudioFileInfo.getAlbumArt());
         } else {
-            mRemoteViews.setImageViewResource(R.id.messenger_album_picture, R.drawable.audio_headphone_small);
+            mRemoteViews.setImageViewResource(R.id.messenger_album_picture, R.drawable.audio_music_small);
         }
 
         mRemoteViews.setTextViewText(R.id.messenger_title, mPlayAudioFileInfo.getTitle() + " - " + mPlayAudioFileInfo.getArtist());

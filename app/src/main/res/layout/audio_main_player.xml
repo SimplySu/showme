@@ -27,7 +27,7 @@
         android:layout_weight="1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:src="@drawable/audio_headphone_large"/>
+        android:src="@drawable/audio_music_large"/>
 
     <SeekBar
         android:id="@+id/audio_player_seekbar"
