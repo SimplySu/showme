@@ -38,6 +38,7 @@ public class ImageFileListActivity extends AppCompatActivity {
     private ImageFileInfo imageFileInfo;                    // image file info getting by cursor
     private ArrayList<ImageFileInfo> mImageFileInfoList;    // image file information list
     private Cursor mCursor;                                 // cursor for media store searching
+    private static int mCurrentPosition = -1;               // -1 means we didn't specify file
 
     private ViewPager mViewPager;
     private MyAdapter mMyAdapter;
@@ -70,6 +71,11 @@ public class ImageFileListActivity extends AppCompatActivity {
         mViewPager = (ViewPager)findViewById(R.id.viewPager);
         mMyAdapter = new MyAdapter(getSupportFragmentManager(), mImageFileInfoList);
         mViewPager.setAdapter(mMyAdapter);
+
+        mCurrentPosition = searchTitleIndex();      // search title index which was specified by user
+        mMyAdapter.setCurrentItem(mCurrentPosition);
+        mMyAdapter.notifyDataSetChanged();
+
     }
 
     private void prepareFileToShow() {
@@ -115,7 +121,7 @@ public class ImageFileListActivity extends AppCompatActivity {
                 }
             }
         } else {
-            showToast("그림/사진 파일이 없습니다.");          // no image found
+            showToast("표시할 파일이 없습니다.");          // no image found
         }
     }
 
@@ -141,6 +147,18 @@ public class ImageFileListActivity extends AppCompatActivity {
         return s.equals(requestedPathname);             // see if this directory is matching ?
     }
 
+    // search matched title with specified by user
+    private int searchTitleIndex() {
+        for (int i = 0; i < mImageFileInfoList.size(); i++) {
+            ImageFileInfo imageFileInfo = mImageFileInfoList.get(i);    // read audio file
+            if (requestedFilename.equals(imageFileInfo.getDisplayName())) {
+                return i;          // return matched index
+            }
+        }
+        return 0;                  // default is the first title
+    }
+
+    // custom adapter for displaying image file using fragment method
     public class MyAdapter extends FragmentPagerAdapter {
 
         private ArrayList<ImageFileInfo> mData;    // image file information list
