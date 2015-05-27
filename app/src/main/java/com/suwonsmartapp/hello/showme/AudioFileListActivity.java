@@ -253,6 +253,8 @@ public class AudioFileListActivity extends AppCompatActivity
 
         showLog("query result : " + String.valueOf(mCursor));
 
+        mAudioFileInfoList = new ArrayList<>();     // initialize info list
+
         if (mCursor != null) {
             mCursor.moveToFirst();              // from the start of data base
 

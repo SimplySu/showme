@@ -52,12 +52,12 @@
         </activity>
 
         <activity
-            android:name=".showme.VideoPlayerActivity"
+            android:name=".showme.VideoFileListActivity"
             android:label="@string/title_activity_video" >
         </activity>
 
         <activity
-            android:name=".showme.VideoPlayer"
+            android:name=".showme.VideoPlayerActivity"
             android:label="@string/title_activity_video" >
         </activity>
 

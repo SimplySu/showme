@@ -69,22 +69,22 @@ public class ImageFileListActivity extends AppCompatActivity {
         prepareFileToShow();               // setup files for showing
 
         mViewPager = (ViewPager)findViewById(R.id.viewPager);
+        mCurrentPosition = searchTitleIndex();      // search title index which was specified by user
+        mViewPager.setCurrentItem(mCurrentPosition);
+
         mMyAdapter = new MyAdapter(getSupportFragmentManager(), mImageFileInfoList);
         mViewPager.setAdapter(mMyAdapter);
-
-        mCurrentPosition = searchTitleIndex();      // search title index which was specified by user
-        mMyAdapter.setCurrentItem(mCurrentPosition);
-        mMyAdapter.notifyDataSetChanged();
-
     }
 
     private void prepareFileToShow() {
 
         String[] projection = {
                 MediaStore.Images.Media._ID,             // picture ID
+                MediaStore.Images.Media.TITLE,           // full pathname
                 MediaStore.Images.Media.DATA,            // full pathname
                 MediaStore.Images.Media.DISPLAY_NAME,    // filename only
                 MediaStore.Images.Media.SIZE,            // file length
+                MediaStore.MediaColumns.DATA             // URI
         };
 
         String selection = MediaStore.Images.Media.DATA + " like ?";
@@ -99,6 +99,8 @@ public class ImageFileListActivity extends AppCompatActivity {
 
         showLog("query result : " + String.valueOf(mCursor));
 
+        mImageFileInfoList = new ArrayList<>();     // initialize info list
+
         if (mCursor != null) {
             mCursor.moveToFirst();              // from the start of data base
 
@@ -110,9 +112,11 @@ public class ImageFileListActivity extends AppCompatActivity {
                 if (isDirectoryMatch()) {      // select matched directory only
                     imageFileInfo = new ImageFileInfo();
                     imageFileInfo.setId(mCursor.getLong(0));                // file ID
-                    imageFileInfo.setData(mCursor.getString(1));            // data
-                    imageFileInfo.setDisplayName(mCursor.getString(2));     // filename
-                    imageFileInfo.setSize(mCursor.getLong(3));              // file size
+                    imageFileInfo.setTitle(mCursor.getString(1));           // filename
+                    imageFileInfo.setData(mCursor.getString(2));            // full pathname
+                    imageFileInfo.setDisplayName(mCursor.getString(3));     // filename
+                    imageFileInfo.setSize(mCursor.getLong(4));              // file size
+                    imageFileInfo.setUriData(mCursor.getString(5));         // URI data
 
                     Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, imageFileInfo.getId());
                     imageFileInfo.setImageUri(contentUri);                   // get image icon
@@ -129,7 +133,7 @@ public class ImageFileListActivity extends AppCompatActivity {
     // return false if it is not.
     // we will include subdirectories also.
     private boolean isDirectoryMatch() {
-        String fullPath = mCursor.getString(1);         // get full path name
+        String fullPath = mCursor.getString(2);         // get full path name
         int i = fullPath.lastIndexOf('/');              // search last slash
         int j = fullPath.length();                      // get fullpath's length
         String pathname = fullPath.substring(0, i);     // get pathname only
@@ -187,7 +191,7 @@ public class ImageFileListActivity extends AppCompatActivity {
 
         private ImageView mImageView;
 
-        // 싱글턴 패턴
+        // Singleton Pattern : make just one instance, and can be accessed at everywhere
         public static Fragment getInstance(ImageFileInfo imageFileInfo) {
             ImageFragment fragment = new ImageFragment();
 

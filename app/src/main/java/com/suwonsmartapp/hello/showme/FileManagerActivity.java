@@ -226,46 +226,72 @@ public class FileManagerActivity extends AppCompatActivity implements
 
                 showFileList(fileData.getAbsolutePath());
             } else {
-                    String mimeType = getMimeType(fileData.getAbsolutePath());
-                    String myType = mimeType.substring(0,5);
+                switch (getMimeType(fileData)) {
+                    case "audio":
+                        Intent iAudio = new Intent(this, AudioFileListActivity.class);
+                        iAudio.setData(Uri.fromFile(fileData));
+                        startActivityForResult(iAudio, ActivityForAudio);
+                        break;
 
-                     // myType = audio, video, image, null...
-                    switch (myType) {
-                        case "":
-                            showToast("실행할 수 없습니다.");
-                            break;
+                    case "video":
+                        Intent iVideo = new Intent(this, VideoFileListActivity.class);
+                        iVideo.setData(Uri.fromFile(fileData));
+                        startActivityForResult(iVideo, ActivityForVideo);
+                        break;
 
-                        case "audio":
-                            Intent iAudio = new Intent(this, AudioFileListActivity.class);
-                            iAudio.setData(Uri.fromFile(fileData));
-                            startActivityForResult(iAudio, ActivityForAudio);
-                            break;
+                    case "image":
+                        Intent iImage = new Intent(this, ImageFileListActivity.class);
+                        iImage.setData(Uri.fromFile(fileData));
+                        startActivityForResult(iImage, ActivityForImage);
+                        break;
 
-                        case "video":
-                            Intent iVideo = new Intent(this, VideoPlayerActivity.class);
-                            iVideo.setData(Uri.fromFile(fileData));
-                            startActivityForResult(iVideo, ActivityForVideo);
-                            break;
-
-                        case "image":
-                            Intent iImage = new Intent(this, ImageFileListActivity.class);
-                            iImage.setData(Uri.fromFile(fileData));
-                            startActivityForResult(iImage, ActivityForImage);
-                            break;
-
-                        default:
-                            try {
+                    default:
+                        try {
+                            if (mimeType(fileData.getAbsolutePath()) != null) {
                                 // if the extension is not audio, video, or image, use chooser for user selection
                                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                                intent.setDataAndType(Uri.fromFile(fileData), mimeType);
+                                intent.setDataAndType(Uri.fromFile(fileData), mimeType(fileData.getAbsolutePath()));
                                 startActivity(Intent.createChooser(intent, "파일선택..."));
-                            } catch (ActivityNotFoundException e) {
-                                showToast("실행할 앱이 없습니다.");
-                                break;
+                            } else {
+                                showLog("실행할 수 없습니다.");
                             }
-                    }
+                        } catch (ActivityNotFoundException e) {
+                            showToast("실행할 앱이 없습니다.");
+                            break;
+                        }
+                }
             }
         }
+    }
+
+    private String getMimeType(File fileData) {
+        String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "xmf", "rtx", "ota", "imy", "ts"};
+        String[] video = {"avi", "mkv", "mp4", "wmv", "asf", "mov", "mpg", "flv", "tp", "3gp", "m4v", "rmvb", "webm"};
+        String[] image = {"jpg", "gif", "png", "bmp", "tif", "tiff", "webp"};
+
+        int i = fileData.getAbsolutePath().lastIndexOf('.');
+        int j = fileData.getAbsolutePath().length();
+        String extension = fileData.getAbsolutePath().substring(i + 1, j);
+        String mimeType = extension.toLowerCase();
+
+        for (int x = 0; x < audio.length; x++) {
+            if (mimeType.equals(audio[x])) {
+                return "audio";
+            }
+        }
+
+        for (int y = 0; y < video.length; y++) {
+            if (mimeType.equals(video[y])) {
+                return "video";
+            }
+        }
+
+        for (int z = 0; z < image.length; z++) {
+            if (mimeType.equals(image[z])) {
+                return "image";
+            }
+        }
+        return "";
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -377,7 +403,7 @@ public class FileManagerActivity extends AppCompatActivity implements
         mTvCurrentPath.setText(mCurrentPath);
     }
 
-    public static String getMimeType(String url) {
+    public static String mimeType(String url) {
         String type = null;
         String ext = url.substring(url.lastIndexOf('.'));
         String extension = MimeTypeMap.getFileExtensionFromUrl(ext);

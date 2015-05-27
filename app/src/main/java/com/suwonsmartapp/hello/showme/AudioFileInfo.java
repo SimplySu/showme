@@ -118,5 +118,4 @@ public class AudioFileInfo implements Parcelable {
             return new AudioFileInfo[0];
         }
     };
-
 }

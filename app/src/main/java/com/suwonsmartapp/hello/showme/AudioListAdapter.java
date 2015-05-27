@@ -96,7 +96,7 @@ public class AudioListAdapter extends BaseAdapter {
         return view;
     }
 
-    public void setmCurrentPosition(int mCurrentPosition) {
-        this.mCurrentPosition = mCurrentPosition;
+    public void setmCurrentPosition(int position) {
+        this.mCurrentPosition = position;
     }
 }
