@@ -8,12 +8,6 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.suwonsmartapp.hello.activity.ViewPagerActivity">
 
-    <Button
-        android:text="어댑터 변경"
-        android:id="@+id/btn_change_adapter"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
     <android.support.v4.view.ViewPager
         android:id="@+id/viewPager"
         android:layout_width="match_parent"

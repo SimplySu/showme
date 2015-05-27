@@ -62,7 +62,7 @@
         </activity>
 
         <activity
-            android:name=".showme.ViewPagerActivity"
+            android:name=".showme.ImageFileListActivity"
             android:label="@string/title_activity_image" >
         </activity>
 

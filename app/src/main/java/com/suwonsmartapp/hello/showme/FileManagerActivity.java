@@ -248,7 +248,7 @@ public class FileManagerActivity extends AppCompatActivity implements
                             break;
 
                         case "image":
-                            Intent iImage = new Intent(this, ViewPagerActivity.class);
+                            Intent iImage = new Intent(this, ImageFileListActivity.class);
                             iImage.setData(Uri.fromFile(fileData));
                             startActivityForResult(iImage, ActivityForImage);
                             break;
