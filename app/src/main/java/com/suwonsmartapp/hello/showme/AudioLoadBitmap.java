@@ -33,8 +33,6 @@ public class AudioLoadBitmap {
     }
 
     public void loadBitmap(int albumId, ImageView imageView) {
-        showLog("loadBitmap");
-
         final String imageKey = String.valueOf(albumId);
         final Bitmap bitmap = getBitmapFromMemoryCache(imageKey);
 
@@ -106,8 +104,6 @@ public class AudioLoadBitmap {
     }
 
     public Bitmap getBitmapFromMemoryCache(String albumIdKey) {
-        showLog("getBitmapFromMemoryCache");
-
         return mAudioImageCache.getmMemoryCache().get(albumIdKey);
     }
 
@@ -166,8 +162,6 @@ public class AudioLoadBitmap {
     }
 
     private Bitmap getArtworkQuick(int album_id, int w, int h) {
-        showLog("getArtworkQuick");
-
         BitmapFactory.Options sBitmapOptionsCache = new BitmapFactory.Options();
         Uri artworkUri = Uri.parse("content://media/external/audio/albumart");
 
