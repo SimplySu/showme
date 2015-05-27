@@ -44,23 +44,6 @@ public class VideoListAdapter extends VideoAsyncBitmapAdapter {
         super(context, c, autoRequery);
 
         mContext = context;
-        mCursor = c;
-
-    }
-
-    @Override
-    public int getCount() {
-        return mCursor.getCount();
-    }
-
-    @Override
-    public Object getItem(int position) {
-        return null;
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return 0;
     }
 
     @Override
@@ -80,21 +63,21 @@ public class VideoListAdapter extends VideoAsyncBitmapAdapter {
             inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
             view = inflater.inflate(R.layout.video_file_list, null);
-            ImageView albumPic = (ImageView) view.findViewById(R.id.video_picture);
-            TextView music = (TextView) view.findViewById(R.id.video_adapter_title);
-            TextView singer = (TextView) view.findViewById(R.id.video_adapter_artist);
+            ImageView videoAdapterPicture = (ImageView) view.findViewById(R.id.video_adapter_picture);
+            TextView videoAdapterTitle = (TextView) view.findViewById(R.id.video_adapter_title);
+            TextView videoAdapterArtist = (TextView) view.findViewById(R.id.video_adapter_artist);
 
-            viewHolder = new ViewHolder();          // construct view holder
-            viewHolder.tvTitle = music;             // set music title
-            viewHolder.ivAlbumIcon = albumPic;      // set album icon
-            viewHolder.tvArtist = singer;           // set music artist
-            view.setTag(viewHolder);                // setup one view
+            viewHolder = new ViewHolder();                      // construct view holder
+            viewHolder.tvTitle = videoAdapterTitle;             // set music title
+            viewHolder.ivAlbumIcon = videoAdapterPicture;       // set album icon
+            viewHolder.tvArtist = videoAdapterArtist;           // set music artist
+            view.setTag(viewHolder);                            // setup one view
 
         } else {
             viewHolder = (ViewHolder) view.getTag();
         }
 
-        mCursor.moveToPosition(position);
+        mCursor = (Cursor) getItem(position);
         VideoFileInfo playVideo = new VideoFileInfo();
         playVideo.setId(mCursor.getLong(0));                // video ID
         playVideo.setArtist(mCursor.getString(1));          // artist
@@ -105,7 +88,7 @@ public class VideoListAdapter extends VideoAsyncBitmapAdapter {
         playVideo.setColumnsData(mCursor.getString(6));     // URI
 
         Uri contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, playVideo.getId());
-        playVideo.setVideoUri(contentUri);                   // get music icon
+        playVideo.setVideoUri(contentUri);                   // get video icon
 
         int extensionPosition = playVideo.getDisplayName().lastIndexOf('.');
         int extensionLength = playVideo.getDisplayName().length();

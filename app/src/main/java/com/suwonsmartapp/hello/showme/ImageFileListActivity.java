@@ -36,7 +36,7 @@ public class ImageFileListActivity extends AppCompatActivity {
     private String requestedFilename = "";          // specified filename by user from intent
 
     private ImageFileInfo imageFileInfo;                    // image file info getting by cursor
-    private ArrayList<ImageFileInfo> mImageFileInfoList;    // image file information list
+    private ArrayList<ImageFileInfo> mImageFileInfoList;    // image file media_player_icon_information list
     private Cursor mCursor;                                 // cursor for media store searching
     private static int mCurrentPosition = -1;               // -1 means we didn't specify file
 
@@ -119,7 +119,7 @@ public class ImageFileListActivity extends AppCompatActivity {
                     imageFileInfo.setUriData(mCursor.getString(5));         // URI data
 
                     Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, imageFileInfo.getId());
-                    imageFileInfo.setImageUri(contentUri);                   // get image icon
+                    imageFileInfo.setImageUri(contentUri);                   // get image media_player_icon_android
 
                     mImageFileInfoList.add(imageFileInfo);                  // register image on the play list
                 }
@@ -165,7 +165,7 @@ public class ImageFileListActivity extends AppCompatActivity {
     // custom adapter for displaying image file using fragment method
     public class MyAdapter extends FragmentPagerAdapter {
 
-        private ArrayList<ImageFileInfo> mData;    // image file information list
+        private ArrayList<ImageFileInfo> mData;    // image file media_player_icon_information list
 
         public MyAdapter(FragmentManager fm, ArrayList<ImageFileInfo> data) {
             super(fm);

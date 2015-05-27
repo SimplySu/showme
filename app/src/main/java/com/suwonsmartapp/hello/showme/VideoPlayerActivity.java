@@ -27,7 +27,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements
     private void showToast(String toast_msg) { Toast.makeText(this, toast_msg, Toast.LENGTH_LONG).show(); }
 
     private int mCurrentPosition;                   // current playing pointer
-    private ArrayList<VideoFileInfo> mVideoFileInfoList;    // video file information list
+    private ArrayList<VideoFileInfo> mVideoFileInfoList;    // video file media_player_icon_information list
     private VideoFileInfo videoFileInfo;                    // video file info getting by cursor
     private String requestedPathname = "";          // specified pathname by user from intent
     private String requestedFilename = "";          // specified filename by user from intent

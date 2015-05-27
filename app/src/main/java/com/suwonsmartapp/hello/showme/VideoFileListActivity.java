@@ -35,7 +35,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
     private String requestedFilename = "";          // specified filename by user from intent
 
     private VideoFileInfo videoFileInfo;                    // video file info getting by cursor
-    private ArrayList<VideoFileInfo> mVideoFileInfoList;    // video file information list
+    private ArrayList<VideoFileInfo> mVideoFileInfoList;    // video file media_player_icon_information list
     private Cursor mCursor;                                 // cursor for media store searching
     private static int mCurrentPosition = -1;               // -1 means we didn't specify file
 
@@ -135,7 +135,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
                     videoFileInfo.setColumnsData(mCursor.getString(6));     // URI
 
                     Uri contentUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, videoFileInfo.getId());
-                    videoFileInfo.setVideoUri(contentUri);                   // get music icon
+                    videoFileInfo.setVideoUri(contentUri);                   // get music media_player_icon_android
 
                     mVideoFileInfoList.add(videoFileInfo);                  // register music on the play list
                 }

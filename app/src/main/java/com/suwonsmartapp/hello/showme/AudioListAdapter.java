@@ -65,7 +65,7 @@ public class AudioListAdapter extends BaseAdapter {
 
             viewHolder = new ViewHolder();          // construct view holder
             viewHolder.tvTitle = music;             // set music title
-            viewHolder.ivAlbumIcon = albumPic;      // set album icon
+            viewHolder.ivAlbumIcon = albumPic;      // set album media_player_icon_android
             viewHolder.tvArtist = singer;           // set music artist
             view.setTag(viewHolder);                // setup one view
 

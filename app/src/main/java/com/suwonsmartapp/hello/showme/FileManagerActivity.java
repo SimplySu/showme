@@ -136,7 +136,18 @@ public class FileManagerActivity extends AppCompatActivity implements
         // Pair<String, String> dcim = new Pair<>("사진", sPathDCIM);
         // Pair<String, String> picture = new Pair<>("그림", sPathPicture);
         // Pair<String, String> download = new Pair<>("다운로드", sPathDownload);
-        // Pair<String, String> document = new Pair<>("문서", sPathDocument);
+        // Pair<String, String> media_player_icon_document = new Pair<>("문서", sPathDocument);
+
+//        ArrayList root = new ArrayList <> ("루트", sPathRoot, R.drawable.icon_root);
+//        ArrayList sdcard = new ArrayList <> ("SD Card", sPathSdcard, R.drawable.icon_sdcard);
+//        ArrayList extsdcard = new ArrayList<>();
+//        if (externalSdCard != null) { extsdcard = new ArrayList <> ("확장 메모리", externalSdCard, R.drawable.icon_extsd); }
+//        ArrayList music = new ArrayList <> ("음악", sPathMusic, R.drawable.icon_music);
+//        ArrayList movie = new ArrayList <> ("동영상", sPathMovie, R.drawable.icon_movie);
+//        ArrayList dcim = new ArrayList <> ("사진", sPathDCIM, R.drawable.icon_picture);
+//        ArrayList picture = new ArrayList <> ("그림", sPathPicture, R.drawable.icon_image);
+//        ArrayList download = new ArrayList <> ("다운로드", sPathDownload, R.drawable.icon_download);
+//        ArrayList document = new ArrayList <> ("문서", sPathDocument, R.drawable.icon_document)
 
         mTitleList = new ArrayList<>();
         mTitleList.add(root);
@@ -347,8 +358,8 @@ public class FileManagerActivity extends AppCompatActivity implements
         Collections.sort(fileList);
         Collections.sort(fileList, mFolderAscComparator);
 
-        FileAdapter fileAdapter = new FileAdapter(getApplicationContext(), fileList);
-        mListView.setAdapter(fileAdapter);
+        FileListAdapter fileListAdapter = new FileListAdapter(getApplicationContext(), fileList);
+        mListView.setAdapter(fileListAdapter);
     }
 
     Comparator<File> mDescComparator = new Comparator<File>() {

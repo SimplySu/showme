@@ -327,16 +327,16 @@ public class MediaPlayerMain extends Activity {
     			TextView size = (TextView)v.findViewById(R.id.textView2);
     			switch(temp.gettype()) {
     			case 0:
-    				icon.setImageResource(R.drawable.folder_horizontal);
+    				icon.setImageResource(R.drawable.media_player_icon_folder_horizontal);
     				break;
     			case 1:
-    				icon.setImageResource(R.drawable.film);
+    				icon.setImageResource(R.drawable.media_player_icon_film);
     				break;
     			case 2:
-    				icon.setImageResource(R.drawable.application_blue);
+    				icon.setImageResource(R.drawable.media_player_icon_application_blue);
     				break;
     			default:
-    				icon.setImageResource(R.drawable.document);
+    				icon.setImageResource(R.drawable.media_player_icon_document);
     				break;
     			}
     			name.setText(temp.getname());

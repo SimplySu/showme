@@ -50,7 +50,7 @@ public class AudioFileListActivity extends AppCompatActivity
     private AudioFileInfo audioFileInfo;                    // audio file info getting by cursor
     private boolean mIsReceiverRegistered;
 
-    private ArrayList<AudioFileInfo> mAudioFileInfoList;    // audio file information list
+    private ArrayList<AudioFileInfo> mAudioFileInfoList;    // audio file media_player_icon_information list
     private ListView mLvMusicList;                          // music list view
     private AudioListAdapter mAudioListAdapter;             // audio list adapter
     private Cursor mCursor;                                 // cursor for media store searching
@@ -60,7 +60,7 @@ public class AudioFileListActivity extends AppCompatActivity
     private static final int MSG_GET_MP_IN_LIST = 3;
 
     private LinearLayout mLlMiniMiniPlayer;             // for visibility setting
-    private ImageView mIvAlbum;                         // icon
+    private ImageView mIvAlbum;                         // media_player_icon_android
     private TextView mTvSongTitle;                      // title
     private TextView mTvMiniPlayerStartTime;            // time left
     private TextView mTvMiniPlayerFinalTime;            // time right
@@ -275,7 +275,7 @@ public class AudioFileListActivity extends AppCompatActivity
                     audioFileInfo.setColumnsData(mCursor.getString(7));
 
                     Uri contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, audioFileInfo.getId());
-                    audioFileInfo.setSongUri(contentUri);                   // get music icon
+                    audioFileInfo.setSongUri(contentUri);                   // get music media_player_icon_android
 
                     mAudioFileInfoList.add(audioFileInfo);                  // register music on the play list
                 }
@@ -326,7 +326,7 @@ public class AudioFileListActivity extends AppCompatActivity
             mMsgOfListAndService = new Messenger(service);
             mBoundMessenger = true;
 
-            // get audio player information
+            // get audio player media_player_icon_information
             Message msg = Message.obtain(null, AudioMessengerService.MSG_GET_MP_IN_LIST, 0, 0);
             try {
                 mMsgOfListAndService.send(msg);
@@ -389,7 +389,7 @@ public class AudioFileListActivity extends AppCompatActivity
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case MSG_GET_MP_IN_LIST:    // get audio player information from service
+                case MSG_GET_MP_IN_LIST:    // get audio player media_player_icon_information from service
                     mMediaPlayer = (MediaPlayer) msg.obj;
                     mCurrentPosition = msg.arg1;
                     break;
@@ -427,13 +427,13 @@ public class AudioFileListActivity extends AppCompatActivity
     private void changeMiniPlayerUI() {
         AudioFileInfo playSong = mAudioFileInfoList.get(mCurrentPosition);
 
-        // get album icon bitmap image from the media store
+        // get album media_player_icon_android bitmap image from the media store
         Bitmap albumArt = AudioPlayerAlbumImage.getArtworkQuick(getApplicationContext(), playSong.getAlbumId(), 150, 150);
 
         if (albumArt != null) {
-            mIvAlbum.setImageBitmap(albumArt);      // album icon found
+            mIvAlbum.setImageBitmap(albumArt);      // album media_player_icon_android found
         } else {
-            mIvAlbum.setImageResource(R.drawable.audio_music_small);    // draw default icon (headphone)
+            mIvAlbum.setImageResource(R.drawable.audio_music_small);    // draw default media_player_icon_android (headphone)
         }
 
         mLlMiniMiniPlayer.setVisibility(View.VISIBLE);

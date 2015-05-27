@@ -26,7 +26,7 @@ import java.util.List;
  * 3. 라이브러리 프로젝트에서 우클릭 -> Make Module
  * 4. 에러가 없으면 성공
  */
-public class FileAdapter extends BaseAdapter {
+public class FileListAdapter extends BaseAdapter {
 
     private List<File> mData;
     private Context mContext;
@@ -34,7 +34,7 @@ public class FileAdapter extends BaseAdapter {
     SimpleDateFormat mDateFormat = new SimpleDateFormat("yyMMdd kk:mm");
     DecimalFormat mDecimalFormat = new DecimalFormat("#,###");
 
-    public FileAdapter(Context context, List<File> data) {
+    public FileListAdapter(Context context, List<File> data) {
         mContext = context;
         mData = data;
     }
