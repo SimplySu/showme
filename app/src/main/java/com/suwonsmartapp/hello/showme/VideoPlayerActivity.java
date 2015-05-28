@@ -48,7 +48,7 @@ public class VideoPlayerActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_video_players);
+        setContentView(R.layout.video_player_activity);
         showLog("onCreate");
 
         // fix the screen for portrait

@@ -46,7 +46,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_movie_list);
+        setContentView(R.layout.video_player_filelist);
         showLog("onCreate");
 
         mVideoFileInfoList = new ArrayList<>();

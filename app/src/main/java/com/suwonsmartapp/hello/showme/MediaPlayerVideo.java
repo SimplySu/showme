@@ -38,7 +38,7 @@ public class MediaPlayerVideo extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.videoview);
+        setContentView(R.layout.media_player_videoview);
         
         Intent intent = getIntent();
         if(intent.hasExtra("FilePath")) {

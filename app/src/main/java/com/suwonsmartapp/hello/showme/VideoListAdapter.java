@@ -62,7 +62,7 @@ public class VideoListAdapter extends VideoAsyncBitmapAdapter {
         if (view == null){
             inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-            view = inflater.inflate(R.layout.video_file_list, null);
+            view = inflater.inflate(R.layout.video_player_adapter_filelist, null);
             ImageView videoAdapterPicture = (ImageView) view.findViewById(R.id.video_adapter_picture);
             TextView videoAdapterTitle = (TextView) view.findViewById(R.id.video_adapter_title);
             TextView videoAdapterArtist = (TextView) view.findViewById(R.id.video_adapter_artist);

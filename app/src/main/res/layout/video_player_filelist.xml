@@ -5,16 +5,10 @@
     android:orientation="vertical"
     android:paddingLeft="5dp"
     android:paddingRight="5dp"
-    tools:context="com.suwonsmartapp.hello.showme.FileManagerActivity">
-
-    <TextView
-        android:id="@+id/tv_currentPath"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+    tools:context="com.suwonsmartapp.hello.showme.VideoFileListActivity">
 
     <ListView
-        android:id="@+id/lv_filetree"
+        android:id="@+id/lv_movies"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_height="match_parent" />
 </LinearLayout>

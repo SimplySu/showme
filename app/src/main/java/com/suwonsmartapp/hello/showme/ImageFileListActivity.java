@@ -46,7 +46,7 @@ public class ImageFileListActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_view_pager);
+        setContentView(R.layout.image_file_list);
         showLog("onCreate");
 
         // fix the screen for portrait
@@ -69,7 +69,7 @@ public class ImageFileListActivity extends AppCompatActivity {
         prepareFileToShow();               // setup files for showing
 
         mViewPager = (ViewPager)findViewById(R.id.viewPager);
-        mCurrentPosition = searchTitleIndex();      // search title index which was specified by user
+        mCurrentPosition = searchPictureIndex();      // search title index which was specified by user
         mViewPager.setCurrentItem(mCurrentPosition);
 
         mMyAdapter = new MyAdapter(getSupportFragmentManager(), mImageFileInfoList);
@@ -152,14 +152,14 @@ public class ImageFileListActivity extends AppCompatActivity {
     }
 
     // search matched title with specified by user
-    private int searchTitleIndex() {
+    private int searchPictureIndex() {
         for (int i = 0; i < mImageFileInfoList.size(); i++) {
-            ImageFileInfo imageFileInfo = mImageFileInfoList.get(i);    // read audio file
+            ImageFileInfo imageFileInfo = mImageFileInfoList.get(i);    // read image file
             if (requestedFilename.equals(imageFileInfo.getDisplayName())) {
                 return i;          // return matched index
             }
         }
-        return 0;                  // default is the first title
+        return 0;                  // default is the first picture
     }
 
     // custom adapter for displaying image file using fragment method
@@ -204,7 +204,7 @@ public class ImageFileListActivity extends AppCompatActivity {
         @Nullable
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_image, container, false);
+            View rootView = inflater.inflate(R.layout.image_fragment, container, false);
             mImageView = (ImageView)rootView.findViewById(R.id.iv_image);
 
             ImageFileInfo imageinfo = getArguments().getParcelable("imageinfo");

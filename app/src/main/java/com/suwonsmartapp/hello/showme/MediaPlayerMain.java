@@ -40,7 +40,7 @@ public class MediaPlayerMain extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+        setContentView(R.layout.media_player_main);
 
         nPath = null;
         PathList_prev = new ArrayList<String>();
@@ -52,7 +52,7 @@ public class MediaPlayerMain extends Activity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
     	super.onConfigurationChanged(newConfig);
-    	setContentView(R.layout.main);
+    	setContentView(R.layout.media_player_main);
 
     	makeFileList();
     }
@@ -280,7 +280,7 @@ public class MediaPlayerMain extends Activity {
 		    }
 	    }
 	    
-	    adapter = new GroupAdapter(this,R.layout.listview,arrayList);
+	    adapter = new GroupAdapter(this,R.layout.media_player_listview,arrayList);
         fileList.setAdapter(adapter);
         
         if(PathList_prev.size() > 0) {
@@ -317,7 +317,7 @@ public class MediaPlayerMain extends Activity {
     		View v = convertView;
     		if(v == null) {
     			LayoutInflater vi = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    			v = vi.inflate(R.layout.listview, null);
+    			v = vi.inflate(R.layout.media_player_listview, null);
     		}
     		temp = item.get(position);
     		
@@ -353,7 +353,7 @@ public class MediaPlayerMain extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	MenuInflater inflater = getMenuInflater();
-    	inflater.inflate(R.menu.main, menu);
+    	inflater.inflate(R.menu.media_player_main, menu);
     	return true;
     }*/
     

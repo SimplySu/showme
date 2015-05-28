@@ -45,7 +45,7 @@ public class FileManagerAdapter extends BaseAdapter {
             // View 를 처음 로딩할 때, Data 를 처음 셋팅할 때
             LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(
                     Context.LAYOUT_INFLATER_SERVICE);
-            convertView = inflater.inflate(R.layout.file_manager_main, null);
+            convertView = inflater.inflate(R.layout.file_manager_adapter, null);
             ImageView icon = (ImageView) convertView.findViewById(R.id.file_manager_icon);
             TextView foldername = (TextView) convertView.findViewById(R.id.file_manager_foldername);
             TextView folderpath = (TextView) convertView.findViewById(R.id.file_manager_folderpath);

@@ -73,7 +73,7 @@ public class FileManagerActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_file_manager);
+        setContentView(R.layout.file_manager_main);
 
         // fix the screen for portrait
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -96,7 +96,7 @@ public class FileManagerActivity extends AppCompatActivity implements
 
         FileManagerInfo sdcard = new FileManagerInfo();
         sdcard.setIconName(R.drawable.icon_sdcard);
-        sdcard.setFolderName("SD Card");
+        sdcard.setFolderName("내부 메모리");
         sdcard.setFolderPath(sPathSdcard);
 
         FileManagerInfo extsdcard = new FileManagerInfo();
@@ -260,7 +260,7 @@ public class FileManagerActivity extends AppCompatActivity implements
     private String getMimeType(File fileData) {
         String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "xmf", "rtx", "ota", "imy", "ts"};
         String[] video = {"avi", "mkv", "mp4", "wmv", "asf", "mov", "mpg", "flv", "tp", "3gp", "m4v", "rmvb", "webm"};
-        String[] image = {"jpg", "gif", "png", "bmp", "tif", "tiff", "webp"};
+        String[] image = {"jpg", "gif", "png", "bmp", "tif", "tiff", "jpeg", "webp"};
 
         int i = fileData.getAbsolutePath().lastIndexOf('.');
         int j = fileData.getAbsolutePath().length();
