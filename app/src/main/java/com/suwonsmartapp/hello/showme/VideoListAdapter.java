@@ -87,14 +87,10 @@ public class VideoListAdapter extends VideoAsyncBitmapAdapter {
         playVideo.setDuration(mCursor.getLong(5));          // playing time
         playVideo.setColumnsData(mCursor.getString(6));     // URI
 
-        Uri contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, playVideo.getId());
+        Uri contentUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, playVideo.getId());
         playVideo.setVideoUri(contentUri);                   // get video icon
 
-        int extensionPosition = playVideo.getDisplayName().lastIndexOf('.');
-        int extensionLength = playVideo.getDisplayName().length();
-        String extension = playVideo.getDisplayName().substring(extensionPosition, extensionLength);
-
-        viewHolder.tvTitle.setText(playVideo.getTitle() + extension);    // title.ext
+        viewHolder.tvTitle.setText(playVideo.getTitle());    // title.ext
         viewHolder.tvArtist.setText(playVideo.getArtist());              // artist
 
         // attach a bitmap image

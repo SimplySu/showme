@@ -27,9 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 
 public class FileManagerActivity extends AppCompatActivity implements
@@ -49,9 +47,10 @@ public class FileManagerActivity extends AppCompatActivity implements
     public static final String sPathDocument = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath();
 
     private ListView mListView;
+    private FileManagerAdapter mFileManagerAdapter;
 
     // we will use default simple adapter
-    private ArrayList<Map<String, String>> mTitleList;
+    private ArrayList<FileManagerInfo> mTitleList;
     private SimpleAdapter mAdapter;
 
     // history management : push current path (mCurrentPath) before going to the next screen
@@ -90,64 +89,52 @@ public class FileManagerActivity extends AppCompatActivity implements
     private void setupHome() {
         findExtSd();    // setup path name on externalSdCard if secondary SD card exists
 
-        Map<String, String> root = new HashMap<>();
-        root.put("title", "루트");
-        root.put("path", sPathRoot);
+        FileManagerInfo root = new FileManagerInfo();
+        root.setIconName(R.drawable.icon_root);
+        root.setFolderName("루트");
+        root.setFolderPath(sPathRoot);
 
-        Map<String, String> sdcard = new HashMap<>();
-        sdcard.put("title", "SD Card");
-        sdcard.put("path", sPathSdcard);
+        FileManagerInfo sdcard = new FileManagerInfo();
+        sdcard.setIconName(R.drawable.icon_sdcard);
+        sdcard.setFolderName("SD Card");
+        sdcard.setFolderPath(sPathSdcard);
 
-        Map<String, String> extsdcard = new HashMap<>();
+        FileManagerInfo extsdcard = new FileManagerInfo();
         if (externalSdCard != null) {
-            extsdcard.put("title", "확장 메모리");
-            extsdcard.put("path", externalSdCard);
+            extsdcard.setIconName(R.drawable.icon_extsd);
+            extsdcard.setFolderName("확장 메모리");
+            extsdcard.setFolderPath(externalSdCard);
         }
 
-        Map<String, String> music = new HashMap<>();
-        music.put("title", "음악");
-        music.put("path", sPathMusic);
+        FileManagerInfo music = new FileManagerInfo();
+        music.setIconName(R.drawable.icon_music);
+        music.setFolderName("음악");
+        music.setFolderPath(sPathMusic);
 
-        Map<String, String> movie = new HashMap<>();
-        movie.put("title", "동영상");
-        movie.put("path", sPathMovie);
+        FileManagerInfo movie = new FileManagerInfo();
+        movie.setIconName(R.drawable.icon_movie);
+        movie.setFolderName("동영상");
+        movie.setFolderPath(sPathMovie);
 
-        Map<String, String> dcim = new HashMap<>();
-        dcim.put("title", "사진");
-        dcim.put("path", sPathDCIM);
+        FileManagerInfo dcim = new FileManagerInfo();
+        dcim.setIconName(R.drawable.icon_picture);
+        dcim.setFolderName("사진");
+        dcim.setFolderPath(sPathDCIM);
 
-        Map<String, String> picture = new HashMap<>();
-        picture.put("title", "그림");
-        picture.put("path", sPathPicture);
+        FileManagerInfo picture = new FileManagerInfo();
+        picture.setIconName(R.drawable.icon_image);
+        picture.setFolderName("그림");
+        picture.setFolderPath(sPathPicture);
 
-        Map<String, String> download = new HashMap<>();
-        download.put("title", "다운로드");
-        download.put("path", sPathDownload);
+        FileManagerInfo download = new FileManagerInfo();
+        download.setIconName(R.drawable.icon_download);
+        download.setFolderName("다운로드");
+        download.setFolderPath(sPathDownload);
 
-        Map<String, String> document = new HashMap<>();
-        document.put("title", "문서");
-        document.put("path", sPathDocument);
-
-        // Pair<String, String> root = new Pair<>("루트", sPathRoot);
-        // Pair<String, String> sdcard = new Pair<>("SD Card", sPathSdcard);
-        // Pair<String, String> extsdcard = new Pair<>("확장 메모리", sPathExtSdcard);
-        // Pair<String, String> music = new Pair<>("음악", sPathMusic);
-        // Pair<String, String> movie = new Pair<>("동영상", sPathMovie);
-        // Pair<String, String> dcim = new Pair<>("사진", sPathDCIM);
-        // Pair<String, String> picture = new Pair<>("그림", sPathPicture);
-        // Pair<String, String> download = new Pair<>("다운로드", sPathDownload);
-        // Pair<String, String> media_player_icon_document = new Pair<>("문서", sPathDocument);
-
-//        ArrayList root = new ArrayList <> ("루트", sPathRoot, R.drawable.icon_root);
-//        ArrayList sdcard = new ArrayList <> ("SD Card", sPathSdcard, R.drawable.icon_sdcard);
-//        ArrayList extsdcard = new ArrayList<>();
-//        if (externalSdCard != null) { extsdcard = new ArrayList <> ("확장 메모리", externalSdCard, R.drawable.icon_extsd); }
-//        ArrayList music = new ArrayList <> ("음악", sPathMusic, R.drawable.icon_music);
-//        ArrayList movie = new ArrayList <> ("동영상", sPathMovie, R.drawable.icon_movie);
-//        ArrayList dcim = new ArrayList <> ("사진", sPathDCIM, R.drawable.icon_picture);
-//        ArrayList picture = new ArrayList <> ("그림", sPathPicture, R.drawable.icon_image);
-//        ArrayList download = new ArrayList <> ("다운로드", sPathDownload, R.drawable.icon_download);
-//        ArrayList document = new ArrayList <> ("문서", sPathDocument, R.drawable.icon_document)
+        FileManagerInfo document = new FileManagerInfo();
+        document.setIconName(R.drawable.icon_document);
+        document.setFolderName("문서");
+        document.setFolderPath(sPathDocument);
 
         mTitleList = new ArrayList<>();
         mTitleList.add(root);
@@ -162,14 +149,9 @@ public class FileManagerActivity extends AppCompatActivity implements
         mTitleList.add(download);
         mTitleList.add(document);
 
-        mAdapter = new SimpleAdapter(getApplicationContext(),
-                mTitleList,
-                android.R.layout.simple_list_item_2,
-                new String[] {"title", "path"},
-                new int[] {android.R.id.text1, android.R.id.text2});
-
-        mListView.setAdapter(mAdapter);
-        mListView.setOnItemClickListener(this);
+        mFileManagerAdapter = new FileManagerAdapter(getApplicationContext(), mTitleList);
+        mListView.setAdapter(mFileManagerAdapter);
+        mListView.setOnItemClickListener(this);      // handle if user selected title directly
     }
 
     private void findExtSd() {
@@ -218,9 +200,9 @@ public class FileManagerActivity extends AppCompatActivity implements
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Object item = mListView.getAdapter().getItem(position);
 
-        if (item instanceof Map) {
-            Map mapData = (Map) item;
-            String path = (String) mapData.get("path");
+        if (item instanceof FileManagerInfo) {
+            FileManagerInfo foldername = (FileManagerInfo) item;
+            String path = foldername.getFolderPath();
 
             mFileStack.push("");
             setCurrentPath(path);
