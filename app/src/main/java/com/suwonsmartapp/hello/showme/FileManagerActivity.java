@@ -259,7 +259,7 @@ public class FileManagerActivity extends AppCompatActivity implements
     }
 
     private String getMimeType(File fileData) {
-        String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "xmf", "rtx", "ota", "imy", "ts"};
+        String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "xmf", "rtx", "ota", "imy", "ts", "wma"};
         String[] video = {"avi", "mkv", "mp4", "wmv", "asf", "mov", "mpg", "flv", "tp", "3gp", "m4v", "rmvb", "webm"};
         String[] image = {"jpg", "gif", "png", "bmp", "tif", "tiff", "jpeg", "webp"};
 
@@ -270,7 +270,7 @@ public class FileManagerActivity extends AppCompatActivity implements
 
         for (String anAudio : audio) {
             if (mimeType.equals(anAudio)) {
-                return "audio";
+                return "audio";                     // currently .cue and .ape are not supported
             }
         }
 
