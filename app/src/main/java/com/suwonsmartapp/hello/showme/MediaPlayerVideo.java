@@ -54,8 +54,8 @@ public class MediaPlayerVideo extends Activity {
         	}
         }
 
-        videoView = (VideoView)findViewById(R.id.video_view_screen);
-        subtitle = (TextView)findViewById(R.id.subtitle);
+        videoView = (VideoView)findViewById(R.id.media_player_screen);
+        subtitle = (TextView)findViewById(R.id.media_player_subtitle);
         
         if(useWeb == false) {
 	        String smiPath = path.substring(0,path.lastIndexOf(".")) + ".smi";
@@ -153,7 +153,7 @@ public class MediaPlayerVideo extends Activity {
     	public void handleMessage(Message msg)
     	{
     		countSmi = getSyncIndex(videoView.getCurrentPosition());
-    		subtitle.setText(Html.fromHtml(parsedSmi.get(countSmi).gettext()));
+    		subtitle.setText(Html.fromHtml(parsedSmi.get(countSmi).getText()));
     	}
     };
     
@@ -162,10 +162,10 @@ public class MediaPlayerVideo extends Activity {
     	
     	while(l <= h) {
     		m = (l+h)/2;
-    		if(parsedSmi.get(m).gettime() <= playTime && playTime < parsedSmi.get(m+1).gettime()) {
+    		if(parsedSmi.get(m).getTime() <= playTime && playTime < parsedSmi.get(m+1).getTime()) {
     			return m;
     		}
-    		if(playTime > parsedSmi.get(m+1).gettime()) {
+    		if(playTime > parsedSmi.get(m+1).getTime()) {
     			l=m+1;
     		} else {
     			h=m-1;

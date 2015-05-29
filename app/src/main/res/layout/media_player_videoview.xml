@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:orientation="horizontal">
 
     <FrameLayout
-        android:id="@+id/frameLayout1"
+        android:id="@+id/media_player_frame"
         android:layout_width="wrap_content"
         android:layout_height="match_parent">
 
         <VideoView
-            android:id="@+id/video_view_screen"
+            android:id="@+id/media_player_screen"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"
@@ -18,7 +18,7 @@
         </VideoView>
 
         <TextView
-            android:id="@+id/subtitle"
+            android:id="@+id/media_player_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center"

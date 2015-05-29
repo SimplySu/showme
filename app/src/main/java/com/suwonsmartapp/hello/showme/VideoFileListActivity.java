@@ -12,7 +12,6 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -21,7 +20,6 @@ import android.widget.Toast;
 
 import com.suwonsmartapp.hello.R;
 
-import java.net.URLDecoder;
 import java.util.ArrayList;
 
 public class VideoFileListActivity extends AppCompatActivity implements
@@ -75,7 +73,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
         mMovieListView.smoothScrollToPosition(mCurrentPosition);
 
         // 로더 초기화
-        getSupportLoaderManager().initLoader(0, null, this);
+//        getSupportLoaderManager().initLoader(0, null, this);
 
         Intent initialIntent = new Intent(getApplicationContext(), VideoPlayerActivity.class);
         initialIntent.putExtra("currentPosition", mCurrentPosition);       // current title position
@@ -149,7 +147,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
                     videoFileInfo.setColumnsData(mCursor.getString(6));     // URI
 
                     Uri contentUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, videoFileInfo.getId());
-                    videoFileInfo.setVideoUri(contentUri);                   // get music media_player_icon_android
+                    videoFileInfo.setVideoUri(contentUri);                   // get video icon
 
                     mVideoFileInfoList.add(videoFileInfo);                  // register music on the play list
                 }

@@ -201,8 +201,8 @@ public class MediaPlayerMain extends Activity {
         fileList.setOnItemClickListener(new OnItemClickListener() {
         	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         		MediaPlayerList item = arrayList.get(position);
-        		if(item.gettype() == 0) {
-        			File dir = new File(nPath + item.getname() + "/");
+        		if(item.getType() == 0) {
+        			File dir = new File(nPath + item.getName() + "/");
     				if(dir.isDirectory() && dir.canRead()) {
     					PathList_prev.add(nPath);
     					PathList_next.clear();
@@ -214,8 +214,8 @@ public class MediaPlayerMain extends Activity {
     				} else {
     					errorDlg.setMessage("폴더가 없거나 읽을 수 없습니다.").show();
     				}
-        		} else if(item.gettype() == 1) {
-        			File file = new File(nPath + item.getname());
+        		} else if(item.getType() == 1) {
+        			File file = new File(nPath + item.getName());
         			if(file.isFile() && file.canRead()) {
  						Intent intent = new Intent(MediaPlayerMain.this, MediaPlayerVideo.class);
  						intent.putExtra("FilePath", file.toString());
@@ -325,7 +325,7 @@ public class MediaPlayerMain extends Activity {
     			ImageView icon = (ImageView)v.findViewById(R.id.imageView1);
     			TextView name = (TextView)v.findViewById(R.id.textView1);
     			TextView size = (TextView)v.findViewById(R.id.textView2);
-    			switch(temp.gettype()) {
+    			switch(temp.getType()) {
     			case 0:
     				icon.setImageResource(R.drawable.media_player_icon_folder_horizontal);
     				break;
@@ -339,11 +339,11 @@ public class MediaPlayerMain extends Activity {
     				icon.setImageResource(R.drawable.media_player_icon_document);
     				break;
     			}
-    			name.setText(temp.getname());
-    			if(temp.gettype() == 0) {
+    			name.setText(temp.getName());
+    			if(temp.getType() == 0) {
     				size.setText("(폴더)");
     			} else {
-    				size.setText("(" + byteTranslater(temp.getsize()) + ")");
+    				size.setText("(" + byteTranslater(temp.getSize()) + ")");
     			}
     		}
     		return v;

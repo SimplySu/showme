@@ -1,16 +1,15 @@
 package com.suwonsmartapp.hello.showme;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.MediaController;
-import android.widget.SeekBar;
 import android.widget.Toast;
 import android.widget.VideoView;
 
@@ -18,9 +17,8 @@ import com.suwonsmartapp.hello.R;
 
 import java.util.ArrayList;
 
-public class VideoPlayerActivity extends AppCompatActivity implements
-        MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener,
-        SeekBar.OnSeekBarChangeListener, View.OnClickListener {
+public class VideoPlayerActivity extends Activity implements
+        MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
 
     private static final String TAG = VideoPlayerActivity.class.getSimpleName();
     private void showLog(String msg) { Log.d(TAG, msg); }
@@ -35,24 +33,22 @@ public class VideoPlayerActivity extends AppCompatActivity implements
 
     private VideoView mVV_show;
 
-    private SeekBar mSB_volume;
-    private Button mBTN_play;
-    private Button mBTN_pause;
-    private Button mBTN_stop;
-
     private int volume_Max = 0;
     private int volume_Current = 0;
     private AudioManager audioManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.video_player_activity);
-        showLog("onCreate");
 
+        // delete title bar and use full screen
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        setContentView(R.layout.video_player_activity);
         // fix the screen for portrait
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        showLog("onCreate");
 
         Intent intent = getIntent();
         mCurrentPosition = intent.getIntExtra("currentPosition", -1);
@@ -65,93 +61,53 @@ public class VideoPlayerActivity extends AppCompatActivity implements
         requestedPathname = fullPathname.substring(0, i);          // get requested pathname
         requestedFilename = fullPathname.substring(i + 1, j);      // and filename
 
-        // 위젯 셋팅
         mVV_show = (VideoView) findViewById(R.id.vv_show);
-        mSB_volume = (SeekBar) findViewById(R.id.sb_volume);
-        mBTN_play = (Button) findViewById(R.id.btn_play);
-        mBTN_pause = (Button) findViewById(R.id.btn_pause);
-        mBTN_stop = (Button) findViewById(R.id.btn_stop);
-
-        // VideoView에 미디어 컨트롤러 추가
         MediaController mController = new MediaController(this);
         mVV_show.setMediaController(mController);
 
-        // VideoView에 경로 지정
-        mVV_show.setVideoPath(fullPathname);
-        // VideoView에 포커스하도록 지정
-        mVV_show.requestFocus();
+        mVV_show.setVideoPath(fullPathname);                        // setting video path
+        mVV_show.requestFocus();                                    // set focus
 
-        // 동영상 재생 준비 완료, 재생 완료 리스너
-        mVV_show.setOnPreparedListener(this);
-        mVV_show.setOnCompletionListener(this);
+        mVV_show.setOnPreparedListener(this);                       // ready listener
+        mVV_show.setOnCompletionListener(this);                     // complete listener for next
 
-        // 볼륨 조절 셋팅
+        audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         volume_Max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         volume_Current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-        mSB_volume.setMax(volume_Max);
-        mSB_volume.setProgress(volume_Current);
-        mSB_volume.setOnSeekBarChangeListener(this);
-
-        // 버튼 리스터 셋팅
-        mBTN_play.setOnClickListener(this);
-        mBTN_pause.setOnClickListener(this);
-        mBTN_stop.setOnClickListener(this);
-        // 컨트롤러를 사용하는 경우 버튼으로 MediaPlayer를 제어할 필요는 없다.
-
+//        mSB_volume.setMax(volume_Max);
+//        mSB_volume.setProgress(volume_Current);
+//        mSB_volume.setOnSeekBarChangeListener(this);
     }
 
-
-    //====================================================
-    // 동영상 재생 관련 상속 메소드
-    //====================================================
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
-        showToast("동영상 재생 준비가 완료되었습니다.");
+            mVV_show.seekTo(0);
+            mVV_show.start();                   // auto start
     }
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
-        showToast("동영상 재생이 끝났습니다.");
-    }
+        if (mCurrentPosition >= mVideoFileInfoList.size()) {
+            finish();           // playing completed
+        } else {
+            mCurrentPosition++;
+            videoFileInfo = mVideoFileInfoList.get(mCurrentPosition);
+            fullPathname = videoFileInfo.getMediaData();
+            int i = fullPathname.lastIndexOf('/');
+            int j = fullPathname.length();
+            requestedPathname = fullPathname.substring(0, i);          // get requested pathname
+            requestedFilename = fullPathname.substring(i + 1, j);      // and filename
 
+            mVV_show.setVideoPath(fullPathname);                        // setting video path
+            mVV_show.requestFocus();                                    // set focus
 
-    //====================================================
-    // 볼륨 관련 상속 메소드
-    //====================================================
-    @Override
-    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0);
-    }
-
-    @Override
-    public void onStartTrackingTouch(SeekBar seekBar) {}
-
-    @Override
-    public void onStopTrackingTouch(SeekBar seekBar) {}
-
-
-    //====================================================
-    // 버튼 이벤트 상속 메소드
-    //====================================================
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.btn_play :
-                mVV_show.seekTo(0);
-                mVV_show.start();
-                break;
-            case R.id.btn_pause :
-                mVV_show.pause();
-                break;
-            case R.id.btn_stop :
-                mVV_show.stopPlayback();
-                break;
+            mVV_show.seekTo(0);
+            mVV_show.start();                   // auto start
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
     }
 }
