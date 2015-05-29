@@ -152,7 +152,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
 
         bindService(serviceIPC, mConnectionMessenger, Context.BIND_ADJUST_WITH_ACTIVITY);
 
-        if (AudioMessengerService.isPaused == true) {
+        if (AudioMessengerService.isPaused) {
             mIbAudioPlayerPlay.setImageResource(android.R.drawable.ic_media_play);
         }
     }
@@ -211,7 +211,11 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
         mPlayAudioFileInfo.setAlbumArt(getAlbumArt(mPlayAudioFileInfo.getAlbumId()));
 
         if (mPlayAudioFileInfo.getAlbumArt() != null) {
-            mIvAudioPlayerPicture.setImageBitmap(mPlayAudioFileInfo.getAlbumArt());
+            if (mPlayAudioFileInfo.getTitle().toLowerCase().lastIndexOf(".mp3") == -1) {
+                mIvAudioPlayerPicture.setImageResource(R.drawable.audio_music_large);
+            } else {
+                mIvAudioPlayerPicture.setImageBitmap(mPlayAudioFileInfo.getAlbumArt());
+            }
         } else {
             mIvAudioPlayerPicture.setImageResource(R.drawable.audio_music_large);
         }

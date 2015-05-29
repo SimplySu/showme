@@ -43,7 +43,7 @@ public class FileManagerActivity extends AppCompatActivity implements
     public static final String sPathMovie = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getAbsolutePath();
     public static final String sPathDCIM = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath();
     public static final String sPathPicture = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath();
-    public static final String sPathDownload = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();;
+    public static final String sPathDownload = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
     public static final String sPathDocument = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath();
 
     private ListView mListView;
@@ -74,6 +74,7 @@ public class FileManagerActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.file_manager_main);
+        showLog("onCreate");
 
         // fix the screen for portrait
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -267,20 +268,20 @@ public class FileManagerActivity extends AppCompatActivity implements
         String extension = fileData.getAbsolutePath().substring(i + 1, j);
         String mimeType = extension.toLowerCase();
 
-        for (int x = 0; x < audio.length; x++) {
-            if (mimeType.equals(audio[x])) {
+        for (String anAudio : audio) {
+            if (mimeType.equals(anAudio)) {
                 return "audio";
             }
         }
 
-        for (int y = 0; y < video.length; y++) {
-            if (mimeType.equals(video[y])) {
+        for (String aVideo : video) {
+            if (mimeType.equals(aVideo)) {
                 return "video";
             }
         }
 
-        for (int z = 0; z < image.length; z++) {
-            if (mimeType.equals(image[z])) {
+        for (String anImage : image) {
+            if (mimeType.equals(anImage)) {
                 return "image";
             }
         }

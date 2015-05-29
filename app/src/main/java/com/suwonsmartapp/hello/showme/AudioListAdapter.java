@@ -82,16 +82,22 @@ public class AudioListAdapter extends BaseAdapter {
         viewHolder.tvTitle.setText(playSong.getTitle() + extension);    // title.ext
         viewHolder.tvArtist.setText(playSong.getArtist());              // artist
 
-        int albumId = playSong.getAlbumId();
+        if (extension.toLowerCase().equals(".mp3")) {
+            int albumId = playSong.getAlbumId();
 
-        // attach a bitmap image
-        AudioLoadBitmap audioLoadBitmap = new AudioLoadBitmap(mContext);
-        audioLoadBitmap.loadBitmap(albumId, viewHolder.ivAlbumIcon);
+            // attach a bitmap image
+            AudioLoadBitmap audioLoadBitmap = new AudioLoadBitmap(mContext);
+            audioLoadBitmap.loadBitmap(albumId, viewHolder.ivAlbumIcon);
+        } else {
+            viewHolder.ivAlbumIcon.setImageResource(R.drawable.audio_music_small);
+        }
 
         if (mCurrentPosition == position) {     // currently playing
-            viewHolder.tvTitle.setTextColor(Color.parseColor("#ff5652f1"));
+            viewHolder.tvTitle.setTextColor(Color.parseColor("#ff5050f0"));
+            viewHolder.tvArtist.setTextColor(Color.parseColor("#ff5050f0"));
         } else {
             viewHolder.tvTitle.setTextColor(Color.WHITE);
+            viewHolder.tvArtist.setTextColor(Color.WHITE);
         }
         return view;
     }

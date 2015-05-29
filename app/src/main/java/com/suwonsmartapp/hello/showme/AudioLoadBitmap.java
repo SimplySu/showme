@@ -56,7 +56,7 @@ public class AudioLoadBitmap {
 
         public AsyncDrawable(Resources res, Bitmap bitmap, BitmapWorkerTask bitmapWorkerTask) {
             super(res, bitmap);
-            bitmapWorkerTaskReference = new WeakReference<BitmapWorkerTask>(bitmapWorkerTask);
+            bitmapWorkerTaskReference = new WeakReference<> (bitmapWorkerTask);
         }
 
         public BitmapWorkerTask getBitmapWorkerTask() {

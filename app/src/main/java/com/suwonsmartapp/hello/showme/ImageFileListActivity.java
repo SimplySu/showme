@@ -56,7 +56,7 @@ public class ImageFileListActivity extends AppCompatActivity {
         if (intent != null) {                       // see if there was any contents
             String value = URLDecoder.decode(intent.getDataString());   // convert filename to UTF-8
 
-            if (TextUtils.isEmpty(value) == false) {
+            if (!TextUtils.isEmpty(value)) {
                 int i = value.lastIndexOf('/');
                 int j = value.length();
                 requestedPathname = value.substring(7, i);          // get requested pathname

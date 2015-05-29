@@ -107,7 +107,7 @@ public class AudioMessengerService extends Service
     public int onStartCommand(Intent intent, int flags, int startId) {
         showLog("onStartCommand");
 
-        if (setSongList == false) {
+        if (!setSongList) {
             mAudioFileInfoList = intent.getParcelableArrayListExtra("songInfoList");
             setSongList = true;
         }
@@ -141,7 +141,7 @@ public class AudioMessengerService extends Service
     public void onPrepared(MediaPlayer mp) {
         showLog("onPrepared");
 
-        if (doRestart == false) {
+        if (!doRestart) {
             mp.start();
             if (mp.isPlaying()) {
                 sendMessageToPlayerActivity();
@@ -373,7 +373,11 @@ public class AudioMessengerService extends Service
         showLog("setNotificationUI");
 
         if (mPlayAudioFileInfo.getAlbumArt() != null) {
-            mRemoteViews.setBitmap(R.id.messenger_album_picture, "setImageBitmap", mPlayAudioFileInfo.getAlbumArt());
+            if (mPlayAudioFileInfo.getTitle().toLowerCase().lastIndexOf(".mp3") == -1) {
+                mRemoteViews.setImageViewResource(R.id.messenger_album_picture, R.drawable.audio_music_small);
+            } else {
+                mRemoteViews.setBitmap(R.id.messenger_album_picture, "setImageBitmap", mPlayAudioFileInfo.getAlbumArt());
+            }
         } else {
             mRemoteViews.setImageViewResource(R.id.messenger_album_picture, R.drawable.audio_music_small);
         }

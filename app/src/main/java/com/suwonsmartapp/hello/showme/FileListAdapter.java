@@ -94,10 +94,17 @@ public class FileListAdapter extends BaseAdapter {
 
         // 디렉토리인지 아닌지
         if (file.isDirectory()) {
-            holder.fileSize.setText("<dir>");
-            holder.fileName.setTextColor(Color.parseColor("#6A76FC"));
-            holder.fileSize.setTextColor(Color.parseColor("#6A76FC"));
-            holder.modified.setTextColor(Color.parseColor("#6A76FC"));
+            if (file.canRead()) {
+                holder.fileSize.setText("<dir>");
+                holder.fileName.setTextColor(Color.parseColor("#ffff00"));
+                holder.fileSize.setTextColor(Color.parseColor("#ffff00"));
+                holder.modified.setTextColor(Color.parseColor("#ffff00"));
+            } else {
+                holder.fileSize.setText("<dir>");
+                holder.fileName.setTextColor(Color.parseColor("#0000ff"));
+                holder.fileSize.setTextColor(Color.parseColor("#0000ff"));
+                holder.modified.setTextColor(Color.parseColor("#0000ff"));
+            }
         } else {
             long size = file.length() / 1024;
             if (size == 0) {
@@ -105,9 +112,9 @@ public class FileListAdapter extends BaseAdapter {
             } else {
                 holder.fileSize.setText(mDecimalFormat.format(size) + "k");
             }
-            holder.fileName.setTextColor(Color.parseColor("#C7C7C7"));
-            holder.fileSize.setTextColor(Color.parseColor("#C7C7C7"));
-            holder.modified.setTextColor(Color.parseColor("#C7C7C7"));
+            holder.fileName.setTextColor(Color.parseColor("#ffffff"));
+            holder.fileSize.setTextColor(Color.parseColor("#ffffff"));
+            holder.modified.setTextColor(Color.parseColor("#ffffff"));
         }
 
         holder.modified.setText(mDateFormat.format(new Date(file.lastModified())));

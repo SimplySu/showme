@@ -14,7 +14,7 @@
     <string name="title_activity_notification">ShowMe(Notification)</string>
     <string name="title_activity_pending_intent_target">ShowMe(PendingIntent)</string>
 
-    <string name="title_audio_file_list_activity">ShowMe(File)</string>
+    <string name="title_audio_file_list_activity">ShowMe(Audio)</string>
     <string name="title_audio_player_activity">ShowMe(Audio)</string>
     <string name="local_service_started">ShowMe(service)</string>
 

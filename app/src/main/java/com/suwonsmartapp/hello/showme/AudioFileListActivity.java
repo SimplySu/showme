@@ -89,7 +89,7 @@ public class AudioFileListActivity extends AppCompatActivity
         if (intent != null) {                       // see if there was any contents
             String value = URLDecoder.decode(intent.getDataString());   // convert filename to UTF-8
 
-            if (TextUtils.isEmpty(value) == false) {
+            if (!TextUtils.isEmpty(value)) {
                 int i = value.lastIndexOf('/');
                 int j = value.length();
                 requestedPathname = value.substring(7, i);          // get requested pathname
@@ -431,9 +431,13 @@ public class AudioFileListActivity extends AppCompatActivity
         Bitmap albumArt = AudioPlayerAlbumImage.getArtworkQuick(getApplicationContext(), playSong.getAlbumId(), 150, 150);
 
         if (albumArt != null) {
-            mIvAlbum.setImageBitmap(albumArt);      // album media_player_icon_android found
+            if (playSong.getTitle().toLowerCase().lastIndexOf(".mp3") == -1) {
+                mIvAlbum.setImageResource(R.drawable.audio_music_small);    // draw default icon
+            } else {
+                mIvAlbum.setImageBitmap(albumArt);      // album icon found
+            }
         } else {
-            mIvAlbum.setImageResource(R.drawable.audio_music_small);    // draw default media_player_icon_android (headphone)
+            mIvAlbum.setImageResource(R.drawable.audio_music_small);    // draw default icon
         }
 
         mLlMiniMiniPlayer.setVisibility(View.VISIBLE);

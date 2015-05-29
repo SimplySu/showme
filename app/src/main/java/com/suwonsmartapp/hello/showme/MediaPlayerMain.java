@@ -19,11 +19,11 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.suwonsmartapp.hello.R;
+
 import java.io.File;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-
-import com.suwonsmartapp.hello.R;
 
 public class MediaPlayerMain extends Activity {
     private TextView dirText;
@@ -43,8 +43,8 @@ public class MediaPlayerMain extends Activity {
         setContentView(R.layout.media_player_main);
 
         nPath = null;
-        PathList_prev = new ArrayList<String>();
-        PathList_next = new ArrayList<String>();
+        PathList_prev = new ArrayList<>();
+        PathList_next = new ArrayList<>();
 
         makeFileList();
     }
@@ -117,7 +117,7 @@ public class MediaPlayerMain extends Activity {
 			}
         });
 
-		String path = null;
+		String path = "";
 		String ext = Environment.getExternalStorageState();
 		if(ext.equals(Environment.MEDIA_MOUNTED)) {
 	    	path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/";
@@ -139,7 +139,7 @@ public class MediaPlayerMain extends Activity {
 			}
 		});
 		
-        View homeBtn = findViewById(R.id.imageButton1);
+        View homeBtn = findViewById(R.id.imageButton1);			// monitor
         homeBtn.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -148,7 +148,7 @@ public class MediaPlayerMain extends Activity {
 			}
         });
         
-        prevBtn = findViewById(R.id.imageButton2);
+        prevBtn = findViewById(R.id.imageButton2);				// left arrow
         prevBtn.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -161,7 +161,7 @@ public class MediaPlayerMain extends Activity {
 			}
         });
         
-        nextBtn = findViewById(R.id.imageButton4);
+        nextBtn = findViewById(R.id.imageButton4);				// right arrow
         nextBtn.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -174,7 +174,7 @@ public class MediaPlayerMain extends Activity {
 			}
         });
         
-        upBtn = findViewById(R.id.imageButton3);
+        upBtn = findViewById(R.id.imageButton3);				// up arrow
         upBtn.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -250,7 +250,7 @@ public class MediaPlayerMain extends Activity {
 	    nPath = path;
 	
 	    File files = new File(path);
-	    arrayList = new ArrayList<MediaPlayerList>();
+	    arrayList = new ArrayList<>();
 	
 	    if(files.listFiles().length > 0) {
 		    for(File file : files.listFiles()) {
@@ -360,17 +360,17 @@ public class MediaPlayerMain extends Activity {
     public static String byteTranslater(long size) {
       	NumberFormat nf = NumberFormat.getIntegerInstance();
       	java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0.00");
-      	int intSize = 0;
+      	int intSize;
       	int kbyteSize = 1024;
-      	double doubleSize = 0;
-      	String returnSize = null;
+      	double doubleSize;
+      	String returnSize;
 
       	if(size >= (1000 * 1024 * 1024)) {
       		intSize = new Long(size / (1000 * 1024 * 1024)).intValue();
       		return nf.format(intSize) + "GB";
       	} else if (size > (kbyteSize * 1024)) {
       		intSize = (int) (((double) size) / ((double) (kbyteSize * 1024)) * 100);
-      		doubleSize = (double) (((double) intSize) / 100);
+      		doubleSize = ((double) intSize) / 100;
       		returnSize = df.format(doubleSize);
 	      	if (returnSize.lastIndexOf(".") != -1) {
 		      	if ("00".equals(returnSize.substring(returnSize.length() - 2, returnSize.length()))) {
