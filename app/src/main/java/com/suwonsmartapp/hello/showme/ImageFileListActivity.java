@@ -43,6 +43,8 @@ public class ImageFileListActivity extends AppCompatActivity {
     private ViewPager mViewPager;
     private MyAdapter mMyAdapter;
 
+    private String value;                                   // filename passed by file manager
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,17 +54,7 @@ public class ImageFileListActivity extends AppCompatActivity {
         // fix the screen for portrait
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        Intent intent = getIntent();                // get user's intent
-        if (intent != null) {                       // see if there was any contents
-            String value = URLDecoder.decode(intent.getDataString());   // convert filename to UTF-8
-
-            if (!TextUtils.isEmpty(value)) {
-                int i = value.lastIndexOf('/');
-                int j = value.length();
-                requestedPathname = value.substring(7, i);          // get requested pathname
-                requestedFilename = value.substring(i + 1, j);      // and filename
-            }
-        }
+        readIntent();                       // get pathname and filename
 
         mImageFileInfoList = new ArrayList<>();         // create audio file lists
 
@@ -74,6 +66,20 @@ public class ImageFileListActivity extends AppCompatActivity {
 
         mMyAdapter = new MyAdapter(getSupportFragmentManager(), mImageFileInfoList);
         mViewPager.setAdapter(mMyAdapter);
+    }
+
+    private void readIntent() {
+        Intent intent = getIntent();
+        if(intent.hasExtra("FilePath")) {
+            value = intent.getStringExtra("FilePath");
+            showLog(value);
+        } else {
+            showToast("잘못된 파일입니다.");
+            finish();
+        }
+
+        requestedPathname = value.substring(0, value.lastIndexOf('/'));
+        requestedFilename = value.substring(value.lastIndexOf('/') + 1, value.length());
     }
 
     private void prepareFileToShow() {

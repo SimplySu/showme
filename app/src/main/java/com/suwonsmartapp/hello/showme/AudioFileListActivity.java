@@ -76,6 +76,8 @@ public class AudioFileListActivity extends AppCompatActivity
     private int TimeLeft;                           // progressing time
     private int TimeRight;                          // music duration
 
+    private String value;                           // filename passed by file manager
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,17 +87,7 @@ public class AudioFileListActivity extends AppCompatActivity
         // fix the screen for portrait
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        Intent intent = getIntent();                // get user's intent
-        if (intent != null) {                       // see if there was any contents
-            String value = URLDecoder.decode(intent.getDataString());   // convert filename to UTF-8
-
-            if (!TextUtils.isEmpty(value)) {
-                int i = value.lastIndexOf('/');
-                int j = value.length();
-                requestedPathname = value.substring(7, i);          // get requested pathname
-                requestedFilename = value.substring(i + 1, j);      // and filename
-            }
-        }
+        readIntent();                       // get pathname and filename
 
         setupViews();                       // setup view
         prepareTitleToPlay();               // setup titles for playing
@@ -133,6 +125,20 @@ public class AudioFileListActivity extends AppCompatActivity
         initialIntent.putExtra("currentPosition", mCurrentPosition);       // current title position
         initialIntent.putParcelableArrayListExtra("songInfoList", mAudioFileInfoList);
         startActivity(initialIntent);
+    }
+
+    private void readIntent() {
+        Intent intent = getIntent();
+        if(intent.hasExtra("FilePath")) {
+            value = intent.getStringExtra("FilePath");
+            showLog(value);
+        } else {
+            showToast("잘못된 파일입니다.");
+            finish();
+        }
+
+        requestedPathname = value.substring(0, value.lastIndexOf('/'));
+        requestedFilename = value.substring(value.lastIndexOf('/') + 1, value.length());
     }
 
     private void setupViews() {

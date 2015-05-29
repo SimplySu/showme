@@ -62,11 +62,6 @@ public class FileManagerActivity extends AppCompatActivity implements
 
     private TextView mTvCurrentPath;
 
-    private static final int ActivityForAudio = 0x0001;
-    private static final int ActivityForVideo = 0x0010;
-    private static final int ActivityForImage = 0x0100;
-    private static final int ActivityForReserve = 0x1000;
-
     private String externalSdCard = null;
     private File fileCur = null;
 
@@ -222,21 +217,27 @@ public class FileManagerActivity extends AppCompatActivity implements
             } else {
                 switch (getMimeType(fileData)) {
                     case "audio":
-                        Intent iAudio = new Intent(this, AudioFileListActivity.class);
-                        iAudio.setData(Uri.fromFile(fileData));
-                        startActivityForResult(iAudio, ActivityForAudio);
+                        Intent iAudio = new Intent(getApplicationContext(), AudioFileListActivity.class);
+                        iAudio.putExtra("FilePath", fileData.toString());
+                        startActivity(iAudio);
                         break;
 
                     case "video":
-                        Intent iVideo = new Intent(this, VideoFileListActivity.class);
-                        iVideo.setData(Uri.fromFile(fileData));
-                        startActivityForResult(iVideo, ActivityForVideo);
+                        Intent iVideo = new Intent(getApplicationContext(), VideoFileListActivity.class);
+                        iVideo.putExtra("FilePath", fileData.toString());
+                        startActivity(iVideo);
+                        break;
+
+                    case "title":
+                        Intent iTitle = new Intent(getApplicationContext(), VideoFileListActivity.class);
+                        iTitle.putExtra("FilePath", fileData.toString());
+                        startActivity(iTitle);
                         break;
 
                     case "image":
-                        Intent iImage = new Intent(this, ImageFileListActivity.class);
-                        iImage.setData(Uri.fromFile(fileData));
-                        startActivityForResult(iImage, ActivityForImage);
+                        Intent iImage = new Intent(getApplicationContext(), ImageFileListActivity.class);
+                        iImage.putExtra("FilePath", fileData.toString());
+                        startActivity(iImage);
                         break;
 
                     default:
@@ -262,6 +263,7 @@ public class FileManagerActivity extends AppCompatActivity implements
         String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "xmf", "rtx", "ota", "imy", "ts", "wma"};
         String[] video = {"avi", "mkv", "mp4", "wmv", "asf", "mov", "mpg", "flv", "tp", "3gp", "m4v", "rmvb", "webm"};
         String[] image = {"jpg", "gif", "png", "bmp", "tif", "tiff", "jpeg", "webp"};
+        String[] title = {"smi", "srt", "sub"};
 
         int i = fileData.getAbsolutePath().lastIndexOf('.');
         int j = fileData.getAbsolutePath().length();
@@ -280,36 +282,18 @@ public class FileManagerActivity extends AppCompatActivity implements
             }
         }
 
+        for (String aTitle : title) {
+            if (mimeType.equals(aTitle)) {
+                return "title";
+            }
+        }
+
         for (String anImage : image) {
             if (mimeType.equals(anImage)) {
                 return "image";
             }
         }
         return "";
-    }
-
-    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        super.onActivityResult(requestCode, resultCode, intent);
-
-        switch (requestCode) {
-            case ActivityForAudio:
-                if (resultCode == RESULT_OK) {
-                    intent.getExtras().getInt("data");
-                }
-                break;
-
-            case ActivityForVideo:
-                if (resultCode == RESULT_OK) {
-                    intent.getExtras().getInt("data");
-                }
-                break;
-
-            case ActivityForImage:
-                if (resultCode == RESULT_OK) {
-                    intent.getExtras().getInt("data");
-                }
-                break;
-        }
     }
 
     private void showFileList(String path) {

@@ -54,7 +54,7 @@ public class MediaPlayerVideo extends Activity {
         	}
         }
 
-        videoView = (VideoView)findViewById(R.id.videoView1);
+        videoView = (VideoView)findViewById(R.id.video_view_screen);
         subtitle = (TextView)findViewById(R.id.subtitle);
         
         if(useWeb == false) {

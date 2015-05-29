@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.example.administrator.helloandroid.pkg_multimedia.MediaPlayer_Video">
+    tools:context="com.suwonsmartapp.hello.showme.VideoPlayerActivity">
 
     <VideoView
         android:id="@+id/vv_show"

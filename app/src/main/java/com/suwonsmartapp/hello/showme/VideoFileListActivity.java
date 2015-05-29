@@ -33,6 +33,9 @@ public class VideoFileListActivity extends AppCompatActivity implements
 
     private String requestedPathname = "";          // specified pathname by user from intent
     private String requestedFilename = "";          // specified filename by user from intent
+    private String requestedExternsion = "";        // specified extension by user from intent
+    private boolean flagSubTitle = false;           // default is filename is not subtitle
+    private String filenameWithoutExt = "";         // filename without extension for subtitle
 
     private VideoFileInfo videoFileInfo;                    // video file info getting by cursor
     private ArrayList<VideoFileInfo> mVideoFileInfoList;    // video file media_player_icon_information list
@@ -42,6 +45,8 @@ public class VideoFileListActivity extends AppCompatActivity implements
     private VideoListAdapter mAdapter;
 
     private ListView mMovieListView;
+
+    private String value;                                   // filename passed by file manager
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,16 +59,11 @@ public class VideoFileListActivity extends AppCompatActivity implements
         // fix the screen for portrait
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        Intent intent = getIntent();                // get user's intent
-        if (intent != null) {                       // see if there was any contents
-            String value = URLDecoder.decode(intent.getDataString());   // convert filename to UTF-8
+        readIntent();                       // get pathname and filename
 
-            if (TextUtils.isEmpty(value) == false) {
-                int i = value.lastIndexOf('/');
-                int j = value.length();
-                requestedPathname = value.substring(7, i);          // get requested pathname
-                requestedFilename = value.substring(i + 1, j);      // and filename
-            }
+        flagSubTitle = false;
+        if ((requestedExternsion.equals("smi")) || (requestedExternsion.equals("srt")) || (requestedExternsion.equals("sub"))) {
+            flagSubTitle = true;
         }
 
         prepareTitleToPlay();               // setup titles for playing
@@ -84,6 +84,22 @@ public class VideoFileListActivity extends AppCompatActivity implements
         initialIntent.putExtra("currentPosition", mCurrentPosition);       // current title position
         initialIntent.putParcelableArrayListExtra("videoInfoList", mVideoFileInfoList);
         startActivity(initialIntent);
+    }
+
+    private void readIntent() {
+        Intent intent = getIntent();
+        if(intent.hasExtra("FilePath")) {
+            value = intent.getStringExtra("FilePath");
+            showLog(value);
+        } else {
+            showToast("잘못된 파일입니다.");
+            finish();
+        }
+
+        requestedPathname = value.substring(0, value.lastIndexOf('/'));
+        requestedFilename = value.substring(value.lastIndexOf('/') + 1, value.length());
+        requestedExternsion = requestedFilename.substring(requestedFilename.lastIndexOf('.') + 1, requestedFilename.length()).toLowerCase();
+        filenameWithoutExt = requestedFilename.substring(0, requestedFilename.lastIndexOf('.'));
     }
 
     private void prepareTitleToPlay() {
@@ -169,13 +185,24 @@ public class VideoFileListActivity extends AppCompatActivity implements
 
     // search matched title with specified by user
     private int searchTitleIndex() {
-        for (int i = 0; i < mVideoFileInfoList.size(); i++) {
-            VideoFileInfo videoFileInfo = mVideoFileInfoList.get(i);    // read audio file
-            if (requestedFilename.equals(videoFileInfo.getDisplayName())) {
-                return i;          // return matched index
+        if (flagSubTitle) {
+            for (int i = 0; i < mVideoFileInfoList.size(); i++) {
+                VideoFileInfo videoFileInfo = mVideoFileInfoList.get(i);    // read audio file
+                String temp = videoFileInfo.getDisplayName();
+                if (filenameWithoutExt.equals(temp.substring(0, temp.lastIndexOf('.')))) {
+                    return i;          // return matched index
+                }
             }
+            return 0;                  // default is the first title
+        } else {
+            for (int i = 0; i < mVideoFileInfoList.size(); i++) {
+                VideoFileInfo videoFileInfo = mVideoFileInfoList.get(i);    // read audio file
+                if (requestedFilename.equals(videoFileInfo.getDisplayName())) {
+                    return i;          // return matched index
+                }
+            }
+            return 0;                  // default is the first title
         }
-        return 0;                  // default is the first title
     }
 
     @Override
