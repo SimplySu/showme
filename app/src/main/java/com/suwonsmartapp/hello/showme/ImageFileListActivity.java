@@ -70,16 +70,17 @@ public class ImageFileListActivity extends AppCompatActivity {
 
     private void readIntent() {
         Intent intent = getIntent();
-        if(intent.hasExtra("FilePath")) {
-            value = intent.getStringExtra("FilePath");
-            showLog(value);
-        } else {
-            showToast("잘못된 파일입니다.");
-            finish();
+        if (intent != null) {
+            if (intent.hasExtra("FilePath")) {
+                value = intent.getStringExtra("FilePath");
+                showLog(value);
+            } else {
+                showToast("잘못된 파일입니다.");
+                finish();
+            }
+            requestedPathname = value.substring(0, value.lastIndexOf('/'));
+            requestedFilename = value.substring(value.lastIndexOf('/') + 1, value.length());
         }
-
-        requestedPathname = value.substring(0, value.lastIndexOf('/'));
-        requestedFilename = value.substring(value.lastIndexOf('/') + 1, value.length());
     }
 
     private void prepareFileToShow() {

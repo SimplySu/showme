@@ -61,10 +61,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
 
         readIntent();                       // get pathname and filename
 
-        flagSubTitle = false;
-        if ((requestedExternsion.equals("smi")) || (requestedExternsion.equals("srt")) || (requestedExternsion.equals("sub"))) {
-            flagSubTitle = true;
-        }
+        flagSubTitle = (requestedExternsion.equals("smi")) || (requestedExternsion.equals("srt")) || (requestedExternsion.equals("sub"));
 
         prepareTitleToPlay();               // setup titles for playing
 
@@ -88,18 +85,19 @@ public class VideoFileListActivity extends AppCompatActivity implements
 
     private void readIntent() {
         Intent intent = getIntent();
-        if(intent.hasExtra("FilePath")) {
-            value = intent.getStringExtra("FilePath");
-            showLog(value);
-        } else {
-            showToast("잘못된 파일입니다.");
-            finish();
+        if (intent != null) {
+            if(intent.hasExtra("FilePath")) {
+                value = intent.getStringExtra("FilePath");
+                showLog(value);
+            } else {
+                showToast("잘못된 파일입니다.");
+                finish();
+            }
+            requestedPathname = value.substring(0, value.lastIndexOf('/'));
+            requestedFilename = value.substring(value.lastIndexOf('/') + 1, value.length());
+            requestedExternsion = requestedFilename.substring(requestedFilename.lastIndexOf('.') + 1, requestedFilename.length()).toLowerCase();
+            filenameWithoutExt = requestedFilename.substring(0, requestedFilename.lastIndexOf('.'));
         }
-
-        requestedPathname = value.substring(0, value.lastIndexOf('/'));
-        requestedFilename = value.substring(value.lastIndexOf('/') + 1, value.length());
-        requestedExternsion = requestedFilename.substring(requestedFilename.lastIndexOf('.') + 1, requestedFilename.length()).toLowerCase();
-        filenameWithoutExt = requestedFilename.substring(0, requestedFilename.lastIndexOf('.'));
     }
 
     private void prepareTitleToPlay() {

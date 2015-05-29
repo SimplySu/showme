@@ -284,7 +284,7 @@ public class FileManagerActivity extends AppCompatActivity implements
 
         for (String aTitle : title) {
             if (mimeType.equals(aTitle)) {
-                return "title";
+                return "title";     // if user designate subtitle, we should find the corresponding movie file.
             }
         }
 
