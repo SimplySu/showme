@@ -118,19 +118,21 @@ public class FileListAdapter extends BaseAdapter {
 
     private int determineMimeType(String file) {
 
-        String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "xmf", "rtx", "ota", "imy", "ts"};
+        String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "xmf", "rtx", "ota", "imy", "ts", "cue", "wma", "ape"};
         int[] audioR = {R.drawable.file_music_mp3, R.drawable.file_music_ogg, R.drawable.file_music_wav,
                 R.drawable.file_music_flac, R.drawable.file_music_mid, R.drawable.file_music_m4a,
                 R.drawable.file_music_xmf, R.drawable.file_music_rtx, R.drawable.file_music_ota,
-                R.drawable.file_music_imy, R.drawable.file_music_ts};
+                R.drawable.file_music_imy, R.drawable.file_music_ts, R.drawable.file_music_cue,
+                R.drawable.file_music_wma, R.drawable.file_music_ape};
 
         String[] video = {"avi", "mkv", "mp4", "wmv", "asf", "mov", "mpg", "flv", "tp", "3gp",
-                "m4v", "rmvb", "webm"};
+                "m4v", "rmvb", "webm", "smi", "srt", "sub"};
         int[] videoR = {R.drawable.file_movie_avi, R.drawable.file_movie_mkv, R.drawable.file_movie_mp4,
                 R.drawable.file_movie_wmv, R.drawable.file_movie_asf, R.drawable.file_movie_mov,
                 R.drawable.file_movie_mpg, R.drawable.file_movie_flv, R.drawable.file_movie_tp,
                 R.drawable.file_movie_3gp, R.drawable.file_movie_m4v, R.drawable.file_movie_rmvb,
-                R.drawable.file_movie_webm};
+                R.drawable.file_movie_webm, R.drawable.file_document_smi, R.drawable.file_document_srt,
+                R.drawable.file_document_sub};
 
         String[] image = {"jpg", "jpeg", "gif", "png", "bmp", "tif", "tiff", "webp"};
         int[] imageR = {R.drawable.file_image_jpg, R.drawable.file_image_jpeg, R.drawable.file_image_gif,
@@ -143,9 +145,18 @@ public class FileListAdapter extends BaseAdapter {
                 R.drawable.file_system_6, R.drawable.file_system_7, R.drawable.file_system_8,
                 R.drawable.file_system_9};
 
+        String[] system = {"cfg", "conf", "dat", "fil", "gz", "ico", "pem", "qc", "qcom", "rc", "sh"};
+        int[] systemR = {R.drawable.file_system_cfg, R.drawable.file_system_conf,
+                R.drawable.file_system_dat, R.drawable.file_system_fil, R.drawable.file_system_gz,
+                R.drawable.file_system_ico, R.drawable.file_system_pem, R.drawable.file_system_qc,
+                R.drawable.file_system_qcom, R.drawable.file_system_rc, R.drawable.file_system_sh};
+
+        String[] other = {"apk", "bin"};
+        int[] otherR = {R.drawable.file_other_apk, R.drawable.file_other_bin};
+
         String[] document = {"txt", "doc", "htm", "hwp", "pdf", "ppt", "rtf", "xls", "xlx", "xml",
                 "csv", "dif", "dot", "emf", "mht", "odp", "ods", "odt", "pot", "ppa", "pps", "prn",
-                "slk", "thm", "wps", "xla", "xlt", "xps"};
+                "slk", "thm", "wps", "xla", "xlt", "xps", "gul"};
         int[] documentR = {R.drawable.file_document_txt, R.drawable.file_document_doc,
                 R.drawable.file_document_htm, R.drawable.file_document_hwp, R.drawable.file_document_pdf,
                 R.drawable.file_document_ppt, R.drawable.file_document_rtf, R.drawable.file_document_xls,
@@ -155,7 +166,7 @@ public class FileListAdapter extends BaseAdapter {
                 R.drawable.file_document_odt, R.drawable.file_document_pot, R.drawable.file_document_ppa,
                 R.drawable.file_document_pps, R.drawable.file_document_prn, R.drawable.file_document_slk,
                 R.drawable.file_document_thm, R.drawable.file_document_wps, R.drawable.file_document_xla,
-                R.drawable.file_document_xlt, R.drawable.file_document_xps };
+                R.drawable.file_document_xlt, R.drawable.file_document_xps, R.drawable.file_document_gul};
 
         int result = file.lastIndexOf('.');
         if (result == -1) {
@@ -165,33 +176,45 @@ public class FileListAdapter extends BaseAdapter {
         int length = file.length();
         String ext = file.substring(result + 1, length);        // get extension without dot
 
-        if (ext == null || ext == "") {
+        if (ext.equals("")) {
             return R.drawable.file_system_;
         }
 
         String extension = ext.toLowerCase();    // extension lowercase character
 
-        for (int a = 0; a < audio.length; a++) {
-            if (extension.equals(audio[a])) {
-                return audioR[a];
+        for (int i = 0; i < audio.length; i++) {
+            if (extension.equals(audio[i])) {
+                return audioR[i];
             }
         }
 
-        for (int v = 0; v < video.length; v++) {
-            if (extension.equals(video[v])) {
-                return videoR[v];
+        for (int i = 0; i < video.length; i++) {
+            if (extension.equals(video[i])) {
+                return videoR[i];
             }
         }
 
-        for (int p = 0; p < image.length; p++) {
-            if (extension.equals(image[p])) {
-                return imageR[p];
+        for (int i = 0; i < image.length; i++) {
+            if (extension.equals(image[i])) {
+                return imageR[i];
             }
         }
 
-        for (int n = 0; n < number.length; n++) {
-            if (extension.equals(number[n])) {
-                return numberR[n];
+        for (int i = 0; i < number.length; i++) {
+            if (extension.equals(number[i])) {
+                return numberR[i];
+            }
+        }
+
+        for (int i = 0; i < system.length; i++) {
+            if (extension.equals(system[i])) {
+                return systemR[i];
+            }
+        }
+
+        for (int i = 0; i < other.length; i++) {
+            if (extension.equals(other[i])) {
+                return otherR[i];
             }
         }
 
@@ -200,9 +223,9 @@ public class FileListAdapter extends BaseAdapter {
         }
 
         String ext3char = extension.substring(0, 3);
-        for (int d = 0; d < document.length; d++) {
-            if (ext3char.equals(document[d])) {
-                return documentR[d];
+        for (int i = 0; i < document.length; i++) {
+            if (ext3char.equals(document[i])) {
+                return documentR[i];
             }
         }
 
