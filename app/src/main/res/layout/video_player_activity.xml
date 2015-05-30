@@ -5,10 +5,32 @@
     android:orientation="vertical"
     tools:context="com.suwonsmartapp.hello.showme.VideoPlayerActivity">
 
-    <VideoView
-        android:id="@+id/vv_show"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"/>
+    <FrameLayout
+        android:id="@+id/vv_frame"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
 
+        <VideoView
+            android:id="@+id/vv_show"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:keepScreenOn="true">
+        </VideoView>
+
+        <TextView
+            android:id="@+id/vv_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:gravity="center"
+            android:shadowColor="#000000"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="2"
+            android:text="TextView"
+            android:textColor="#FFFFFF"
+            android:textSize="24dip">
+        </TextView>
+    </FrameLayout>
 </LinearLayout>

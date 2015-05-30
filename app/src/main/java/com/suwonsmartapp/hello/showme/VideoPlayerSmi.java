@@ -1,10 +1,10 @@
 package com.suwonsmartapp.hello.showme;
 
-class MediaPlayerSmi {
+class VideoPlayerSmi {
 	long time;
 	String text;
 
-	MediaPlayerSmi(long time, String text) {
+	VideoPlayerSmi(long time, String text) {
 		this.time = time;
 		this.text = text;
 	}
