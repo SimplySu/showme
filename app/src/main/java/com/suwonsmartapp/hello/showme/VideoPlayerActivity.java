@@ -105,11 +105,7 @@ public class VideoPlayerActivity extends Activity implements
         smiPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".smi";
         smiFile = new File(smiPathname);
 
-        if(smiFile.isFile() && smiFile.canRead()) {
-            useSmi = true;
-        } else {
-            useSmi = false;
-        }
+        useSmi = smiFile.isFile() && smiFile.canRead();
 
         mVV_show = (VideoView) findViewById(R.id.vv_show);
         mVV_subtitle = (TextView)findViewById(R.id.vv_subtitle);
@@ -128,11 +124,9 @@ public class VideoPlayerActivity extends Activity implements
             new Thread(new Runnable() {
                 public void run() {
                     try {
-                        while (true) {
-                            Thread.sleep(300);
-                            myHandler.sendMessage(myHandler.obtainMessage());
-                        }
-                    } catch (Throwable t) {
+                        Thread.sleep(300);
+                        smiHandler.sendMessage(smiHandler.obtainMessage());
+                    } catch (Throwable ignored) {
                     }
                 }
             }).start();
@@ -155,11 +149,9 @@ public class VideoPlayerActivity extends Activity implements
                 new Thread(new Runnable() {
                     public void run() {
                         try {
-                            while (true) {
-                                Thread.sleep(300);
-                                myHandler.sendMessage(myHandler.obtainMessage());
-                            }
-                        } catch (Throwable t) {
+                            Thread.sleep(300);
+                            smiHandler.sendMessage(smiHandler.obtainMessage());
+                        } catch (Throwable ignored) {
                         }
                     }
                 }).start();
@@ -172,15 +164,26 @@ public class VideoPlayerActivity extends Activity implements
         super.onDestroy();
     }
 
+    // SMI file structure:
+    //
+    // <SYNC Start=370000>
+    // Message line 1
+    // Message line 2
+
+    // SRT file structure:
+    //
+    // 123
+    // 00:00:00.000 --> 00:00:00.000
+    // <i> Message line 1 </i>
+    // <i> Message line 2 </i>
+
     private void setupSMI() {
         if (useSmi) {
-            parsedSmi = new ArrayList<VideoPlayerSmi>();
+            parsedSmi = new ArrayList<>();
 
             try {
                 in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(smiFile.toString())), "MS949"));
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            } catch (FileNotFoundException e) {
+            } catch (UnsupportedEncodingException | FileNotFoundException e) {
                 e.printStackTrace();
             }
 
@@ -195,7 +198,7 @@ public class VideoPlayerActivity extends Activity implements
                         text = s.substring(s.indexOf(">") + 1, s.length());
                         text = text.substring(text.indexOf(">") + 1, text.length());
                     } else {
-                        if (smiStart == true) {
+                        if (smiStart) {
                             text += s;
                         }
                     }
@@ -216,7 +219,7 @@ public class VideoPlayerActivity extends Activity implements
         }
     }
 
-    Handler myHandler = new Handler() {
+    Handler smiHandler = new Handler() {
         public void handleMessage(Message msg) {
             countSmi = getSyncIndex(mVV_show.getCurrentPosition());
             mVV_subtitle.setText(Html.fromHtml(parsedSmi.get(countSmi).getText()));
@@ -224,11 +227,11 @@ public class VideoPlayerActivity extends Activity implements
     };
 
     public int getSyncIndex(long playTime) {
-        int l=0,m,h=parsedSmi.size();
+        int l = 0, m, h = parsedSmi.size();
 
         while(l <= h) {
             m = (l + h) / 2;
-            if(parsedSmi.get(m).getTime() <= playTime && playTime < parsedSmi.get(m+1).getTime()) {
+            if(parsedSmi.get(m).getTime() <= playTime && playTime < parsedSmi.get(m + 1).getTime()) {
                 return m;
             }
             if(playTime > parsedSmi.get(m + 1).getTime()) {

@@ -263,7 +263,7 @@ public class FileManagerActivity extends AppCompatActivity implements
         String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "xmf", "rtx", "ota", "imy", "ts", "wma"};
         String[] video = {"avi", "mkv", "mp4", "wmv", "asf", "mov", "mpg", "flv", "tp", "3gp", "m4v", "rmvb", "webm"};
         String[] image = {"jpg", "gif", "png", "bmp", "tif", "tiff", "jpeg", "webp"};
-        String[] title = {"smi", "srt", "sub"};
+        String[] title = {"smi", "srt", "sub", "ass", "ssa"};
 
         int i = fileData.getAbsolutePath().lastIndexOf('.');
         int j = fileData.getAbsolutePath().length();

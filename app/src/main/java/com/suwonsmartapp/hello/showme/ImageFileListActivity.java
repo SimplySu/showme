@@ -13,7 +13,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,7 +22,6 @@ import android.widget.Toast;
 
 import com.suwonsmartapp.hello.R;
 
-import java.net.URLDecoder;
 import java.util.ArrayList;
 
 public class ImageFileListActivity extends AppCompatActivity {
@@ -56,16 +54,17 @@ public class ImageFileListActivity extends AppCompatActivity {
 
         readIntent();                       // get pathname and filename
 
-        mImageFileInfoList = new ArrayList<>();         // create audio file lists
+        mImageFileInfoList = new ArrayList<>();         // create image file lists
 
         prepareFileToShow();               // setup files for showing
 
         mViewPager = (ViewPager)findViewById(R.id.viewPager);
-        mCurrentPosition = searchPictureIndex();      // search title index which was specified by user
-        mViewPager.setCurrentItem(mCurrentPosition);
+        mCurrentPosition = searchPictureIndex();      // search picture index which was specified by user
+        showLog("returned index : " + mCurrentPosition);
 
         mMyAdapter = new MyAdapter(getSupportFragmentManager(), mImageFileInfoList);
         mViewPager.setAdapter(mMyAdapter);
+        mViewPager.setCurrentItem(mCurrentPosition);        // setup position after adapter established
     }
 
     private void readIntent() {
@@ -160,8 +159,12 @@ public class ImageFileListActivity extends AppCompatActivity {
 
     // search matched title with specified by user
     private int searchPictureIndex() {
+        showLog("Picture count : " + mImageFileInfoList.size());
         for (int i = 0; i < mImageFileInfoList.size(); i++) {
             ImageFileInfo imageFileInfo = mImageFileInfoList.get(i);    // read image file
+            showLog("requested filename : " + requestedFilename);
+            showLog("we found : " + imageFileInfo.getDisplayName());
+            showLog("current index : " + i);
             if (requestedFilename.equals(imageFileInfo.getDisplayName())) {
                 return i;          // return matched index
             }
