@@ -124,8 +124,10 @@ public class VideoPlayerActivity extends Activity implements
             new Thread(new Runnable() {
                 public void run() {
                     try {
-                        Thread.sleep(300);
-                        smiHandler.sendMessage(smiHandler.obtainMessage());
+                        while (true) {
+                            Thread.sleep(300);
+                            smiHandler.sendMessage(smiHandler.obtainMessage());
+                        }
                     } catch (Throwable ignored) {
                     }
                 }
@@ -149,8 +151,10 @@ public class VideoPlayerActivity extends Activity implements
                 new Thread(new Runnable() {
                     public void run() {
                         try {
-                            Thread.sleep(300);
-                            smiHandler.sendMessage(smiHandler.obtainMessage());
+                            while (true) {
+                                Thread.sleep(300);
+                                smiHandler.sendMessage(smiHandler.obtainMessage());
+                            }
                         } catch (Throwable ignored) {
                         }
                     }
