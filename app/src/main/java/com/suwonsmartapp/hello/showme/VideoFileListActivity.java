@@ -8,9 +8,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -23,7 +20,7 @@ import com.suwonsmartapp.hello.R;
 import java.util.ArrayList;
 
 public class VideoFileListActivity extends AppCompatActivity implements
-        LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemClickListener {
+        AdapterView.OnItemClickListener {
 
     private static final String TAG = AudioFileListActivity.class.getSimpleName();
     private void showLog(String msg) { Log.d(TAG, msg); }
@@ -45,6 +42,16 @@ public class VideoFileListActivity extends AppCompatActivity implements
     private ListView mMovieListView;
 
     private String value;                                   // filename passed by file manager
+
+    public static final int RESULT_OK = 0x0fff;
+    public static final int REQUEST_CODE_AUDIO = 0x0001;
+    public static final int REQUEST_CODE_AUDIO_PLAYER = 0x0002;
+    public static final int REQUEST_CODE_VIDEO = 0x0010;
+    public static final int REQUEST_CODE_VIDEO_PLAYER = 0x0020;
+    public static final int REQUEST_CODE_IMAGE = 0x0100;
+    public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
+    private Bundle extraVideoService;
+    private Intent intentVideoService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,13 +79,10 @@ public class VideoFileListActivity extends AppCompatActivity implements
         mAdapter.setCurrentPosition(mCurrentPosition);
         mMovieListView.smoothScrollToPosition(mCurrentPosition);
 
-        // 로더 초기화
-//        getSupportLoaderManager().initLoader(0, null, this);
-
         Intent initialIntent = new Intent(getApplicationContext(), VideoPlayerActivity.class);
         initialIntent.putExtra("currentPosition", mCurrentPosition);       // current title position
         initialIntent.putParcelableArrayListExtra("videoInfoList", mVideoFileInfoList);
-        startActivity(initialIntent);
+        startActivityForResult(initialIntent, REQUEST_CODE_VIDEO_PLAYER);
     }
 
     private void readIntent() {
@@ -202,38 +206,34 @@ public class VideoFileListActivity extends AppCompatActivity implements
     }
 
     @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        // 커서 로더 생성
-        // 모든 Video 데이터 취득
-        return new CursorLoader(getApplicationContext(),
-                MediaStore.Video.Media.EXTERNAL_CONTENT_URI, null, null, null, null);
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        // 화면 갱신
-        mAdapter.swapCursor(data);
-    }
-
-    @Override
-    public void onLoaderReset(Loader loader) {
-        mAdapter.swapCursor(null);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        // 로더 파괴
-        getSupportLoaderManager().destroyLoader(0);
-    }
-
-    @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         mCurrentPosition = position;
         Intent initialIntent = new Intent(getApplicationContext(), VideoPlayerActivity.class);
         initialIntent.putExtra("currentPosition", mCurrentPosition);       // current title position
         initialIntent.putParcelableArrayListExtra("videoInfoList", mVideoFileInfoList);
-        startActivity(initialIntent);
+        startActivityForResult(initialIntent, REQUEST_CODE_VIDEO_PLAYER);
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        extraVideoService = new Bundle();
+        intentVideoService = new Intent();
+        extraVideoService.putInt("CurrentPosition", mCurrentPosition);
+        intentVideoService.putExtras(extraVideoService);
+        this.setResult(RESULT_OK, intentVideoService);
+
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_VIDEO_PLAYER) {
+            if (resultCode == RESULT_OK) {
+                mCurrentPosition = data.getExtras().getInt("CurrentPosition");
+            }
+        }
     }
 }

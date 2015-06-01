@@ -21,7 +21,6 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -35,7 +34,6 @@ import android.widget.Toast;
 
 import com.suwonsmartapp.hello.R;
 
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -77,6 +75,14 @@ public class AudioFileListActivity extends AppCompatActivity
     private int TimeRight;                          // music duration
 
     private String value;                           // filename passed by file manager
+
+    public static final int RESULT_OK = 0x0fff;
+    public static final int REQUEST_CODE_AUDIO = 0x0001;
+    public static final int REQUEST_CODE_AUDIO_PLAYER = 0x0002;
+    public static final int REQUEST_CODE_VIDEO = 0x0010;
+    public static final int REQUEST_CODE_VIDEO_PLAYER = 0x0020;
+    public static final int REQUEST_CODE_IMAGE = 0x0100;
+    public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

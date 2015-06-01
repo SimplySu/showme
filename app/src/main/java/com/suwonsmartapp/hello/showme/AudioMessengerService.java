@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -59,6 +60,16 @@ public class AudioMessengerService extends Service
     private RemoteViews mRemoteViews;
 
     private NotificationCompat.Builder mNotiBuilder;
+
+    public static final int RESULT_OK = 0x0fff;
+    public static final int REQUEST_CODE_AUDIO = 0x0001;
+    public static final int REQUEST_CODE_AUDIO_PLAYER = 0x0002;
+    public static final int REQUEST_CODE_VIDEO = 0x0010;
+    public static final int REQUEST_CODE_VIDEO_PLAYER = 0x0020;
+    public static final int REQUEST_CODE_IMAGE = 0x0100;
+    public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
+    private Bundle extraAudioService;
+    private Intent intentAudioService;
 
     // Handler of incoming messages from clients
     class IncomingHandler extends Handler {
@@ -261,6 +272,12 @@ public class AudioMessengerService extends Service
 
         mNotiManager.cancel(NOTI_MUSIC_SERVICE);
         unregisterCallReceiverService();
+
+//        extraAudioService = new Bundle();
+//        intentAudioService = new Intent();
+//        extraAudioService.putInt("CurrentPosition", 0);
+//        intentAudioService.putExtras(extraAudioService);
+//        this.setResult(RESULT_OK, intentAudioService);
 
         super.onDestroy();
     }

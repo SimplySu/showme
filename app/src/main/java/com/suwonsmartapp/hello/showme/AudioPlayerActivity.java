@@ -60,6 +60,14 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
 
     private boolean mIsReceiverRegistered;
 
+    public static final int RESULT_OK = 0x0fff;
+    public static final int REQUEST_CODE_AUDIO = 0x0001;
+    public static final int REQUEST_CODE_AUDIO_PLAYER = 0x0002;
+    public static final int REQUEST_CODE_VIDEO = 0x0010;
+    public static final int REQUEST_CODE_VIDEO_PLAYER = 0x0020;
+    public static final int REQUEST_CODE_IMAGE = 0x0100;
+    public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
