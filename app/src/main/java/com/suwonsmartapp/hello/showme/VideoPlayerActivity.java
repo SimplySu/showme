@@ -341,6 +341,10 @@ public class VideoPlayerActivity extends Activity implements
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+        if (parsedSmi.size() <= 1) {
+            useSmi = false;     // if we have just one line, ignore this subtitle
+            }
         }
     }
 
@@ -427,6 +431,10 @@ public class VideoPlayerActivity extends Activity implements
                 in.close();
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+
+        if (parsedSrt.size() <= 1) {
+            useSrt = false;     // if we have just one line, ignore this subtitle
             }
         }
     }
@@ -525,6 +533,11 @@ public class VideoPlayerActivity extends Activity implements
                 in.close();
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+
+        if (parsedAss.size() <= 1) {
+            useAss = false;     // if we have just one line, ignore this subtitle
+            useSsa = false;     // if we have just one line, ignore this subtitle
             }
         }
     }
