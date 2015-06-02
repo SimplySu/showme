@@ -45,34 +45,25 @@ public class VideoPlayerActivity extends Activity implements
     private String requestedFilename = "";          // specified filename by user from intent
     private String fullPathname = "";              // full path + filename
 
-    private String smiPathname = "";                // smi file pathname
-    private File smiFile;                           // smi file
+    private String subPathname = "";                // smi file pathname
+    private File subFile;                           // smi file
     private boolean useSmi = false;                 // true if we will use smi file
-
-    private String srtPathname = "";                // srt file pathname
-    private File srtFile;                           // srt file
     private boolean useSrt = false;                 // true if we will use srt file
-
-    private String assPathname = "";                // ass file pathname
-    private File assFile;                           // ass file
     private boolean useAss = false;                 // true if we will use ass file
-
-    private String ssaPathname = "";                // ssa file pathname
-    private File ssaFile;                           // ssa file
     private boolean useSsa = false;                 // true if we will use ssa file
 
     private BufferedReader in;
     private String s;
     private String text = null;
 
-    private ArrayList<VideoPlayerSubtitle> parsedSmi;
-    private long timeSMI = -1;
-    private boolean smiStart = false;
-    private int countSmi;
+    private ArrayList<VideoPlayerSubtitle> parsedSub;
+    private long timeSUB = -1;
+    private boolean subStart = false;
+    private int countSub;
+    private long maxRunningTime = 0L;
 
-    private ArrayList<VideoPlayerSubtitle> parsedSrt;
-    private long timeSRTstart = -1;
-    private long timeSRTend = -1;
+    private long timeSUBstart = -1;
+    private long timeSUBend = -1;
     private String t1, t2;
     private long timeStartHour;
     private long timeStartMinute;
@@ -82,14 +73,6 @@ public class VideoPlayerActivity extends Activity implements
     private long timeEndMinute;
     private long timeEndSecond;
     private long timeEndMillisecond;
-    private boolean srtStart = false;
-    private int countSrt;
-
-    private ArrayList<VideoPlayerSubtitle> parsedAss;
-    private long timeASSstart = -1;
-    private long timeASSend = -1;
-    private boolean assStart = false;
-    private int countAss;
 
     private VideoView mVV_show;                     // video screen
     private TextView mVV_subtitle;                  // subtitle
@@ -122,13 +105,19 @@ public class VideoPlayerActivity extends Activity implements
         showLog("onCreate");
 
         Intent intent = getIntent();
-        mCurrentPosition = intent.getIntExtra("currentPosition", -1);
-        mVideoFileInfoList = intent.getParcelableArrayListExtra("videoInfoList");
+        if (intent != null) {
+            mCurrentPosition = intent.getIntExtra("currentPosition", -1);
+            mVideoFileInfoList = intent.getParcelableArrayListExtra("videoInfoList");
+        } else {
+            showToast("잘못된 파일입니다.");
+            finish();
+        }
 
-        setupVideoScreen();
+        setupVideoScreen();     // see if subtitle exists ?
         setupSMI();             // prepare SMI if it exists
         setupSRT();             // prepare SRT if it exists
         setupASS();             // prepare ASS/SSA if it exists
+        addOneMoreLine();                   // add dummy subtitle for the safety
 
         MediaController mController = new MediaController(this);
         mController.setAnchorView(mVV_show);
@@ -152,27 +141,7 @@ public class VideoPlayerActivity extends Activity implements
         requestedPathname = fullPathname.substring(0, i);          // get requested pathname
         requestedFilename = fullPathname.substring(i + 1, j);      // and filename
 
-        smiPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".smi";
-        smiFile = new File(smiPathname);
-        useSmi = smiFile.isFile() && smiFile.canRead();
-
-        if (!useSmi) {
-            srtPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".srt";
-            srtFile = new File(srtPathname);
-            useSrt = srtFile.isFile() && srtFile.canRead();
-        }
-
-        if ((!useSmi) && (!useSrt)) {
-            assPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".ass";
-            assFile = new File(assPathname);
-            useAss = assFile.isFile() && assFile.canRead();
-
-            if (!useAss) {
-                ssaPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".ssa";
-                ssaFile = new File(ssaPathname);
-                useSsa = ssaFile.isFile() && ssaFile.canRead();
-            }
-        }
+        detectSubtitle();               // see if there exist .smi .srt .ass .ssa file
 
         mVV_show = (VideoView) findViewById(R.id.vv_show);
         mVV_subtitle = (TextView)findViewById(R.id.vv_subtitle);
@@ -182,46 +151,46 @@ public class VideoPlayerActivity extends Activity implements
         mVV_show.requestFocus();                                    // set focus
     }
 
+    private void detectSubtitle() {
+        subPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".smi";
+        subFile = new File(subPathname);
+        useSmi = subFile.isFile() && subFile.canRead();
+
+        if (!useSmi) {
+            subPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".srt";
+            subFile = new File(subPathname);
+            useSrt = subFile.isFile() && subFile.canRead();
+        }
+
+        if ((!useSmi) && (!useSrt)) {
+            subPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".ass";
+            subFile = new File(subPathname);
+            useAss = subFile.isFile() && subFile.canRead();
+
+            if (!useAss) {
+                subPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".ssa";
+                subFile = new File(subPathname);
+                useSsa = subFile.isFile() && subFile.canRead();
+            }
+        }
+
+        if (useSmi || useSrt || useAss || useSsa) {
+            parsedSub = new ArrayList<>();
+        }
+    }
+
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
         mVV_show.seekTo(0);
         mVV_show.start();                   // auto start
 
-        if (useSmi) {
+        if (useSmi || useSrt || useAss || useSsa) {
             new Thread(new Runnable() {
                 public void run() {
                     try {
                         while (true) {
                             Thread.sleep(300);
-                            smiHandler.sendMessage(smiHandler.obtainMessage());
-                        }
-                    } catch (Throwable ignored) {
-                    }
-                }
-            }).start();
-        }
-
-        if (useSrt) {
-            new Thread(new Runnable() {
-                public void run() {
-                    try {
-                        while (true) {
-                            Thread.sleep(300);
-                            srtHandler.sendMessage(srtHandler.obtainMessage());
-                        }
-                    } catch (Throwable ignored) {
-                    }
-                }
-            }).start();
-        }
-
-        if (useAss) {
-            new Thread(new Runnable() {
-                public void run() {
-                    try {
-                        while (true) {
-                            Thread.sleep(300);
-                            assHandler.sendMessage(assHandler.obtainMessage());
+                            subHandler.sendMessage(subHandler.obtainMessage());
                         }
                     } catch (Throwable ignored) {
                     }
@@ -232,59 +201,32 @@ public class VideoPlayerActivity extends Activity implements
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
-        if (mCurrentPosition >= mVideoFileInfoList.size()) {
-            finish();           // playing completed
-        } else {
-            mCurrentPosition++;                 // next movie
-            setupVideoScreen();                 // prepare next movie screen
-            setupSMI();
-            setupSRT();
-            setupASS();
+        mCurrentPosition++;                 // next movie
+        if (mCurrentPosition == mVideoFileInfoList.size()) {
+            mCurrentPosition = 0;               // wrap around
+        }
 
-            mVV_show.seekTo(0);
-            mVV_show.start();                   // auto start
+        setupVideoScreen();                 // prepare next movie screen
+        setupSMI();
+        setupSRT();
+        setupASS();
+        addOneMoreLine();                   // add dummy subtitle for the safety
 
-            if (useSmi) {
-                new Thread(new Runnable() {
-                    public void run() {
-                        try {
-                            while (true) {
-                                Thread.sleep(300);
-                                smiHandler.sendMessage(smiHandler.obtainMessage());
-                            }
-                        } catch (Throwable ignored) {
+        mVV_show.seekTo(0);
+        mVV_show.start();                   // auto start
+
+        if (useSmi || useSrt || useAss || useSsa) {
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        while (true) {
+                            Thread.sleep(300);
+                            subHandler.sendMessage(subHandler.obtainMessage());
                         }
+                    } catch (Throwable ignored) {
                     }
-                }).start();
-            }
-
-            if (useSrt) {
-                new Thread(new Runnable() {
-                    public void run() {
-                        try {
-                            while (true) {
-                                Thread.sleep(300);
-                                srtHandler.sendMessage(srtHandler.obtainMessage());
-                            }
-                        } catch (Throwable ignored) {
-                        }
-                    }
-                }).start();
-            }
-
-            if (useAss) {
-                new Thread(new Runnable() {
-                    public void run() {
-                        try {
-                            while (true) {
-                                Thread.sleep(300);
-                                assHandler.sendMessage(assHandler.obtainMessage());
-                            }
-                        } catch (Throwable ignored) {
-                        }
-                    }
-                }).start();
-            }
+                }
+            }).start();
         }
     }
 
@@ -308,10 +250,8 @@ public class VideoPlayerActivity extends Activity implements
 
     private void setupSMI() {
         if (useSmi) {
-            parsedSmi = new ArrayList<>();
-
             try {
-                in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(smiFile.toString())), detectEncoding(smiFile.toString())));
+                in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(subFile.toString())), detectEncoding(subFile.toString())));
             } catch (UnsupportedEncodingException | FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -319,16 +259,17 @@ public class VideoPlayerActivity extends Activity implements
             try {
                 while ((s = in.readLine()) != null) {
                     if (s.contains("<SYNC")) {
-                        smiStart = true;
-                        if (timeSMI != -1) {
-                            parsedSmi.add(new VideoPlayerSubtitle(timeSMI, text));
+                        subStart = true;
+                        if (timeSUB != -1) {
+                            parsedSub.add(new VideoPlayerSubtitle(timeSUB, text));
                         }
-                        timeSMI = Integer.parseInt(s.substring(s.indexOf("=") + 1, s.indexOf(">")));
+                        timeSUB = Integer.parseInt(s.substring(s.indexOf("=") + 1, s.indexOf(">")));
                         text = s.substring(s.indexOf(">") + 1, s.length());
                         text = text.substring(text.indexOf(">") + 1, text.length());
                     } else {
-                        if (smiStart) {
-                            text += s;
+                        if (subStart) {
+                            text = text + s;
+                            subStart = false;
                         }
                     }
                 }
@@ -342,34 +283,10 @@ public class VideoPlayerActivity extends Activity implements
                 e.printStackTrace();
             }
 
-        if (parsedSmi.size() <= 1) {
+        if (parsedSub.size() <= 1) {
             useSmi = false;     // if we have just one line, ignore this subtitle
             }
         }
-    }
-
-    Handler smiHandler = new Handler() {
-        public void handleMessage(Message msg) {
-            countSmi = getSmiSyncIndex(mVV_show.getCurrentPosition());
-            mVV_subtitle.setText(Html.fromHtml(parsedSmi.get(countSmi).getText()));
-        }
-    };
-
-    public int getSmiSyncIndex(long playTime) {
-        int l = 0, m, h = parsedSmi.size();
-
-        while(l <= h) {
-            m = (l + h) / 2;
-            if(parsedSmi.get(m).getTime() <= playTime && playTime < parsedSmi.get(m + 1).getTime()) {
-                return m;
-            }
-            if(playTime > parsedSmi.get(m + 1).getTime()) {
-                l = m + 1;
-            } else {
-                h = m - 1;
-            }
-        }
-        return 0;
     }
 
     // SRT file structure:
@@ -381,10 +298,8 @@ public class VideoPlayerActivity extends Activity implements
 
     private void setupSRT() {
         if (useSrt) {
-            parsedSrt = new ArrayList<>();
-
             try {
-                in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(srtFile.toString())), detectEncoding(srtFile.toString())));
+                in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(subFile.toString())), detectEncoding(subFile.toString())));
             } catch (UnsupportedEncodingException | FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -392,34 +307,34 @@ public class VideoPlayerActivity extends Activity implements
             try {
                 while ((s = in.readLine()) != null) {
                     if (s.contains("-->")) {
-                        srtStart = true;
-                        if (timeSRTstart != -1) {
-                            parsedSrt.add(new VideoPlayerSubtitle(timeSRTstart, text));
+                        subStart = true;
+                        if (timeSUBstart != -1) {
+                            parsedSub.add(new VideoPlayerSubtitle(timeSUBstart, text));
                         }
                         t1 = s.substring(0, s.lastIndexOf(" --> "));
                         timeStartHour = Integer.parseInt(t1.substring(0, t1.indexOf(':')));
                         timeStartMinute = Integer.parseInt(t1.substring(t1.indexOf(':') + 1, t1.lastIndexOf(':')));
                         timeStartSecond = Integer.parseInt(t1.substring(t1.lastIndexOf(':') + 1, t1.indexOf(',')));
                         timeStartMillisecond = Integer.parseInt(t1.substring(t1.lastIndexOf(',') + 1, t1.length()));
-                        timeSRTstart = ((timeStartHour * 60 + timeStartMinute) * 60 + timeStartSecond) * 1000 + timeStartMillisecond;
+                        timeSUBstart = ((timeStartHour * 60 + timeStartMinute) * 60 + timeStartSecond) * 1000 + timeStartMillisecond;
 
                         t2 = s.substring(s.lastIndexOf(" --> ") + 5, s.length());
                         timeEndHour = Integer.parseInt(t2.substring(0, t2.indexOf(':')));
                         timeEndMinute = Integer.parseInt(t2.substring(t2.indexOf(':') + 1, t2.lastIndexOf(':')));
                         timeEndSecond = Integer.parseInt(t2.substring(t2.lastIndexOf(':') + 1, t2.indexOf(',')));
                         timeEndMillisecond = Integer.parseInt(t2.substring(t2.lastIndexOf(',') + 1, t2.length()));
-                        timeSRTend = ((timeEndHour * 60 + timeEndMinute) * 60 + timeEndSecond) * 1000 + timeEndMillisecond;
+                        timeSUBend = ((timeEndHour * 60 + timeEndMinute) * 60 + timeEndSecond) * 1000 + timeEndMillisecond;
 
-                        showLog(timeStartHour + ":" + timeStartMinute + ":" + timeStartSecond + "," + timeStartMillisecond + " -> " +
-                                timeEndHour + ":" + timeEndMinute + ":" + timeEndSecond + "," + timeEndMillisecond);
+//                        showLog(timeStartHour + ":" + timeStartMinute + ":" + timeStartSecond + "," + timeStartMillisecond + " -> " +
+//                                timeEndHour + ":" + timeEndMinute + ":" + timeEndSecond + "," + timeEndMillisecond);
 
                         text = "";      // clear text line for getting new text
-                    } else if (srtStart) {
+                    } else if (subStart) {
                         if (s.contains("<i>")) {
                             text = text + s.substring(s.indexOf("<i>") + 3, s.lastIndexOf("</i>"));
                         } else {
                             text = text + s.substring(0, s.length());
-                            srtStart = false;
+                            subStart = false;
                         }
                     }
                 }
@@ -433,34 +348,10 @@ public class VideoPlayerActivity extends Activity implements
                 e.printStackTrace();
             }
 
-        if (parsedSrt.size() <= 1) {
+        if (parsedSub.size() <= 1) {
             useSrt = false;     // if we have just one line, ignore this subtitle
             }
         }
-    }
-
-    Handler srtHandler = new Handler() {
-        public void handleMessage(Message msg) {
-            countSrt = getSrtSyncIndex(mVV_show.getCurrentPosition());
-            mVV_subtitle.setText(Html.fromHtml(parsedSrt.get(countSrt).getText()));
-        }
-    };
-
-    public int getSrtSyncIndex(long playTime) {
-        int l = 0, m, h = parsedSrt.size();
-
-        while(l <= h) {
-            m = (l + h) / 2;
-            if(parsedSrt.get(m).getTime() <= playTime && playTime < parsedSrt.get(m + 1).getTime()) {
-                return m;
-            }
-            if(playTime > parsedSrt.get(m + 1).getTime()) {
-                l = m + 1;
-            } else {
-                h = m - 1;
-            }
-        }
-        return 0;
     }
 
     // ASS/SSA file structure:
@@ -471,11 +362,9 @@ public class VideoPlayerActivity extends Activity implements
 
     private void setupASS() {
         if (useAss || useSsa) {
-            parsedAss = new ArrayList<>();
-
             if (useAss) {
                 try {
-                    in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(assFile.toString())), detectEncoding(assFile.toString())));
+                    in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(subFile.toString())), detectEncoding(subFile.toString())));
                 } catch (UnsupportedEncodingException | FileNotFoundException e) {
                     e.printStackTrace();
                 }
@@ -483,7 +372,7 @@ public class VideoPlayerActivity extends Activity implements
 
             if (useSsa) {
                 try {
-                    in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(ssaFile.toString())), detectEncoding(ssaFile.toString())));
+                    in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(subFile.toString())), detectEncoding(subFile.toString())));
                     useAss = true;      // treat SSA same as ASS
                     useSsa = false;
                 } catch (UnsupportedEncodingException | FileNotFoundException e) {
@@ -494,10 +383,10 @@ public class VideoPlayerActivity extends Activity implements
             try {
                 while ((s = in.readLine()) != null) {
                     if (s.contains("Dialogue:")) {
-                        assStart = true;
-                        if (timeASSstart != -1) {
-                            parsedAss.add(new VideoPlayerSubtitle(timeASSstart, text));
-                            showLog("time : " + timeASSstart + ", text : " + text);
+                        subStart = true;
+                        if (timeSUBstart != -1) {
+                            parsedSub.add(new VideoPlayerSubtitle(timeSUBstart, text));
+                            showLog("time : " + timeSUBstart + ", text : " + text);
                         }
                         t2 = s.substring(s.indexOf(',') + 1, s.length());
                         t1 = t2.substring(0, t2.indexOf(','));
@@ -505,11 +394,7 @@ public class VideoPlayerActivity extends Activity implements
                         timeStartMinute = Integer.parseInt(t1.substring(t1.indexOf(':') + 1, t1.lastIndexOf(':')));
                         timeStartSecond = Integer.parseInt(t1.substring(t1.lastIndexOf(':') + 1, t1.indexOf('.')));
                         timeStartMillisecond = Integer.parseInt(t1.substring(t1.lastIndexOf('.') + 1, t1.length())) * 10;
-                        timeASSstart = ((timeStartHour * 60 + timeStartMinute) * 60 + timeStartSecond) * 1000 + timeStartMillisecond;
-
-                        if (timeASSstart == 372580) {
-                            showLog("current time : " + timeASSstart);
-                        }
+                        timeSUBstart = ((timeStartHour * 60 + timeStartMinute) * 60 + timeStartSecond) * 1000 + timeStartMillisecond;
 
                         t1 = t2.substring(t2.lastIndexOf(",,") + 2, t2.length());
                         if (t1.equals("")) {
@@ -520,9 +405,9 @@ public class VideoPlayerActivity extends Activity implements
                             }
                             text = t1;      // we've got the text
                         }
-                    } else if (assStart) {
+                    } else if (subStart) {
                         text = text + s.substring(0, s.length());
-                        srtStart = false;
+                        subStart = false;
                     }
                 }
             } catch (IOException e) {
@@ -535,32 +420,42 @@ public class VideoPlayerActivity extends Activity implements
                 e.printStackTrace();
             }
 
-        if (parsedAss.size() <= 1) {
+        if (parsedSub.size() <= 1) {
             useAss = false;     // if we have just one line, ignore this subtitle
             useSsa = false;     // if we have just one line, ignore this subtitle
             }
         }
     }
 
-Handler assHandler = new Handler() {
-    public void handleMessage(Message msg) {
-        countAss = getAssSyncIndex(mVV_show.getCurrentPosition());
-        mVV_subtitle.setText(Html.fromHtml(parsedAss.get(countAss).getText()));
-    }
-};
-
-    public int getAssSyncIndex(long playTime) {
-        int l = 0, m, h = parsedAss.size();
-
-        while(l <= h) {
-            m = (l + h) / 2;
-            if(parsedAss.get(m).getTime() <= playTime && playTime < parsedAss.get(m + 1).getTime()) {
-                return m;
+    Handler subHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            if (mVV_show.getCurrentPosition() <= maxRunningTime) {
+                countSub = getSubSyncIndex(mVV_show.getCurrentPosition());
+                mVV_subtitle.setText(Html.fromHtml(parsedSub.get(countSub).getText()));
             }
-            if(playTime > parsedAss.get(m + 1).getTime()) {
-                l = m + 1;
+        }
+    };
+
+    // if get(index) <= playTime < get(index+1), then return index
+    //
+    //                      <=    playTime    <
+    //    +-----------------+-----------------+--------------------+
+    //    0             get(index)      get(index + 1)         get(size)
+    //
+    public int getSubSyncIndex(long playTime) {
+        int lowLimit = 0;
+        int highLimit = parsedSub.size();
+        int indexPointer;
+
+        while(lowLimit <= highLimit) {
+            indexPointer = (lowLimit + highLimit) / 2;
+            if((parsedSub.get(indexPointer).getTime() <= playTime) && (playTime < parsedSub.get(indexPointer + 1).getTime())) {
+                return indexPointer;
+            }
+            if(playTime >= parsedSub.get(indexPointer + 1).getTime()) {
+                lowLimit = indexPointer + 1;
             } else {
-                h = m - 1;
+                highLimit = indexPointer - 1;
             }
         }
         return 0;
@@ -597,5 +492,13 @@ Handler assHandler = new Handler() {
         detector.reset();
 
         return encoding;
+    }
+
+    private void addOneMoreLine() {
+        if (useSmi || useSrt || useAss || useSsa) {
+            int h = parsedSub.size() - 1;
+            maxRunningTime = parsedSub.get(h).getTime();
+            parsedSub.add(new VideoPlayerSubtitle(maxRunningTime + 500, "The End"));
+        }
     }
 }
