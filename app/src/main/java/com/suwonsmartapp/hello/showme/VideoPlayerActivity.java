@@ -19,6 +19,8 @@ import android.widget.VideoView;
 
 import com.suwonsmartapp.hello.R;
 
+import org.mozilla.universalchardet.UniversalDetector;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,6 +36,7 @@ public class VideoPlayerActivity extends Activity implements
     private static final String TAG = VideoPlayerActivity.class.getSimpleName();
     private void showLog(String msg) { Log.d(TAG, msg); }
     private void showToast(String toast_msg) { Toast.makeText(this, toast_msg, Toast.LENGTH_LONG).show(); }
+    private static final String ENCODING = "EUC-KR";
 
     private int mCurrentPosition;                   // current playing pointer
     private ArrayList<VideoFileInfo> mVideoFileInfoList;    // video file media_player_icon_information list
@@ -44,25 +47,33 @@ public class VideoPlayerActivity extends Activity implements
 
     private String smiPathname = "";                // smi file pathname
     private File smiFile;                           // smi file
-    private boolean useSmi;                         // true if we will use smi file
+    private boolean useSmi = false;                 // true if we will use smi file
 
     private String srtPathname = "";                // srt file pathname
     private File srtFile;                           // srt file
-    private boolean useSrt;                         // true if we will use srt file
+    private boolean useSrt = false;                 // true if we will use srt file
+
+    private String assPathname = "";                // ass file pathname
+    private File assFile;                           // ass file
+    private boolean useAss = false;                 // true if we will use ass file
+
+    private String ssaPathname = "";                // ssa file pathname
+    private File ssaFile;                           // ssa file
+    private boolean useSsa = false;                 // true if we will use ssa file
 
     private BufferedReader in;
     private String s;
     private String text = null;
 
-    private ArrayList<VideoPlayerSUB> parsedSmi;
-    private String t1, t2;
+    private ArrayList<VideoPlayerSubtitle> parsedSmi;
     private long timeSMI = -1;
     private boolean smiStart = false;
     private int countSmi;
 
-    private ArrayList<VideoPlayerSUB> parsedSrt;
+    private ArrayList<VideoPlayerSubtitle> parsedSrt;
     private long timeSRTstart = -1;
     private long timeSRTend = -1;
+    private String t1, t2;
     private long timeStartHour;
     private long timeStartMinute;
     private long timeStartSecond;
@@ -73,6 +84,12 @@ public class VideoPlayerActivity extends Activity implements
     private long timeEndMillisecond;
     private boolean srtStart = false;
     private int countSrt;
+
+    private ArrayList<VideoPlayerSubtitle> parsedAss;
+    private long timeASSstart = -1;
+    private long timeASSend = -1;
+    private boolean assStart = false;
+    private int countAss;
 
     private VideoView mVV_show;                     // video screen
     private TextView mVV_subtitle;                  // subtitle
@@ -111,6 +128,7 @@ public class VideoPlayerActivity extends Activity implements
         setupVideoScreen();
         setupSMI();             // prepare SMI if it exists
         setupSRT();             // prepare SRT if it exists
+        setupASS();             // prepare ASS/SSA if it exists
 
         MediaController mController = new MediaController(this);
         mController.setAnchorView(mVV_show);
@@ -142,6 +160,18 @@ public class VideoPlayerActivity extends Activity implements
             srtPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".srt";
             srtFile = new File(srtPathname);
             useSrt = srtFile.isFile() && srtFile.canRead();
+        }
+
+        if ((!useSmi) && (!useSrt)) {
+            assPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".ass";
+            assFile = new File(assPathname);
+            useAss = assFile.isFile() && assFile.canRead();
+
+            if (!useAss) {
+                ssaPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".ssa";
+                ssaFile = new File(ssaPathname);
+                useSsa = ssaFile.isFile() && ssaFile.canRead();
+            }
         }
 
         mVV_show = (VideoView) findViewById(R.id.vv_show);
@@ -184,6 +214,20 @@ public class VideoPlayerActivity extends Activity implements
                 }
             }).start();
         }
+
+        if (useAss) {
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        while (true) {
+                            Thread.sleep(300);
+                            assHandler.sendMessage(assHandler.obtainMessage());
+                        }
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }).start();
+        }
     }
 
     @Override
@@ -195,6 +239,7 @@ public class VideoPlayerActivity extends Activity implements
             setupVideoScreen();                 // prepare next movie screen
             setupSMI();
             setupSRT();
+            setupASS();
 
             mVV_show.seekTo(0);
             mVV_show.start();                   // auto start
@@ -220,6 +265,20 @@ public class VideoPlayerActivity extends Activity implements
                             while (true) {
                                 Thread.sleep(300);
                                 srtHandler.sendMessage(srtHandler.obtainMessage());
+                            }
+                        } catch (Throwable ignored) {
+                        }
+                    }
+                }).start();
+            }
+
+            if (useAss) {
+                new Thread(new Runnable() {
+                    public void run() {
+                        try {
+                            while (true) {
+                                Thread.sleep(300);
+                                assHandler.sendMessage(assHandler.obtainMessage());
                             }
                         } catch (Throwable ignored) {
                         }
@@ -252,7 +311,7 @@ public class VideoPlayerActivity extends Activity implements
             parsedSmi = new ArrayList<>();
 
             try {
-                in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(smiFile.toString())), "MS949"));
+                in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(smiFile.toString())), detectEncoding(smiFile.toString())));
             } catch (UnsupportedEncodingException | FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -262,7 +321,7 @@ public class VideoPlayerActivity extends Activity implements
                     if (s.contains("<SYNC")) {
                         smiStart = true;
                         if (timeSMI != -1) {
-                            parsedSmi.add(new VideoPlayerSUB(timeSMI, text));
+                            parsedSmi.add(new VideoPlayerSubtitle(timeSMI, text));
                         }
                         timeSMI = Integer.parseInt(s.substring(s.indexOf("=") + 1, s.indexOf(">")));
                         text = s.substring(s.indexOf(">") + 1, s.length());
@@ -321,7 +380,7 @@ public class VideoPlayerActivity extends Activity implements
             parsedSrt = new ArrayList<>();
 
             try {
-                in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(srtFile.toString())), "MS949"));
+                in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(srtFile.toString())), detectEncoding(srtFile.toString())));
             } catch (UnsupportedEncodingException | FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -331,7 +390,7 @@ public class VideoPlayerActivity extends Activity implements
                     if (s.contains("-->")) {
                         srtStart = true;
                         if (timeSRTstart != -1) {
-                            parsedSrt.add(new VideoPlayerSUB(timeSRTstart, text));
+                            parsedSrt.add(new VideoPlayerSubtitle(timeSRTstart, text));
                         }
                         t1 = s.substring(0, s.lastIndexOf(" --> "));
                         timeStartHour = Integer.parseInt(t1.substring(0, t1.indexOf(':')));
@@ -394,5 +453,136 @@ public class VideoPlayerActivity extends Activity implements
             }
         }
         return 0;
+    }
+
+    // ASS/SSA file structure:
+    //
+    // Dialog: Layer, Start, End, Style, Name, MarginalL, MarginalR, MarginalV, Effect, Text
+    // Dialog: 0,0:00:15.76, ,0:00:16.21, ... ..Text     or
+    // Dialog: 0,0:00:15.76, ,0:00:16.21, ... ..{ ... }Text
+
+    private void setupASS() {
+        if (useAss || useSsa) {
+            parsedAss = new ArrayList<>();
+
+            if (useAss) {
+                try {
+                    in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(assFile.toString())), detectEncoding(assFile.toString())));
+                } catch (UnsupportedEncodingException | FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (useSsa) {
+                try {
+                    in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(ssaFile.toString())), detectEncoding(ssaFile.toString())));
+                    useAss = true;      // treat SSA same as ASS
+                    useSsa = false;
+                } catch (UnsupportedEncodingException | FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            try {
+                while ((s = in.readLine()) != null) {
+                    if (s.contains("Dialogue:")) {
+                        assStart = true;
+                        if (timeASSstart != -1) {
+                            parsedAss.add(new VideoPlayerSubtitle(timeASSstart, text));
+                            showLog("time : " + timeASSstart + ", text : " + text);
+                        }
+                        t2 = s.substring(s.indexOf(',') + 1, s.length());
+                        t1 = t2.substring(0, t2.indexOf(','));
+                        timeStartHour = Integer.parseInt(t1.substring(0, t1.indexOf(':')));
+                        timeStartMinute = Integer.parseInt(t1.substring(t1.indexOf(':') + 1, t1.lastIndexOf(':')));
+                        timeStartSecond = Integer.parseInt(t1.substring(t1.lastIndexOf(':') + 1, t1.indexOf('.')));
+                        timeStartMillisecond = Integer.parseInt(t1.substring(t1.lastIndexOf('.') + 1, t1.length())) * 10;
+                        timeASSstart = ((timeStartHour * 60 + timeStartMinute) * 60 + timeStartSecond) * 1000 + timeStartMillisecond;
+
+                        if (timeASSstart == 372580) {
+                            showLog("current time : " + timeASSstart);
+                        }
+
+                        t1 = t2.substring(t2.lastIndexOf(",,") + 2, t2.length());
+                        if (t1.equals("")) {
+                            text = " ";     // if text is empty, just put one space
+                        } else {
+                            if (t1.substring(0, 1).equals("{")) {
+                                t1 = t2.substring(t2.lastIndexOf("}") + 1, t2.length());    // ignore { ... }
+                            }
+                            text = t1;      // we've got the text
+                        }
+                    } else if (assStart) {
+                        text = text + s.substring(0, s.length());
+                        srtStart = false;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+Handler assHandler = new Handler() {
+    public void handleMessage(Message msg) {
+        countAss = getAssSyncIndex(mVV_show.getCurrentPosition());
+        mVV_subtitle.setText(Html.fromHtml(parsedAss.get(countAss).getText()));
+    }
+};
+
+    public int getAssSyncIndex(long playTime) {
+        int l = 0, m, h = parsedAss.size();
+
+        while(l <= h) {
+            m = (l + h) / 2;
+            if(parsedAss.get(m).getTime() <= playTime && playTime < parsedAss.get(m + 1).getTime()) {
+                return m;
+            }
+            if(playTime > parsedAss.get(m + 1).getTime()) {
+                l = m + 1;
+            } else {
+                h = m - 1;
+            }
+        }
+        return 0;
+    }
+
+    private String detectEncoding(String filename) {
+        byte[] buf = new byte[4096];
+        String fileName = filename;
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(fileName);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        UniversalDetector detector = new UniversalDetector(null);
+
+        int nread;
+        try {
+            while ((nread = fis.read(buf)) > 0 && !detector.isDone()) {
+                detector.handleData(buf, 0, nread);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        detector.dataEnd();
+
+        String encoding = detector.getDetectedCharset();
+        if (encoding == null) {
+            encoding = ENCODING;        // set default encoding method
+        }
+
+        detector.reset();
+
+        return encoding;
     }
 }

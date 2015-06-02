@@ -1,10 +1,10 @@
 package com.suwonsmartapp.hello.showme;
 
-class VideoPlayerSUB {
+class VideoPlayerSubtitle {
 	long time;
 	String text;
 
-	VideoPlayerSUB(long time, String text) {
+	VideoPlayerSubtitle(long time, String text) {
 		this.time = time;
 		this.text = text;
 	}
