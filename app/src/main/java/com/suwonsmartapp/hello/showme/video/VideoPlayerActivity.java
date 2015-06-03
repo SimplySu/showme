@@ -18,7 +18,7 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.suwonsmartapp.hello.R;
-import com.suwonsmartapp.hello.showme.encoding.UniversalDetector;
+import com.suwonsmartapp.hello.showme.detect.character.CodeDetector;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -267,8 +267,27 @@ public class VideoPlayerActivity extends Activity implements
                         text = text.substring(text.indexOf(">") + 1, text.length());
                     } else {
                         if (subStart) {
-                            text = text + s;
-                            subStart = false;       // we allow just maximum two lines
+                            if (s.toLowerCase().contains("<br>")) {
+                                if (text.equals("")) {
+                                    text = text + s.substring(0, s.indexOf("<"));
+                                    if (s.substring(s.indexOf(">"), s.length()).length() > 1) {
+                                        text = text + "<br />" + s.substring(s.lastIndexOf(">") + 1, s.length());
+                                    }
+                                } else {
+                                    text = text + "<br />" + s.substring(0, s.indexOf("<"));
+                                    if (s.substring(s.indexOf(">"), s.length()).length() > 1) {
+                                        text = text + "<br />" + s.substring(s.lastIndexOf(">") + 1, s.length());
+                                    }
+                                }
+                            } else {
+                                if (text.equals("")) {
+                                    text = text + s;
+                                    subStart = false;       // we allow just maximum two lines
+                                } else {
+                                    text = text + "<br />" + s;
+                                    subStart = false;       // we allow just maximum two lines
+                                }
+                            }
                         }
                     }
                 }
@@ -329,11 +348,18 @@ public class VideoPlayerActivity extends Activity implements
 
                         text = "";      // clear text line for getting new text
                     } else if (subStart) {
-                        if (s.contains("<i>")) {
-                            text = text + s.substring(s.indexOf("<i>") + 3, s.lastIndexOf("</i>"));
-                        } else {
-                            text = text + s.substring(0, s.length());
+                        if (s.equals("")) {
                             subStart = false;
+                        } else {
+                            if (s.contains("<i>")) {
+                                text = text + s.substring(s.indexOf("<i>") + 3, s.lastIndexOf("</i>"));
+                            } else {
+                                if (text.equals("")) {
+                                    text = text + s;
+                                } else {
+                                    text = text + "<br />" + s;
+                                }
+                            }
                         }
                     }
                 }
@@ -470,7 +496,7 @@ public class VideoPlayerActivity extends Activity implements
             e.printStackTrace();
         }
 
-        UniversalDetector detector = new UniversalDetector(null);
+        CodeDetector detector = new CodeDetector(null);
 
         int nread;
         try {
