@@ -43,5 +43,4 @@ public class VideoMemoryImageCache implements VideoImageCache {
     public void clear() {
         lruCache.evictAll();
     }
-
 }

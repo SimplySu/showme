@@ -79,7 +79,7 @@ public class AudioListAdapter extends BaseAdapter {
         int extensionLength = playSong.getDisplayName().length();
         String extension = playSong.getDisplayName().substring(extensionPosition, extensionLength);
 
-        viewHolder.tvTitle.setText(playSong.getTitle() + extension);    // title.ext
+        viewHolder.tvTitle.setText(playSong.getDisplayName());    // title.ext
         viewHolder.tvArtist.setText(playSong.getArtist());              // artist
 
         if (extension.toLowerCase().equals(".mp3")) {
