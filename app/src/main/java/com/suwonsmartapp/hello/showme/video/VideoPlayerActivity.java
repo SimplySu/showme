@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -29,9 +30,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 
 public class VideoPlayerActivity extends Activity implements
@@ -89,8 +87,9 @@ public class VideoPlayerActivity extends Activity implements
     private int cell_ID;
     private int pts;
     private long filePOS;
-    private long savedSize = 0L;
+    private int savedSize = 0;
     private boolean stopFlag = false;
+    private int savedIndex;
 
     private FileInputStream accessFile;
     private byte[] buf = new byte[BUF_LENGTH];    // buffer for sub data reading, minimum 0x2000
@@ -235,26 +234,16 @@ public class VideoPlayerActivity extends Activity implements
 
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
+
+        int [] timearray = new int [] {71304, 73139, 77177, 77944, 79679, 81414};
+        // create bitmap testing code
+        for (int i : timearray) {
+            countSub = getSubSyncIndexGraphic(i);
+            mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
+        }
+
         mVV_show.seekTo(0);
         mVV_show.start();                   // auto start
-
-        // test code
-//        countSub = getSubSyncIndexGraphic(0);
-//        mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
-//
-//        countSub = getSubSyncIndexGraphic(1);
-//        mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
-//
-//        countSub = getSubSyncIndexGraphic(2);
-//        mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
-//
-//        countSub = getSubSyncIndexGraphic(3);
-//        mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
-//
-//        countSub = getSubSyncIndexGraphic(4);
-//        mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
-
-
 
         if (useSmi || useSrt || useAss || useSsa) {
             new Thread(new Runnable() {
@@ -321,7 +310,7 @@ public class VideoPlayerActivity extends Activity implements
                 public void run() {
                     try {
                         while (true) {
-                            Thread.sleep(300);
+                            Thread.sleep(500);
                             idxHandler.sendMessage(idxHandler.obtainMessage());
                         }
                     } catch (Throwable ignored) {
@@ -563,7 +552,7 @@ public class VideoPlayerActivity extends Activity implements
             }
 
             try {
-                while (((s = in.readLine()) != null) || (!stopFlag)) {
+                while (((s = in.readLine()) != null) && (!stopFlag)) {
                     if (s.contains("# Vob/Cell ID: ")) {
                         vob_ID = Integer.parseInt(s.substring(s.indexOf(":") + 1, s.indexOf(",")).trim());
 
@@ -590,14 +579,17 @@ public class VideoPlayerActivity extends Activity implements
 
                         if (savedTimeSub == -1) {
                             parsedGraphicSubtitle.add(new VideoPlayerGraphicSubtitle(timeSUB, filePOS));
+                            showLog("time stamp : " + timeSUB + ", file pos : " + filePOS);
                             savedTimeSub = timeSUB;
                             stopFlag = false;
                         } else if (timeSUB > savedTimeSub) {
                             parsedGraphicSubtitle.add(new VideoPlayerGraphicSubtitle(timeSUB, filePOS));
+                            showLog("time stamp : " + timeSUB + ", file pos : " + filePOS);
                             savedTimeSub = timeSUB;
                         } else {
                             stopFlag = true;
                         }
+
                     } else if (s.toLowerCase().contains("size:")) {
                         sizeCx = Integer.parseInt(s.substring(s.indexOf(":") + 1, s.toLowerCase().indexOf("x")).trim());
                         sizeCy = Integer.parseInt(s.substring(s.toLowerCase().indexOf("x") + 1, s.length()).trim());
@@ -614,6 +606,13 @@ public class VideoPlayerActivity extends Activity implements
                 e.printStackTrace();
             }
 
+            try {
+                accessFile = new FileInputStream(new File(subFile.toString()));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            showLog("saved " + parsedGraphicSubtitle.size() + " subtitles");
             if (parsedGraphicSubtitle.size() <= 1) {
                 useSub = false;     // if we have just one line, ignore this subtitle
             }
@@ -625,20 +624,10 @@ public class VideoPlayerActivity extends Activity implements
 
     private Bitmap getBitmapSubtitle(long filePos) {
         try {
-            accessFile = new FileInputStream(new File(subFile.toString()));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        try {
             accessFile.skip(filePos);
             numberOfRead = accessFile.read(buf, 0, buf.length);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-        try {
-            accessFile.close();
+            showLog("read " + numberOfRead + " bytes for filePOS : " + filePos);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -654,27 +643,95 @@ public class VideoPlayerActivity extends Activity implements
         // buf[hsize] 부터 size 만큼 copy
         // buf[buf[0x16] + 0x17] == (nLang | 0x20) 이면 stop
 
+        graphic = null;
+//        if (((buf[0x00] != 0x00) || (buf[0x01] != 0x00) || (buf[0x02] != 0x01) || (buf[0x03] != 0xba)) ||
+//            ((buf[0x0e] != 0x00) || (buf[0x0f] != 0x00) || (buf[0x10] != 0x01) || (buf[0x11] != 0xbd))) {
+//            return graphic;
+//        }
+
+        if (buf[0x00] != 0) { return graphic; }
+        if (buf[0x01] != 0) { return graphic; }
+        if (buf[0x02] != 1) { return graphic; }
+        if (buf[0x03] != -70) { return graphic; }
+        if (buf[0x0e] != 0) { return graphic; }
+        if (buf[0x0f] != 0) { return graphic; }
+        if (buf[0x10] != 1) { return graphic; }
+        if (buf[0x11] != -67) { return graphic; }
+        if (buf[0x16] == 0) { return graphic; }
+
         int packetSize = (buf[buf[0x16] + 0x18] << 8) + buf[buf[0x16] + 0x19];
         int dataSize = (buf[buf[0x16] + 0x1a] << 8) + buf[buf[0x16] + 0x1b];
         int hsize = 0x18 + buf[0x16];
+        if ((buf[0x15] & 0x80) != 0x00) {
+            hsize = hsize + 4;
+        }
         int ptr = buf[hsize];
         int nLang = buf[buf[0x16] + 0x17] & 0x1f;
 
-//        showToast("packet size : " + packetSize);
-//        showToast("data size : " + dataSize);
-//        showToast("hsize : " + hsize);
-//        showToast("ptr : " + ptr);
-//        showToast("nLang : " + nLang);
+        // if packetSize exceeds 0x0800 bytes, we should squeeze information area.
+//        System.arraycopy(buf, 0x0800 + 0x18, buf, 0x0800, packetSize - 0x0800 + hsize);
+//        System.arraycopy(buf, hsize, buf, 0, packetSize);
 
-        byte [] nbuf = new byte[BUF_LENGTH / 2];
-        System.arraycopy(buf, hsize + 6, nbuf, 0, packetSize);
+        if (packetSize > savedSize) {
+            savedSize = packetSize;
+            showLog("packet size = " + packetSize);
+        }
 
-        IntBuffer intBuf = ByteBuffer.wrap(nbuf).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
-        int [] ibuf = new int [intBuf.remaining()];
-        intBuf.get(ibuf);
+        if (packetSize > BUF_LENGTH) {
+            showLog("file pos : " + filePos);
+            showLog("data : " + buf[0x16] + " " + buf[0x18] + " " + buf[0x19] + " " + buf[0x1a] + " " + buf[0x1b]);
+            return graphic;
+        }
 
-        graphic = Bitmap.createBitmap(ibuf, 0, sizeCx, sizeCx, sizeCy, Bitmap.Config.ARGB_8888);
-//        graphic = Bitmap.createBitmap(ibuf, 0, sizeCx, sizeCx, sizeCy, Bitmap.Config.RGB_565);
+        // packet data = from buf[hsize] length packetSize
+        if (packetSize < (0x0800 - hsize)) {
+            // done.
+        } else if (packetSize < (0x1000 - (hsize + 0x18))) {
+            // data continues to the second block
+            for (int i = 0x0800 + 0x18, j = 0x0800; i < packetSize - 0x0800 + hsize + 0x18; i++, j++) {
+                buf[j] = buf[i];
+            }
+        } else if (packetSize < (0x1800 - (hsize + 0x18 * 2))) {
+            // data continues to the third block
+            for (int i = 0x0800 + 0x18, j = 0x0800; i < 0x1000 - 0x18; i++, j++) {
+                buf[j] = buf[i];
+            }
+            for (int i = 0x1000 + 0x18, j = 0x1000 - 0x18; i < packetSize - 0x1000 + hsize + 0x18 * 2; i++, j++) {
+                buf[j] = buf[i];
+            }
+        } else {
+            // data continues to the fourth block : if data burst, we will be dead.
+            for (int i = 0x0800 + 0x18, j = 0x0800; i < 0x1000 - 0x18; i++, j++) {
+                buf[j] = buf[i];
+            }
+            for (int i = 0x1000 + 0x18, j = 0x1000 - 0x18; i < 0x1800 - 0x18 * 2; i++, j++) {
+                buf[j] = buf[i];
+            }
+            for (int i = 0x1800 + 0x18, j = 0x1800 - 0x18 - 0x18; i < packetSize - 0x1800 + hsize + 0x18 * 3; i++, j++) {
+                buf[j] = buf[i];
+            }
+        }
+
+        // copy BYTE array into INT array
+//        IntBuffer intBuf = ByteBuffer.wrap(nbuf).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
+//        int [] ibuf = new int [intBuf.remaining()];
+//        intBuf.get(ibuf);
+
+        // now, packet data = from buf[0] length packetSize
+        graphic = Bitmap.createBitmap(sizeCx, sizeCy, Bitmap.Config.ARGB_4444);
+        Canvas canvas = new Canvas(graphic);
+        for (int i = hsize; i < dataSize; i = i + 4) {
+            int a, r, g, b;
+            a = buf[i] << 24;
+            r = buf[i + 1] << 16;
+            g = buf[i + 2] << 8;
+            b = buf[i + 3];
+            int color = (a | r | g | b);
+//            int color = ((((buf[i] >> 6) & 0x03) << 12) | (((buf[i] >> 4) & 0x03) << 8) | (((buf[i] >> 2) & 0x03) << 4) | (buf[i] & 0x03));
+            canvas.drawColor(color);
+        }
+
+        canvas.drawBitmap(graphic, 0, 0, null);
         return graphic;
     }
 
@@ -716,6 +773,7 @@ public class VideoPlayerActivity extends Activity implements
         public void handleMessage(Message msg) {
             if (mVV_show.getCurrentPosition() <= maxRunningTime) {
                 countSub = getSubSyncIndexGraphic(mVV_show.getCurrentPosition());
+                mIV_subtitle.setImageBitmap(null);
                 mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
             }
         }
