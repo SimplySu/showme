@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -36,10 +37,22 @@ import java.util.ArrayList;
 public class VideoPlayerActivity extends Activity implements
         MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
 
+    private static final boolean myDEBUG = true;
     private static final String TAG = VideoPlayerActivity.class.getSimpleName();
-    private void showLog(String msg) { Log.d(TAG, msg); }
-    private void showToast(String toast_msg) { Toast.makeText(this, toast_msg, Toast.LENGTH_LONG).show(); }
-    private static final String ENCODING = "EUC-KR";
+
+    private void showLog(String msg) {
+        if (myDEBUG) {
+            Log.d(TAG, msg);
+        }
+    }
+
+    private void showToast(String toast_msg) {
+        if (myDEBUG) {
+            Toast.makeText(this, toast_msg, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private static final String ENCODING = "EUC-KR";    // default encoding method
     private static final int BUF_LENGTH = 256 * 16 * 2;
 
     private int mCurrentPosition;                   // current playing pointer
@@ -64,6 +77,10 @@ public class VideoPlayerActivity extends Activity implements
     private String s;
     private String text = null;
     private Bitmap graphic;
+    Canvas canvas;
+    Paint p;
+    private int [] colorbuf = new int [720 * 1];
+    private int rgbReserved;
 
     private ArrayList<VideoPlayerTextSubtitle> parsedTextSubtitle;
     private ArrayList<VideoPlayerGraphicSubtitle> parsedGraphicSubtitle;
@@ -128,6 +145,9 @@ public class VideoPlayerActivity extends Activity implements
     private int y;
     private int end0;
     private int end1;
+    private int nPlane = 0;
+    private int fAligned = 1;
+    private int offset;
 
     private VideoView mVV_show;                     // video screen
     private TextView mVV_subtitle;                  // text view subtitle
@@ -767,36 +787,148 @@ public class VideoPlayerActivity extends Activity implements
 //        int [] ibuf = new int [intBuf.remaining()];
 //        intBuf.get(ibuf);
 
-        getPacketInfo();
+        getPacketInfo();        // collect rendering information
 
-        graphic = Bitmap.createBitmap(rect.right, rect.bottom, Bitmap.Config.ARGB_4444);
-        Canvas canvas = new Canvas(graphic);
+//        getBitmapData();        // collect bitmap data from subtitle packet
 
-        int end0 = nOffset[1];
-        int end1 = dataSize;
+        graphic = Bitmap.createBitmap(colorbuf, 0, rect.right, rect.right, rect.bottom, Bitmap.Config.ARGB_4444);
+        return graphic;
+    }
+
+    private void getBitmapData() {
+        int nPlane = 0;
+        int fAligned = 1;
+
+        int end0 = nOffset[1] + hsize - 4;
+        int end1 = dataSize + hsize - 4;
 
         if (nOffset[0] > nOffset[1]) {
-            end1 = nOffset[0];
-            end0 = dataSize;
+            end1 = nOffset[0] + hsize - 4;
+            end0 = dataSize + hsize - 4;
         }
 
         x = rect.left;
         y = rect.top;
+        offset = nOffset[nPlane] + hsize - 4;
 
-        while (nOffset[0] < end0) {
+        while ((((nPlane == 0) && (nOffset[0] + hsize - 4 < end0)) || ((nPlane == 1) && (nOffset[1] + hsize - 4 < end1)))) {
 
-            int a = (buf[nOffset[0]] >> 4) & 0x0f;
-            int r = buf[nOffset[0]] & 0x0f;
-            int g = (buf[nOffset[0] + 1] >> 4) & 0x0f;
-            int b = buf[nOffset[0] + 1] & 0x0f;
-            pixel = ((a << 12) | (r << 8) | (g << 4) | b);
+            int a = getNibble();
+            int b = getNibble();
+            int c = getNibble();
+            int d = getNibble();
 
-            canvas.drawARGB(a, r, g, b);
-            canvas.drawColor(pixel);
+            int code = a;
+            if (a >= 0x04) {
+                drawPixels(code >> 2, code & 3);
+            }
 
-            nOffset[0] += 2;
+            code = code << 4;
+            code = code | b;
+            if (b >= 0x10) {
+                drawPixels(code >> 2, code & 3);
+            }
+
+            code = code << 4;
+            code = code | c;
+            if (c >= 0x40) {
+                drawPixels(code >> 2, code & 3);
+            }
+
+            code = code << 4;
+            code = code | d;
+            if (d >= 0x100) {
+                drawPixels(code >> 2, code & 3);
+            }
+
+            drawPixels(rect.right - x, code & 3);
+
+            x = rect.left;
+            y++;
+            nPlane = 1 - nPlane;
+
+            nOffset[0] = nOffset[0] + 2;
+            nOffset[1] = nOffset[1] + 2;
         }
-        return graphic;
+
+        if (fAligned == 1) {
+            getNibble();        // align to byte
+        }
+
+        rect.bottom = Math.min(y, rect.bottom);
+    }
+
+    private void drawPixels(int length, int colorid) {
+        if ((length <= 0) || (x + length < rect.left) || (x >= rect.right) || (y < rect.top) || (y >= rect.bottom)) {
+            return;
+        }
+
+        if (x < rect.left) {
+            x = rect.left;
+        }
+
+        if (x + length >= rect.right) {
+            length = rect.right - x;
+        }
+
+        int ptr = rect.width() * (y - rect.top) + (x - rect.left);
+
+        int c;
+        if (!customColors) {
+            c = palette[palPal[colorid]];
+            rgbReserved = (palTr[colorid] << 4) | palTr[colorid];
+        } else {
+            c = color[colorid];
+        }
+
+        while (length-- > 0) {
+            colorbuf[ptr] = c;
+            ptr++;
+        }
+    }
+
+//    private void trimSubImage() {
+//        for (int j = 0, cy = rect.height(); j < cy; j++) {
+//            for (int i = 0, cx = rect.width(); i < cx; i++, ptr++) {
+//                if (rgbReserved != 0) {
+//                    if (rect.top > j) {
+//                        rect.top = j;
+//                    }
+//
+//                    if (rect.bottom < j) {
+//                        rect.bottom = j;
+//                    }
+//
+//                    if (rect.left < i) {
+//                        rect.left = i;
+//                    }
+//
+//                    if (rect.right < i) {
+//                        rect.right = i;
+//                    }
+//                }
+//            }
+//        }
+//
+//        if ((rect.left > rect.right) || (rect.top > rect.bottom)) {
+//            return;
+//        }
+//
+//        // code for PC
+//
+//    }
+
+    private int getNibble() {
+        int result = (buf[offset] >> (fAligned << 2)) & 0x0f;
+
+        if (fAligned == 1) {
+            fAligned = 0;
+        } else if (fAligned == 0) {
+            fAligned = 1;
+        }
+
+        offset = offset + fAligned;
+        return result;
     }
 
     private void getPacketInfo() {
