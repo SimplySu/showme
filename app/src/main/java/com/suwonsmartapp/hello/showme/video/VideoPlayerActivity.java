@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -93,6 +94,11 @@ public class VideoPlayerActivity extends Activity implements
 
     private FileInputStream accessFile;
     private byte[] buf = new byte[BUF_LENGTH];    // buffer for sub data reading, minimum 0x2000
+    private int[] palette = new int[16];            // save palette informatin on .idx file
+    private int tridx;
+    private boolean customColors;
+    private int [] color = new int [4];
+    private int pixel;
     private int numberOfRead;
     private int currentFilePointer = 0;
 
@@ -104,6 +110,24 @@ public class VideoPlayerActivity extends Activity implements
     private int savedDataSize = 0;
     private int sizeCx = 0;
     private int sizeCy = 0;
+    private int index = 0;
+
+    private boolean fForced = true;
+    private int delay = 0;
+    private int t = 0;
+    private boolean fBreak = false;
+    private int nextCtrlBlk;
+    private int pal;
+    private int tr;
+    private Rect rect = new Rect(0,0,0,0);
+    private int dataIndex;
+    private int [] nOffset = new int [2];
+    private int [] palPal = new int [4];
+    private int [] palTr = new int [4];
+    private int x;
+    private int y;
+    private int end0;
+    private int end1;
 
     private VideoView mVV_show;                     // video screen
     private TextView mVV_subtitle;                  // text view subtitle
@@ -552,7 +576,7 @@ public class VideoPlayerActivity extends Activity implements
             }
 
             try {
-                while (((s = in.readLine()) != null) && (!stopFlag)) {
+                while (((s = in.readLine()) != null) && (stopFlag == false) && (index == 0)) {
                     if (s.contains("# Vob/Cell ID: ")) {
                         vob_ID = Integer.parseInt(s.substring(s.indexOf(":") + 1, s.indexOf(",")).trim());
 
@@ -579,12 +603,12 @@ public class VideoPlayerActivity extends Activity implements
 
                         if (savedTimeSub == -1) {
                             parsedGraphicSubtitle.add(new VideoPlayerGraphicSubtitle(timeSUB, filePOS));
-                            showLog("time stamp : " + timeSUB + ", file pos : " + filePOS);
+                            showLog("index : " + index + ", time stamp : " + timeSUB + ", file pos : " + filePOS);
                             savedTimeSub = timeSUB;
                             stopFlag = false;
                         } else if (timeSUB > savedTimeSub) {
                             parsedGraphicSubtitle.add(new VideoPlayerGraphicSubtitle(timeSUB, filePOS));
-                            showLog("time stamp : " + timeSUB + ", file pos : " + filePOS);
+//                            showLog("index : " + index + ", time stamp : " + timeSUB + ", file pos : " + filePOS);
                             savedTimeSub = timeSUB;
                         } else {
                             stopFlag = true;
@@ -594,6 +618,32 @@ public class VideoPlayerActivity extends Activity implements
                         sizeCx = Integer.parseInt(s.substring(s.indexOf(":") + 1, s.toLowerCase().indexOf("x")).trim());
                         sizeCy = Integer.parseInt(s.substring(s.toLowerCase().indexOf("x") + 1, s.length()).trim());
                         showLog("screen size (x, y) = (" + sizeCx + ", " + sizeCy + ")");
+
+                    } else if (s.toLowerCase().contains("index:")) {
+                        index = Integer.parseInt(s.substring(s.toLowerCase().lastIndexOf(":") + 1, s.length()).trim());
+                        showLog("index : " + index);
+
+                    } else if (s.toLowerCase().contains("palette:")) {
+                        s = s.substring(s.toLowerCase().indexOf("palette:") + 8, s.length()).trim();
+                        s = s + ","; // for the consistency
+                        for (int i = 0; i < 16; i++) {
+                            palette[i] = Integer.parseInt(s.substring(0, s.indexOf(",")).trim(), 16);
+                            s = s.substring(s.indexOf(",") + 1, s.length());
+                        }
+
+                    } else if (s.toLowerCase().contains("custom colors:")) {
+                        String cColors = s.substring(s.indexOf("custom colors:") + 17, s.indexOf("custom colors:") + 18).toLowerCase().trim();
+                        customColors = true;        // ON
+                        if (cColors.equals("f")) {
+                            customColors = false;   // OFF
+                        }
+                        tridx = Integer.parseInt(s.substring(s.indexOf("tridx:") + 6, s.indexOf(", colors:")).trim(), 16);
+                        s = s.substring(s.indexOf(", colors:") + 9, s.length());
+                        s = s + ","; // for the consistency
+                        for (int i = 0; i < 4; i++) {
+                            color[i] = Integer.parseInt(s.substring(0, s.indexOf(",")).trim(), 16);
+                            s = s.substring(s.indexOf(",") + 1, s.length());
+                        }
                     }
                 }
             } catch (IOException e) {
@@ -659,14 +709,14 @@ public class VideoPlayerActivity extends Activity implements
         if (buf[0x11] != -67) { return graphic; }
         if (buf[0x16] == 0) { return graphic; }
 
-        int packetSize = (buf[buf[0x16] + 0x18] << 8) + buf[buf[0x16] + 0x19];
-        int dataSize = (buf[buf[0x16] + 0x1a] << 8) + buf[buf[0x16] + 0x1b];
-        int hsize = 0x18 + buf[0x16];
+        packetSize = (buf[buf[0x16] + 0x18] << 8) + buf[buf[0x16] + 0x19];
+        dataSize = (buf[buf[0x16] + 0x1a] << 8) + buf[buf[0x16] + 0x1b];
+        hsize = 0x18 + buf[0x16];
         if ((buf[0x15] & 0x80) != 0x00) {
             hsize = hsize + 4;
         }
-        int ptr = buf[hsize];
-        int nLang = buf[buf[0x16] + 0x17] & 0x1f;
+        ptr = buf[hsize];
+        nLang = buf[buf[0x16] + 0x17] & 0x1f;
 
         // if packetSize exceeds 0x0800 bytes, we should squeeze information area.
 //        System.arraycopy(buf, 0x0800 + 0x18, buf, 0x0800, packetSize - 0x0800 + hsize);
@@ -717,22 +767,109 @@ public class VideoPlayerActivity extends Activity implements
 //        int [] ibuf = new int [intBuf.remaining()];
 //        intBuf.get(ibuf);
 
-        // now, packet data = from buf[0] length packetSize
-        graphic = Bitmap.createBitmap(sizeCx, sizeCy, Bitmap.Config.ARGB_4444);
+        getPacketInfo();
+
+        graphic = Bitmap.createBitmap(rect.right, rect.bottom, Bitmap.Config.ARGB_4444);
         Canvas canvas = new Canvas(graphic);
-        for (int i = hsize; i < dataSize; i = i + 4) {
-            int a, r, g, b;
-            a = buf[i] << 24;
-            r = buf[i + 1] << 16;
-            g = buf[i + 2] << 8;
-            b = buf[i + 3];
-            int color = (a | r | g | b);
-//            int color = ((((buf[i] >> 6) & 0x03) << 12) | (((buf[i] >> 4) & 0x03) << 8) | (((buf[i] >> 2) & 0x03) << 4) | (buf[i] & 0x03));
-            canvas.drawColor(color);
+
+        int end0 = nOffset[1];
+        int end1 = dataSize;
+
+        if (nOffset[0] > nOffset[1]) {
+            end1 = nOffset[0];
+            end0 = dataSize;
         }
 
-        canvas.drawBitmap(graphic, 0, 0, null);
+        x = rect.left;
+        y = rect.top;
+
+        while (nOffset[0] < end0) {
+
+            int a = (buf[nOffset[0]] >> 4) & 0x0f;
+            int r = buf[nOffset[0]] & 0x0f;
+            int g = (buf[nOffset[0] + 1] >> 4) & 0x0f;
+            int b = buf[nOffset[0] + 1] & 0x0f;
+            pixel = ((a << 12) | (r << 8) | (g << 4) | b);
+
+            canvas.drawARGB(a, r, g, b);
+            canvas.drawColor(pixel);
+
+            nOffset[0] += 2;
+        }
         return graphic;
+    }
+
+    private void getPacketInfo() {
+        dataIndex = dataSize + hsize - 4;
+        t = ((buf[dataIndex] << 8) | buf[dataIndex + 1]);
+        showLog("t = " + buf[dataIndex] + ", " + buf[dataIndex + 1]);
+        dataIndex = dataIndex + 2;
+
+        nextCtrlBlk = ((buf[dataIndex] << 8) | buf[dataIndex + 1]);
+        showLog("nextCtrlBlk = " + buf[dataIndex] + ", " + buf[dataIndex + 1]);
+        dataIndex = dataIndex + 2;
+
+        // we should note that : dataSize < nextCtrlBlk < packetSize
+
+        do {
+            showLog("parsing data = " + buf[dataIndex] + ", " + buf[dataIndex + 1] + ", " +
+                    buf[dataIndex + 2] + ", " + buf[dataIndex + 3] + ", " + buf[dataIndex + 4] +
+                    ", " + buf[dataIndex + 5] + ", " + buf[dataIndex + 6]);
+
+            switch (buf[dataIndex++]) {
+                case 0x00:      // forced start displaying
+                    fForced = true;
+                    break;
+
+                case 0x01:      // start displaying
+                    fForced = false;
+                    break;
+
+                case 0x02:      // stop displaying
+                    delay = 1024 * t / 90;
+                    break;
+
+                case 0x03:      // get palette
+                    pal = ((buf[dataIndex] << 8) | buf[dataIndex + 1]);
+                    dataIndex = dataIndex + 2;
+                    break;
+
+                case 0x04:      // get tridx data
+                    if ((buf[dataIndex] << 8 | buf[dataIndex + 1]) != 0) {
+                        tr = ((buf[dataIndex] << 8) | buf[dataIndex + 1]);
+                    }
+                    dataIndex = dataIndex + 2;
+                    break;
+
+                case 0x05:      // get rectangle
+                    int left = (buf[dataIndex] << 4) + (buf[dataIndex + 1] >> 4);
+                    int top = (buf[dataIndex + 3] << 4) + (buf[dataIndex + 4] >> 4);
+                    int right = ((buf[dataIndex + 1] & 0x0f) << 8) + (buf[dataIndex + 2] + 1);
+                    int bottom = ((buf[dataIndex + 4] & 0x0f) << 8) + (buf[dataIndex + 5] + 1);
+                    rect = new Rect(left, top, right, bottom);
+                    dataIndex = dataIndex + 6;
+
+                case 0x06:      // get offset
+                    nOffset[0] = (buf[dataIndex] << 8) + (buf[dataIndex + 1]);
+                    dataIndex = dataIndex + 2;
+                    nOffset[1] = (buf[dataIndex] << 8) + (buf[dataIndex + 1]);
+                    dataIndex = dataIndex + 2;
+                    break;
+
+                case (byte) 0xff:      // end of control block
+                    fBreak = true;
+                    continue;
+
+                default:        // skip this control block
+                    fBreak = true;
+                    break;
+            }
+        } while (!fBreak);
+
+        for (int i = 0; i < 4; i++) {
+            palPal[i] = ((pal >> (i << 2)) & 0x0f);
+            palTr[i] = ((tr >> (i << 2)) & 0x0f);
+        }
     }
 
     Handler textHandler = new Handler() {
@@ -774,7 +911,9 @@ public class VideoPlayerActivity extends Activity implements
             if (mVV_show.getCurrentPosition() <= maxRunningTime) {
                 countSub = getSubSyncIndexGraphic(mVV_show.getCurrentPosition());
                 mIV_subtitle.setImageBitmap(null);
-                mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
+                long recordPos = parsedGraphicSubtitle.get(countSub).getFilepos();
+                mIV_subtitle.setImageBitmap(getBitmapSubtitle(recordPos));
+//                showLog("current running time : " + countSub + "position : " + recordPos);
             }
         }
     };

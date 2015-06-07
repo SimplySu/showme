@@ -133,13 +133,13 @@ public class FileListAdapter extends BaseAdapter {
                 R.drawable.file_music_wma, R.drawable.file_music_ape};
 
         String[] video = {"avi", "mkv", "mp4", "wmv", "asf", "mov", "mpg", "flv", "tp", "3gp",
-                "m4v", "rmvb", "webm", "smi", "srt", "sub"};
+                "m4v", "rmvb", "webm", "smi", "srt", "sub", "idx"};
         int[] videoR = {R.drawable.file_movie_avi, R.drawable.file_movie_mkv, R.drawable.file_movie_mp4,
                 R.drawable.file_movie_wmv, R.drawable.file_movie_asf, R.drawable.file_movie_mov,
                 R.drawable.file_movie_mpg, R.drawable.file_movie_flv, R.drawable.file_movie_tp,
                 R.drawable.file_movie_3gp, R.drawable.file_movie_m4v, R.drawable.file_movie_rmvb,
                 R.drawable.file_movie_webm, R.drawable.file_document_smi, R.drawable.file_document_srt,
-                R.drawable.file_document_sub};
+                R.drawable.file_document_sub, R.drawable.file_document_idx};
 
         String[] image = {"jpg", "jpeg", "gif", "png", "bmp", "tif", "tiff", "webp"};
         int[] imageR = {R.drawable.file_image_jpg, R.drawable.file_image_jpeg, R.drawable.file_image_gif,
