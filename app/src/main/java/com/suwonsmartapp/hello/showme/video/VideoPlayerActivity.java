@@ -37,23 +37,12 @@ import java.util.ArrayList;
 public class VideoPlayerActivity extends Activity implements
         MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
 
-    private static final boolean myDEBUG = true;
     private static final String TAG = VideoPlayerActivity.class.getSimpleName();
-
-    private void showLog(String msg) {
-        if (myDEBUG) {
-            Log.d(TAG, msg);
-        }
-    }
-
-    private void showToast(String toast_msg) {
-        if (myDEBUG) {
-            Toast.makeText(this, toast_msg, Toast.LENGTH_LONG).show();
-        }
-    }
+    private void showLog(String msg) { Log.d(TAG, msg); }
+    private void showToast(String toast_msg) { Toast.makeText(this, toast_msg, Toast.LENGTH_LONG).show(); }
 
     private static final String ENCODING = "EUC-KR";    // default encoding method
-    private static final int BUF_LENGTH = 256 * 16 * 2;
+    private static final int BUF_LENGTH = 256 * 8 * 3;
 
     private int mCurrentPosition;                   // current playing pointer
     private ArrayList<VideoFileInfo> mVideoFileInfoList;    // video file media_player_icon_information list
@@ -79,7 +68,6 @@ public class VideoPlayerActivity extends Activity implements
     private Bitmap graphic;
     Canvas canvas;
     Paint p;
-    private int [] colorbuf = new int [720 * 1];
     private int rgbReserved;
 
     private ArrayList<VideoPlayerTextSubtitle> parsedTextSubtitle;
@@ -110,7 +98,7 @@ public class VideoPlayerActivity extends Activity implements
     private int savedIndex;
 
     private FileInputStream accessFile;
-    private byte[] buf = new byte[BUF_LENGTH];    // buffer for sub data reading, minimum 0x2000
+    private byte[] buf = new byte[BUF_LENGTH];    // buffer for sub data reading, minimum 0x1800
     private int[] palette = new int[16];            // save palette informatin on .idx file
     private int tridx;
     private boolean customColors;
@@ -121,6 +109,7 @@ public class VideoPlayerActivity extends Activity implements
 
     private int packetSize = 0;
     private int dataSize = 0;
+    private int dataPointer = 0;
     private int hsize = 0;
     private int ptr = 0;
     private int nLang = 0;
@@ -283,7 +272,8 @@ public class VideoPlayerActivity extends Activity implements
         // create bitmap testing code
         for (int i : timearray) {
             countSub = getSubSyncIndexGraphic(i);
-            mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
+//            mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
+            getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos());
         }
 
         mVV_show.seekTo(0);
@@ -587,6 +577,119 @@ public class VideoPlayerActivity extends Activity implements
         }
     }
 
+    /*
+
+    .idx file example
+
+    # VobSub index file, v7 (do not modify this line!)
+    #
+    # To repair desyncronization, you can insert gaps this way:
+    # (it usually happens after vob id changes)
+    #
+    #	 delay: [sign]hh:mm:ss:ms
+    #
+    # Where:
+    #	 [sign]: +, - (optional)
+    #	 hh: hours (0 <= hh)
+    #	 mm/ss: minutes/seconds (0 <= mm/ss <= 59)
+    #	 ms: milliseconds (0 <= ms <= 999)
+    #
+    #	 Note: You can't position a sub before the previous with a negative value.
+    #
+    # You can also modify timestamps or delete a few subs you don't like.
+    # Just make sure they stay in increasing order.
+
+
+    # Settings
+
+    # Original frame size
+    size: 720x480
+
+    # Origin, relative to the upper-left corner, can be overloaded by aligment
+    org: 0, 0
+
+    # Image scaling (hor,ver), origin is at the upper-left corner or at the alignment coord (x, y)
+    scale: 100%, 100%
+
+    # Alpha blending
+    alpha: 100%
+
+    # Smoothing for very blocky images (use OLD for no filtering)
+    smooth: OFF
+
+    # In millisecs
+    fadein/out: 50, 50
+
+    # Force subtitle placement relative to (org.x, org.y)
+    align: OFF at LEFT TOP
+
+    # For correcting non-progressive desync. (in millisecs or hh:mm:ss:ms)
+    # Note: Not effective in DirectVobSub, use "delay: ... " instead.
+    time offset: 0
+
+    # ON: displays only forced subtitles, OFF: shows everything
+    forced subs: OFF
+
+    # The original palette of the DVD
+    palette: e83f07, e19120, f3c71b, f8ff18, 9bd22a, 54a530, 12eb12, 15bef6, 0300e3, 4c0353, c12262, ffffff, b3b3b3, 808080, 4e4e4e, 000000
+
+    # Custom colors (transp idxs and the four colors)
+    custom colors: OFF, tridx: 1000, colors: ffffff, ffffff, 808080, 000000
+
+    # Language index in use
+    langidx: 0
+
+    # Chinese
+    id: zh, index: 0
+    # Decomment next line to activate alternative name in DirectVobSub / Windows Media Player 6.x
+    # alt: Chinese
+    # Vob/Cell ID: 1, 2 (PTS: 65931)
+    timestamp: 00:01:06:633, filepos: 000000000
+    timestamp: 00:01:11:304, filepos: 000004000
+    timestamp: 00:01:13:139, filepos: 000005800
+    timestamp: 00:01:17:177, filepos: 000008000
+        .............................
+    timestamp: 00:12:49:468, filepos: 0001de800
+    timestamp: 00:12:51:937, filepos: 0001e1800
+    timestamp: 00:12:53:572, filepos: 0001e4000
+    # Vob/Cell ID: 1, 3 (PTS: 780346)
+    timestamp: 00:13:01:447, filepos: 0001e5800
+    timestamp: 00:13:02:615, filepos: 0001e7000
+    timestamp: 00:13:04:016, filepos: 0001e9800
+        .............................
+    timestamp: 01:38:21:662, filepos: 000f04000
+    timestamp: 01:38:23:297, filepos: 000f08000
+    timestamp: 01:38:30:070, filepos: 000f0a800
+
+    # English
+    id: en, index: 1
+    # Decomment next line to activate alternative name in DirectVobSub / Windows Media Player 6.x
+    # alt: English
+    # Vob/Cell ID: 1, 2 (PTS: 65931)
+    timestamp: 00:01:06:633, filepos: 000002000
+    timestamp: 00:01:11:304, filepos: 000003800
+    timestamp: 00:01:13:139, filepos: 000006000
+        .............................
+        .............................
+    timestamp: 01:38:21:662, filepos: 000f05000
+    timestamp: 01:38:23:297, filepos: 000f09000
+    timestamp: 01:38:30:070, filepos: 000f0b000
+
+    # Chinese
+    id: zh, index: 2
+    # Decomment next line to activate alternative name in DirectVobSub / Windows Media Player 6.x
+    # alt: Chinese
+    # Vob/Cell ID: 1, 2 (PTS: 65931)
+    timestamp: 00:01:06:633, filepos: 000001000
+    timestamp: 00:01:11:304, filepos: 000003000
+    timestamp: 00:01:13:139, filepos: 000004800
+        .............................
+        .............................
+    timestamp: 01:38:21:662, filepos: 000f04800
+    timestamp: 01:38:23:297, filepos: 000f07000
+    timestamp: 01:38:30:070, filepos: 000f0a000
+    */
+
     private void setupSUB() {
         if (useSub) {
             try {
@@ -637,11 +740,11 @@ public class VideoPlayerActivity extends Activity implements
                     } else if (s.toLowerCase().contains("size:")) {
                         sizeCx = Integer.parseInt(s.substring(s.indexOf(":") + 1, s.toLowerCase().indexOf("x")).trim());
                         sizeCy = Integer.parseInt(s.substring(s.toLowerCase().indexOf("x") + 1, s.length()).trim());
-                        showLog("screen size (x, y) = (" + sizeCx + ", " + sizeCy + ")");
+//                        showLog("screen size (x, y) = (" + sizeCx + ", " + sizeCy + ")");
 
                     } else if (s.toLowerCase().contains("index:")) {
                         index = Integer.parseInt(s.substring(s.toLowerCase().lastIndexOf(":") + 1, s.length()).trim());
-                        showLog("index : " + index);
+//                        showLog("index : " + index);
 
                     } else if (s.toLowerCase().contains("palette:")) {
                         s = s.substring(s.toLowerCase().indexOf("palette:") + 8, s.length()).trim();
@@ -689,45 +792,59 @@ public class VideoPlayerActivity extends Activity implements
         }
     }
 
-    // subtitle file is (File) subFile
-    // purpose is to make bitmap file and put it into image view.
+    // packet header rule (.sub file) :
+    //
+    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    // | 00 | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0a | 0b | 0c | 0d | 0e | 0f | address
+    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    // | 00 | 00 | 01 | ba |    |    |    |    |    |    |    |    |    |    | 00 | 00 | data
+    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    //
+    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    // | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 1a | 1b | 1c | 1d | 1e | 1f | address
+    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    // | 01 | bd |    |    |    |(*1)| pq |(*2)|    |    |    |    |    | wx | yz | WX | data
+    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    //
+    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    // | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 2a | 2b | 2c | 2d | 2e | 2f | address
+    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    // | YZ |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    | data
+    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    //
+    // buf[0x00] should be 00 00 01 ba (fixed value)
+    // buf[0x0e] should be 00 00 01 bd (fixed value)
+    // (*1) buf[0x15] & 0x80 should be true
+    // (*2) (buf[0x17] & 0xf0) should be 0x20
+    // (buf[buf[0x16] + 0x17] & 0xe0) should be 0x20
+    // (buf[buf[0x16] + 0x17] & 0x1f) should be supported number of Language
+    //
+    // buf[16] = [pq] = normally 0x05 (very first block can contains 0x08, it means there are optional information 3 bytes)
+    // packet size = (buf[buf[0x16] + 0x18] << 8) + buf[buf[0x16] + 0x19] = normally wxyz(hexa)
+    // data size = (buf[buf[0x16] + 0x1a] << 8) + buf[buf[0x16] + 0x1b] = normally WXYZ(hexa)
+    //
+    // for example,
+    // buf[0x16] = 05(pq), buf[0x1d] = 07(wx), buf[0x1e] = 9a(yz), buf[0x1f] = 07(WX), buf[0x20] = 7b(YZ)
+    // then, packet size = 0x079a bytes, data size = 0x077b bytes
+    // thus, information length = packet size - data size = 0x079a - 0x077b = 0x1f bytes
 
-    private Bitmap getBitmapSubtitle(long filePos) {
+    // for example,
+    // buf[0x16] = 08(pq), buf[0x20] = 0b(wx), buf[0x21] = 70(yz), buf[0x22] = 0b(WX), buf[0x23] = 51(YZ)
+    // then, packet size = 0x0b70 bytes, data size = 0x0b51 bytes
+    // thus, information length = packet size - data size = 0x0b70 - 0x0b51 = 0x1f bytes
+
+    private boolean getBitmapSubtitle(long filePos) {
         try {
             accessFile.skip(filePos);
             numberOfRead = accessFile.read(buf, 0, buf.length);
-
-            showLog("read " + numberOfRead + " bytes for filePOS : " + filePos);
+//            showLog("read " + numberOfRead + " bytes for filePOS : " + filePos);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        // buf[0x00] should be 00 00 01 ba
-        // buf[0x0e] should be 00 00 01 bd
-        // buf[0x15] & 0x80 should be true
-        // (buf[0x17] & 0xf0) should be 0x20
-        // (buf[buf[0x16] + 0x17] & 0xe0) should be 0x20
-        // (buf[buf[0x16] + 0x17] & 0x1f) should be supported number of Language
-
-        // packetSize 와 0x800 - hsize 중에서 적은 것이 size
-        // buf[hsize] 부터 size 만큼 copy
-        // buf[buf[0x16] + 0x17] == (nLang | 0x20) 이면 stop
-
-        graphic = null;
-//        if (((buf[0x00] != 0x00) || (buf[0x01] != 0x00) || (buf[0x02] != 0x01) || (buf[0x03] != 0xba)) ||
-//            ((buf[0x0e] != 0x00) || (buf[0x0f] != 0x00) || (buf[0x10] != 0x01) || (buf[0x11] != 0xbd))) {
-//            return graphic;
-//        }
-
-        if (buf[0x00] != 0) { return graphic; }
-        if (buf[0x01] != 0) { return graphic; }
-        if (buf[0x02] != 1) { return graphic; }
-        if (buf[0x03] != -70) { return graphic; }
-        if (buf[0x0e] != 0) { return graphic; }
-        if (buf[0x0f] != 0) { return graphic; }
-        if (buf[0x10] != 1) { return graphic; }
-        if (buf[0x11] != -67) { return graphic; }
-        if (buf[0x16] == 0) { return graphic; }
+        if ((buf[0x00] != 0) || (buf[0x01] != 0) || (buf[0x02] != 1) || (buf[0x03] != -70)) { return false; }
+        if ((buf[0x0e] != 0) || (buf[0x0f] != 0) || (buf[0x10] != 1) || (buf[0x11] != -67)) { return false; }
+        if (buf[0x16] == 0) { return false; }
 
         packetSize = (buf[buf[0x16] + 0x18] << 8) + buf[buf[0x16] + 0x19];
         dataSize = (buf[buf[0x16] + 0x1a] << 8) + buf[buf[0x16] + 0x1b];
@@ -743,17 +860,62 @@ public class VideoPlayerActivity extends Activity implements
 //        System.arraycopy(buf, hsize, buf, 0, packetSize);
 
         if (packetSize > savedSize) {
-            savedSize = packetSize;
+            savedSize = packetSize;         // we want to see how much data comming
             showLog("packet size = " + packetSize);
         }
 
         if (packetSize > BUF_LENGTH) {
-            showLog("file pos : " + filePos);
-            showLog("data : " + buf[0x16] + " " + buf[0x18] + " " + buf[0x19] + " " + buf[0x1a] + " " + buf[0x1b]);
-            return graphic;
+//            showLog("file pos : " + filePos);
+//            showLog("data : " + buf[0x16] + " " + buf[0x18] + " " + buf[0x19] + " " + buf[0x1a] + " " + buf[0x1b]);
+            return false;
         }
 
         // packet data = from buf[hsize] length packetSize
+        condenseBuffer();
+
+        // copy BYTE array into INT array
+//        IntBuffer intBuf = ByteBuffer.wrap(nbuf).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
+//        int [] ibuf = new int [intBuf.remaining()];
+//        intBuf.get(ibuf);
+
+        Canvas canvas = new Canvas();
+
+        getPacketInfo();        // collect rendering information
+
+        getBitmapData();        // collect bitmap data from subtitle packet
+
+//        graphic = Bitmap.createBitmap(colorbuf, 0, rect.right, rect.right, rect.bottom, Bitmap.Config.ARGB_4444);
+        return true;
+    }
+
+    // we have four blocks of buffer, one buffer contains 0x0800 bytes.
+    // each buffer have packet header (length is vary)
+    // if we treat two more blocks of data, we should get rid of this packet header from the second block.
+    // packet header length of the second block to fourth block is 0x18 bytes.
+    // if the packet exceeds four blocks (0x0800 * 4 bytes), we just ignore it because we can't display it by time limitation.
+
+    // buf[0]
+    // +-----------------------+       +-----------------------+
+    // |   packet header 1     |       |   packet header 1     | <-- hsize bytes
+    // +-----------------------+       +-----------------------+
+    // |                       |       |                       |
+    // |   data block 1        |       |   data block 1        | <-- 0x0800 - hsize bytes
+    // |                       |       |                       |
+    // +-----------------------+       +-----------------------+
+    // |   packet header 2     |       |                       |
+    // +-----------------------+       |   data block 2        | <-- 0x0800 - 0x18 bytes
+    // |                       |  ==>  |                       |
+    // |   data block 2        |       +-----------------------+
+    // |                       |       |                       |
+    // +-----------------------+       |   data block 3        |   maximum real data will be
+    // |   packet header 3     |       |                       |   0x0800 * 3 - hsize - 0x18 * 2 bytes
+    // +-----------------------+       +-----------------------+
+    // |                       |
+    // |   data block 3        |
+    // |                       |
+    // +-----------------------+
+
+    private void condenseBuffer() {
         if (packetSize < (0x0800 - hsize)) {
             // done.
         } else if (packetSize < (0x1000 - (hsize + 0x18))) {
@@ -762,49 +924,42 @@ public class VideoPlayerActivity extends Activity implements
                 buf[j] = buf[i];
             }
         } else if (packetSize < (0x1800 - (hsize + 0x18 * 2))) {
-            // data continues to the third block
+            // data continues to the third block : if data burst, we will be dead.
             for (int i = 0x0800 + 0x18, j = 0x0800; i < 0x1000 - 0x18; i++, j++) {
                 buf[j] = buf[i];
             }
             for (int i = 0x1000 + 0x18, j = 0x1000 - 0x18; i < packetSize - 0x1000 + hsize + 0x18 * 2; i++, j++) {
                 buf[j] = buf[i];
             }
-        } else {
-            // data continues to the fourth block : if data burst, we will be dead.
-            for (int i = 0x0800 + 0x18, j = 0x0800; i < 0x1000 - 0x18; i++, j++) {
-                buf[j] = buf[i];
-            }
-            for (int i = 0x1000 + 0x18, j = 0x1000 - 0x18; i < 0x1800 - 0x18 * 2; i++, j++) {
-                buf[j] = buf[i];
-            }
-            for (int i = 0x1800 + 0x18, j = 0x1800 - 0x18 - 0x18; i < packetSize - 0x1800 + hsize + 0x18 * 3; i++, j++) {
-                buf[j] = buf[i];
-            }
         }
-
-        // copy BYTE array into INT array
-//        IntBuffer intBuf = ByteBuffer.wrap(nbuf).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
-//        int [] ibuf = new int [intBuf.remaining()];
-//        intBuf.get(ibuf);
-
-        getPacketInfo();        // collect rendering information
-
-//        getBitmapData();        // collect bitmap data from subtitle packet
-
-        graphic = Bitmap.createBitmap(colorbuf, 0, rect.right, rect.right, rect.bottom, Bitmap.Config.ARGB_4444);
-        return graphic;
     }
 
+    // buf[0]
+    // +-----------------------+
+    // |   packet header       | (packet header length = hsize)
+    // +-----------------------+ <-----+ <-----+ buf[hsize]
+    // |                       |       |       |
+    // |                       |       |       |
+    // |   subtitle data       |       | data  |
+    // |                       |       | size  | packet
+    // |                       |       |       | size
+    // |                       |       |       |
+    // +-----------------------+ <-----+       |
+    // |   information         |               |   (information length = packet size - data size)
+    // +-----------------------+         <-----+
+
     private void getBitmapData() {
+        dataPointer = dataSize + hsize - 4;
+
         int nPlane = 0;
         int fAligned = 1;
 
         int end0 = nOffset[1] + hsize - 4;
-        int end1 = dataSize + hsize - 4;
+        int end1 = dataPointer;
 
         if (nOffset[0] > nOffset[1]) {
             end1 = nOffset[0] + hsize - 4;
-            end0 = dataSize + hsize - 4;
+            end0 = dataPointer;
         }
 
         x = rect.left;
@@ -882,7 +1037,7 @@ public class VideoPlayerActivity extends Activity implements
         }
 
         while (length-- > 0) {
-            colorbuf[ptr] = c;
+//            colorbuf[ptr] = c;            // delete temporarily
             ptr++;
         }
     }
@@ -934,19 +1089,19 @@ public class VideoPlayerActivity extends Activity implements
     private void getPacketInfo() {
         dataIndex = dataSize + hsize - 4;
         t = ((buf[dataIndex] << 8) | buf[dataIndex + 1]);
-        showLog("t = " + buf[dataIndex] + ", " + buf[dataIndex + 1]);
+//        showLog("t = " + buf[dataIndex] + ", " + buf[dataIndex + 1]);
         dataIndex = dataIndex + 2;
 
         nextCtrlBlk = ((buf[dataIndex] << 8) | buf[dataIndex + 1]);
-        showLog("nextCtrlBlk = " + buf[dataIndex] + ", " + buf[dataIndex + 1]);
+//        showLog("nextCtrlBlk = " + buf[dataIndex] + ", " + buf[dataIndex + 1]);
         dataIndex = dataIndex + 2;
 
         // we should note that : dataSize < nextCtrlBlk < packetSize
 
         do {
-            showLog("parsing data = " + buf[dataIndex] + ", " + buf[dataIndex + 1] + ", " +
-                    buf[dataIndex + 2] + ", " + buf[dataIndex + 3] + ", " + buf[dataIndex + 4] +
-                    ", " + buf[dataIndex + 5] + ", " + buf[dataIndex + 6]);
+//            showLog("parsing data = " + buf[dataIndex] + ", " + buf[dataIndex + 1] + ", " +
+//                    buf[dataIndex + 2] + ", " + buf[dataIndex + 3] + ", " + buf[dataIndex + 4] +
+//                    ", " + buf[dataIndex + 5] + ", " + buf[dataIndex + 6]);
 
             switch (buf[dataIndex++]) {
                 case 0x00:      // forced start displaying
@@ -1043,8 +1198,8 @@ public class VideoPlayerActivity extends Activity implements
             if (mVV_show.getCurrentPosition() <= maxRunningTime) {
                 countSub = getSubSyncIndexGraphic(mVV_show.getCurrentPosition());
                 mIV_subtitle.setImageBitmap(null);
-                long recordPos = parsedGraphicSubtitle.get(countSub).getFilepos();
-                mIV_subtitle.setImageBitmap(getBitmapSubtitle(recordPos));
+                getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos());
+//                mIV_subtitle.setImageBitmap(getBitmapSubtitle(recordPos));
 //                showLog("current running time : " + countSub + "position : " + recordPos);
             }
         }
