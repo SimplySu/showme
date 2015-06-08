@@ -37,12 +37,13 @@ import java.util.ArrayList;
 public class VideoPlayerActivity extends Activity implements
         MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
 
-    private static final String TAG = VideoPlayerActivity.class.getSimpleName();
-    private void showLog(String msg) { Log.d(TAG, msg); }
-    private void showToast(String toast_msg) { Toast.makeText(this, toast_msg, Toast.LENGTH_LONG).show(); }
+    private final boolean nowDEBUG = false;
+    private final String TAG = VideoPlayerActivity.class.getSimpleName();
+    private void showLog(String msg) { if (nowDEBUG) { Log.d(TAG, msg);}}
+    private void showToast(String toast_msg) { if (nowDEBUG) { Toast.makeText(this, toast_msg, Toast.LENGTH_LONG).show(); }}
 
-    private static final String ENCODING = "EUC-KR";    // default encoding method
-    private static final int BUF_LENGTH = 256 * 8 * 3;
+    private final String ENCODING = "EUC-KR";    // default encoding method
+    private final int BUF_LENGTH = 256 * 8 * 3;
 
     private int mCurrentPosition;                   // current playing pointer
     private ArrayList<VideoFileInfo> mVideoFileInfoList;    // video file media_player_icon_information list
@@ -128,15 +129,16 @@ public class VideoPlayerActivity extends Activity implements
     private Rect rect = new Rect(0,0,0,0);
     private int dataIndex;
     private int [] nOffset = new int [2];
+    private int nPlane;
     private int [] palPal = new int [4];
     private int [] palTr = new int [4];
     private int x;
     private int y;
     private int end0;
     private int end1;
-    private int nPlane = 0;
     private int fAligned = 1;
     private int offset;
+    private int [] pixels = new int [740 * 480];
 
     private VideoView mVV_show;                     // video screen
     private TextView mVV_subtitle;                  // text view subtitle
@@ -218,6 +220,7 @@ public class VideoPlayerActivity extends Activity implements
         mVV_show.requestFocus();                                    // set focus
     }
 
+    // see if .smi, .srt, .ass, .ssa, .idx, and .sub file exists.
     private void detectSubtitle() {
         subPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".smi";
         subFile = new File(subPathname);
@@ -272,8 +275,7 @@ public class VideoPlayerActivity extends Activity implements
         // create bitmap testing code
         for (int i : timearray) {
             countSub = getSubSyncIndexGraphic(i);
-//            mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
-            getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos());
+            mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
         }
 
         mVV_show.seekTo(0);
@@ -298,7 +300,7 @@ public class VideoPlayerActivity extends Activity implements
                 public void run() {
                     try {
                         while (true) {
-                            Thread.sleep(300);
+                            Thread.sleep(1000);
                             idxHandler.sendMessage(idxHandler.obtainMessage());
                         }
                     } catch (Throwable ignored) {
@@ -344,7 +346,7 @@ public class VideoPlayerActivity extends Activity implements
                 public void run() {
                     try {
                         while (true) {
-                            Thread.sleep(500);
+                            Thread.sleep(1000);
                             idxHandler.sendMessage(idxHandler.obtainMessage());
                         }
                     } catch (Throwable ignored) {
@@ -365,6 +367,53 @@ public class VideoPlayerActivity extends Activity implements
 
         super.onDestroy();
     }
+
+/*
+    .smi file example
+
+    <SAMI>
+    <HEAD>
+    <Title>Delta.of.Venus.1995.x264.DTS.CD1-MoMo</Title>
+    <Style TYPE="text/css">
+    <!--
+    P {margin-left:2pt; margin-right:2pt; margin-bottom:1pt; margin-top:1pt;
+    text-align:center; font-size:22pt; font-family: Arial, Sans-serif;
+    font-weight:bold; color:white;}
+    .KRCC {Name:Korean; lang:ko-KR; SAMIType:CC;}
+    #STDPrn {Name:Standard Print;}
+    #VLargePrn {Name:32pt (VLarge Print); font-size:32pt;}
+    #LargePrn {Name:28pt (Large Print); font-size:28pt;}
+    #MediumPrn {Name:24pt (Medium Print); font-size:24pt;}
+    #BSmallPrn {Name:18pt (BSmall Print); font-size:18pt;}
+    #SmallPrn {Name:12pt (Small Print); font-size:12pt;}
+    -->
+    </Style>
+    </HEAD>
+    <BODY>
+    <!--
+    서브변환 : 조이데이(goowoo5@korea.com)
+    Special Thanks 메가무비동호회
+    -->
+    <SYNC Start=36536><P Class=KRCC>
+    <span style=color:black;filter:glow(color=dodgerblue);height:1>
+    DELTA OF VENUS</span><br><font color=#46b8ff>
+    델타비너스
+    <SYNC Start=41496><P Class=KRCC>&nbsp;
+    <SYNC Start=42675><P Class=KRCC><font color=skyblue>
+    파리, 1940년 1월 6일
+    <SYNC Start=48204><P Class=KRCC>&nbsp;
+    <SYNC Start=48281><P Class=KRCC>
+    또, 그녀는 밤새 글을 썼다
+    ..........................................................
+    ..........................................................
+    ..........................................................
+    <SYNC Start=3137960><P Class=KRCC>&nbsp;
+    <SYNC Start=3139803><P Class=KRCC>
+    원하는 게 나이겠지
+    <SYNC Start=3143295><P Class=KRCC>&nbsp;
+    </BODY>
+    </SAMI>
+*/
 
     // SMI file structure:
     //
@@ -431,6 +480,34 @@ public class VideoPlayerActivity extends Activity implements
             }
         }
     }
+
+/*
+    .srt file example
+
+    1
+    00:00:00,025 --> 00:00:03,070
+    >> Welcome to Android Fundamentals.
+
+    2
+    00:00:03,070 --> 00:00:05,720
+    Getting started on Android is straightforward.
+
+    3
+    00:00:05,720 --> 00:00:09,210
+    Simply installing Android Studio and creating a new project is enough to
+
+    ..........................................................
+    ..........................................................
+    ..........................................................
+
+    23
+    00:01:01,300 --> 00:01:03,270
+    Katherine, why don't you get us started.
+
+    24
+    00:01:03,270 --> 00:01:03,770
+    >> Sure.
+*/
 
     // SRT file structure:
     //
@@ -503,6 +580,48 @@ public class VideoPlayerActivity extends Activity implements
             }
         }
     }
+
+/*
+    .ass file example
+
+    [Script Info]
+    ; Script generated by Aegisub 2.1.8
+    ; http://www.aegisub.org/
+    Title: Default Aegisub file
+    ScriptType: v4.00+
+    WrapStyle: 0
+    PlayResX: 640
+    PlayResY: 480
+    ScaledBorderAndShadow: yes
+    Video Aspect Ratio: 0
+    Video Zoom: 6
+    Video Position: 0
+    Last Style Storage: Default
+
+    [V4+ Styles]
+    Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+    Style: Default,Arial,25,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1
+
+    [Events]
+    Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+    Comment: 0,0:00:00.00,0:00:00.00,Default,,0000,0000,0000,,This line has some Arabic text to check for basic support.
+    Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0000,0000,0000,,هل تعمل اللغة العربية؟
+    Comment: 0,0:00:02.00,0:00:02.00,Default,,0000,0000,0000,,These are typeset words with diacritics. They also demonstrate some "ligatures".
+    Dialogue: 0,0:00:02.00,0:00:04.00,Default,,0000,0000,0000,,{\pos(323,84)\frz345.949}نَصٌّ
+    Dialogue: 0,0:00:02.00,0:00:04.00,Default,,0000,0000,0000,,{\frx28\fry322\fscx251.25\fscy308.75\pos(318,177)}تجريبيّ
+    Dialogue: 0,0:00:02.00,0:00:04.00,Default,,0000,0000,0000,,{\frz25.57\fscx368.75\fscy352.5\pos(346,305)}عَرَبيّ
+    Dialogue: 0,0:00:02.00,0:00:04.00,Default,,0000,0000,0000,,{\pos(319,430)\fscx260\fscy258.75\clip(305,327,353,460)}مقطوع
+    Comment: 0,0:00:04.00,0:00:04.00,Default,,0000,0000,0000,,This line test a common bug. Using tags on a word in an RTL line usually messes up its order.
+    Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0000,0000,0000,,{\frz328.582\fscx357.5\fscy445\frx58\fry6\pos(292,250)}{\1c&H0000FF&}هذا {\1c&H00FF00&}نص {\1c&HFF0000&}ملون
+    Comment: 0,0:00:06.00,0:00:06.00,Default,,0000,0000,0000,,Numbers in a RTL line. They should be displayed as 1432 and 2011.
+    Dialogue: 0,0:00:06.00,0:00:08.00,Default,,0000,0000,0000,,كُتب هذا الملف عام 1432 هـ الموافق 2011 م
+    Comment: 0,0:00:08.00,0:00:08.00,Default,,0000,0000,0000,,Another common problem: punctuations at the beginning or the end of a line are sometimes rendered at the wrong end of the line.
+    Dialogue: 0,0:00:08.00,0:00:10.00,Default,,0000,0000,0000,,- علامات الترقيم تعمل!
+    Comment: 0,0:00:10.00,0:00:10.00,Default,,0000,0000,0000,,A LTR word in a punctuated RTL context and vice-versa.
+    Dialogue: 0,0:00:10.00,0:00:12.00,Default,,0000,0000,0000,,- اللغة الرسمية في Germany هي الألمانية.\N- The official language in مصر is Arabic.
+    Comment: 0,0:00:12.00,0:00:12.00,Default,,0000,0000,0000,,Bidi karaoke has never worked before. Say hello to kickass-libass!!
+    Dialogue: 0,0:00:12.00,0:00:18.00,Default,,0000,0000,0000,,{\k59}كا{\k58}ر{\k54}يو{\k59}كي {\k63}La{\k55}tin {\k52}و{\k58}ع{\k54}ر{\k53}بي!
+*/
 
     // ASS/SSA file structure:
     //
@@ -577,8 +696,7 @@ public class VideoPlayerActivity extends Activity implements
         }
     }
 
-    /*
-
+/*
     .idx file example
 
     # VobSub index file, v7 (do not modify this line!)
@@ -688,7 +806,7 @@ public class VideoPlayerActivity extends Activity implements
     timestamp: 01:38:21:662, filepos: 000f04800
     timestamp: 01:38:23:297, filepos: 000f07000
     timestamp: 01:38:30:070, filepos: 000f0a000
-    */
+*/
 
     private void setupSUB() {
         if (useSub) {
@@ -756,10 +874,7 @@ public class VideoPlayerActivity extends Activity implements
 
                     } else if (s.toLowerCase().contains("custom colors:")) {
                         String cColors = s.substring(s.indexOf("custom colors:") + 17, s.indexOf("custom colors:") + 18).toLowerCase().trim();
-                        customColors = true;        // ON
-                        if (cColors.equals("f")) {
-                            customColors = false;   // OFF
-                        }
+                        customColors = !cColors.equals("f");        // ON : true, OFF : false
                         tridx = Integer.parseInt(s.substring(s.indexOf("tridx:") + 6, s.indexOf(", colors:")).trim(), 16);
                         s = s.substring(s.indexOf(", colors:") + 9, s.length());
                         s = s + ","; // for the consistency
@@ -792,48 +907,50 @@ public class VideoPlayerActivity extends Activity implements
         }
     }
 
-    // packet header rule (.sub file) :
-    //
-    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    // | 00 | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0a | 0b | 0c | 0d | 0e | 0f | address
-    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    // | 00 | 00 | 01 | ba |    |    |    |    |    |    |    |    |    |    | 00 | 00 | data
-    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    //
-    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    // | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 1a | 1b | 1c | 1d | 1e | 1f | address
-    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    // | 01 | bd |    |    |    |(*1)| pq |(*2)|    |    |    |    |    | wx | yz | WX | data
-    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    //
-    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    // | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 2a | 2b | 2c | 2d | 2e | 2f | address
-    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    // | YZ |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    | data
-    // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    //
-    // buf[0x00] should be 00 00 01 ba (fixed value)
-    // buf[0x0e] should be 00 00 01 bd (fixed value)
-    // (*1) buf[0x15] & 0x80 should be true
-    // (*2) (buf[0x17] & 0xf0) should be 0x20
-    // (buf[buf[0x16] + 0x17] & 0xe0) should be 0x20
-    // (buf[buf[0x16] + 0x17] & 0x1f) should be supported number of Language
-    //
-    // buf[16] = [pq] = normally 0x05 (very first block can contains 0x08, it means there are optional information 3 bytes)
-    // packet size = (buf[buf[0x16] + 0x18] << 8) + buf[buf[0x16] + 0x19] = normally wxyz(hexa)
-    // data size = (buf[buf[0x16] + 0x1a] << 8) + buf[buf[0x16] + 0x1b] = normally WXYZ(hexa)
-    //
-    // for example,
-    // buf[0x16] = 05(pq), buf[0x1d] = 07(wx), buf[0x1e] = 9a(yz), buf[0x1f] = 07(WX), buf[0x20] = 7b(YZ)
-    // then, packet size = 0x079a bytes, data size = 0x077b bytes
-    // thus, information length = packet size - data size = 0x079a - 0x077b = 0x1f bytes
+/*
+    packet header rule (.sub file) :
 
-    // for example,
-    // buf[0x16] = 08(pq), buf[0x20] = 0b(wx), buf[0x21] = 70(yz), buf[0x22] = 0b(WX), buf[0x23] = 51(YZ)
-    // then, packet size = 0x0b70 bytes, data size = 0x0b51 bytes
-    // thus, information length = packet size - data size = 0x0b70 - 0x0b51 = 0x1f bytes
+    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    | 00 | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0a | 0b | 0c | 0d | 0e | 0f | address
+    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    | 00 | 00 | 01 | ba |    |    |    |    |    |    |    |    |    |    | 00 | 00 | data
+    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
 
-    private boolean getBitmapSubtitle(long filePos) {
+    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 1a | 1b | 1c | 1d | 1e | 1f | address
+    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    | 01 | bd |    |    |    |(*1)| pq |(*2)|    |    |    |    |    | wx | yz | WX | data
+    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+
+    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 2a | 2b | 2c | 2d | 2e | 2f | address
+    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    | YZ |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    | data
+    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+
+    buf[0x00] should be 00 00 01 ba (fixed value)
+    buf[0x0e] should be 00 00 01 bd (fixed value)
+    (*1) buf[0x15] & 0x80 should be true
+    (*2) (buf[0x17] & 0xf0) should be 0x20
+    (buf[buf[0x16] + 0x17] & 0xe0) should be 0x20
+    (buf[buf[0x16] + 0x17] & 0x1f) should be supported number of Language
+
+    buf[16] = [pq] = normally 0x05 (very first block can contains 0x08, it means there are optional information 3 bytes)
+    packet size = (buf[buf[0x16] + 0x18] << 8) + buf[buf[0x16] + 0x19] = normally wxyz(hexa)
+    data size = (buf[buf[0x16] + 0x1a] << 8) + buf[buf[0x16] + 0x1b] = normally WXYZ(hexa)
+
+    for example,
+    buf[0x16] = 05(pq), buf[0x1d] = 07(wx), buf[0x1e] = 9a(yz), buf[0x1f] = 07(WX), buf[0x20] = 7b(YZ)
+    then, packet size = 0x079a bytes, data size = 0x077b bytes
+    thus, information length = packet size - data size = 0x079a - 0x077b = 0x1f bytes
+
+    for example,
+    buf[0x16] = 08(pq), buf[0x20] = 0b(wx), buf[0x21] = 70(yz), buf[0x22] = 0b(WX), buf[0x23] = 51(YZ)
+    then, packet size = 0x0b70 bytes, data size = 0x0b51 bytes
+    thus, information length = packet size - data size = 0x0b70 - 0x0b51 = 0x1f bytes
+*/
+
+    private Bitmap getBitmapSubtitle(long filePos) {
         try {
             accessFile.skip(filePos);
             numberOfRead = accessFile.read(buf, 0, buf.length);
@@ -842,9 +959,10 @@ public class VideoPlayerActivity extends Activity implements
             e.printStackTrace();
         }
 
-        if ((buf[0x00] != 0) || (buf[0x01] != 0) || (buf[0x02] != 1) || (buf[0x03] != -70)) { return false; }
-        if ((buf[0x0e] != 0) || (buf[0x0f] != 0) || (buf[0x10] != 1) || (buf[0x11] != -67)) { return false; }
-        if (buf[0x16] == 0) { return false; }
+        graphic = null; // we will return null if the condition does not match
+        if ((buf[0x00] != 0) || (buf[0x01] != 0) || (buf[0x02] != 1) || (buf[0x03] != -70)) { return graphic; }
+        if ((buf[0x0e] != 0) || (buf[0x0f] != 0) || (buf[0x10] != 1) || (buf[0x11] != -67)) { return graphic; }
+        if (buf[0x16] == 0) { return graphic; }
 
         packetSize = (buf[buf[0x16] + 0x18] << 8) + buf[buf[0x16] + 0x19];
         dataSize = (buf[buf[0x16] + 0x1a] << 8) + buf[buf[0x16] + 0x1b];
@@ -867,7 +985,7 @@ public class VideoPlayerActivity extends Activity implements
         if (packetSize > BUF_LENGTH) {
 //            showLog("file pos : " + filePos);
 //            showLog("data : " + buf[0x16] + " " + buf[0x18] + " " + buf[0x19] + " " + buf[0x1a] + " " + buf[0x1b]);
-            return false;
+            return graphic;
         }
 
         // packet data = from buf[hsize] length packetSize
@@ -878,42 +996,44 @@ public class VideoPlayerActivity extends Activity implements
 //        int [] ibuf = new int [intBuf.remaining()];
 //        intBuf.get(ibuf);
 
-        Canvas canvas = new Canvas();
+//        Canvas canvas = new Canvas();
 
         getPacketInfo();        // collect rendering information
 
         getBitmapData();        // collect bitmap data from subtitle packet
 
-//        graphic = Bitmap.createBitmap(colorbuf, 0, rect.right, rect.right, rect.bottom, Bitmap.Config.ARGB_4444);
-        return true;
+        graphic = Bitmap.createBitmap(pixels, 0, rect.right, rect.right, rect.bottom, Bitmap.Config.ARGB_8888);
+        return graphic;
     }
 
-    // we have four blocks of buffer, one buffer contains 0x0800 bytes.
-    // each buffer have packet header (length is vary)
-    // if we treat two more blocks of data, we should get rid of this packet header from the second block.
-    // packet header length of the second block to fourth block is 0x18 bytes.
-    // if the packet exceeds four blocks (0x0800 * 4 bytes), we just ignore it because we can't display it by time limitation.
+/*
+    we have four blocks of buffer, one buffer contains 0x0800 bytes.
+    each buffer have packet header (length is vary)
+    if we treat two more blocks of data, we should get rid of this packet header from the second block.
+    packet header length of the second block to fourth block is 0x18 bytes.
+    if the packet exceeds four blocks (0x0800 * 4 bytes), we just ignore it because we can't display it by time limitation.
 
-    // buf[0]
-    // +-----------------------+       +-----------------------+
-    // |   packet header 1     |       |   packet header 1     | <-- hsize bytes
-    // +-----------------------+       +-----------------------+
-    // |                       |       |                       |
-    // |   data block 1        |       |   data block 1        | <-- 0x0800 - hsize bytes
-    // |                       |       |                       |
-    // +-----------------------+       +-----------------------+
-    // |   packet header 2     |       |                       |
-    // +-----------------------+       |   data block 2        | <-- 0x0800 - 0x18 bytes
-    // |                       |  ==>  |                       |
-    // |   data block 2        |       +-----------------------+
-    // |                       |       |                       |
-    // +-----------------------+       |   data block 3        |   maximum real data will be
-    // |   packet header 3     |       |                       |   0x0800 * 3 - hsize - 0x18 * 2 bytes
-    // +-----------------------+       +-----------------------+
-    // |                       |
-    // |   data block 3        |
-    // |                       |
-    // +-----------------------+
+    buf[0]
+    +-----------------------+       +-----------------------+
+    |   packet header 1     |       |   packet header 1     | <-- hsize bytes
+    +-----------------------+       +-----------------------+
+    |                       |       |                       |
+    |   data block 1        |       |   data block 1        | <-- 0x0800 - hsize bytes
+    |                       |       |                       |
+    +-----------------------+       +-----------------------+
+    |   packet header 2     |       |                       |
+    +-----------------------+       |   data block 2        | <-- 0x0800 - 0x18 bytes
+    |                       |  ==>  |                       |
+    |   data block 2        |       +-----------------------+
+    |                       |       |                       |
+    +-----------------------+       |   data block 3        |   maximum real data will be
+    |   packet header 3     |       |                       |   0x0800 * 3 - hsize - 0x18 * 2 bytes
+    +-----------------------+       +-----------------------+
+    |                       |
+    |   data block 3        |
+    |                       |
+    +-----------------------+
+*/
 
     private void condenseBuffer() {
         if (packetSize < (0x0800 - hsize)) {
@@ -951,63 +1071,40 @@ public class VideoPlayerActivity extends Activity implements
     private void getBitmapData() {
         dataPointer = dataSize + hsize - 4;
 
-        int nPlane = 0;
-        int fAligned = 1;
+        int nPlane = 0;         // from the first line
+        int fAligned = 1;       // from the high nibble
 
-        int end0 = nOffset[1] + hsize - 4;
+        int end0 = nOffset[1];
         int end1 = dataPointer;
 
         if (nOffset[0] > nOffset[1]) {
-            end1 = nOffset[0] + hsize - 4;
+            end1 = nOffset[0];
             end0 = dataPointer;
         }
 
         x = rect.left;
         y = rect.top;
-        offset = nOffset[nPlane] + hsize - 4;
 
-        while ((((nPlane == 0) && (nOffset[0] + hsize - 4 < end0)) || ((nPlane == 1) && (nOffset[1] + hsize - 4 < end1)))) {
+        while ((nPlane == 0 && nOffset[0] < end0) || (nPlane == 1 && nOffset[1] < end1)) {
+            int code;
 
-            int a = getNibble();
-            int b = getNibble();
-            int c = getNibble();
-            int d = getNibble();
-
-            int code = a;
-            if (a >= 0x04) {
+            if((code = getNibble()) >= 0x4
+                    || (code = (code << 4) | getNibble()) >= 0x10
+                    || (code = (code << 4) | getNibble()) >= 0x40
+                    || (code = (code << 4) | getNibble()) >= 0x100) {
                 drawPixels(code >> 2, code & 3);
-            }
-
-            code = code << 4;
-            code = code | b;
-            if (b >= 0x10) {
-                drawPixels(code >> 2, code & 3);
-            }
-
-            code = code << 4;
-            code = code | c;
-            if (c >= 0x40) {
-                drawPixels(code >> 2, code & 3);
-            }
-
-            code = code << 4;
-            code = code | d;
-            if (d >= 0x100) {
-                drawPixels(code >> 2, code & 3);
+                if((x += code >> 2) < rect.right) continue;
             }
 
             drawPixels(rect.right - x, code & 3);
 
+            if (fAligned == 0) { getNibble(); }        // align to byte
+
+            nOffset[nPlane] += 2;
+
             x = rect.left;
             y++;
-            nPlane = 1 - nPlane;
-
-            nOffset[0] = nOffset[0] + 2;
-            nOffset[1] = nOffset[1] + 2;
-        }
-
-        if (fAligned == 1) {
-            getNibble();        // align to byte
+            nPlane = 1 - nPlane;        // go to the second line
         }
 
         rect.bottom = Math.min(y, rect.bottom);
@@ -1037,8 +1134,7 @@ public class VideoPlayerActivity extends Activity implements
         }
 
         while (length-- > 0) {
-//            colorbuf[ptr] = c;            // delete temporarily
-            ptr++;
+            pixels[ptr++] = c;            // delete temporarily
         }
     }
 
@@ -1073,7 +1169,9 @@ public class VideoPlayerActivity extends Activity implements
 //
 //    }
 
+    // offset moves 0.5 bytes (4 bits) because of fAligned value.
     private int getNibble() {
+        offset = nOffset[nPlane];
         int result = (buf[offset] >> (fAligned << 2)) & 0x0f;
 
         if (fAligned == 1) {
@@ -1085,6 +1183,109 @@ public class VideoPlayerActivity extends Activity implements
         offset = offset + fAligned;
         return result;
     }
+
+/*
+    Sub-Pictures
+    The typical arrangement of data in the 53220 byte buffer for sub-pictures is
+            +------+-------+-------+----------+
+            | (1)  |      (2)      |    (3)   |
+            | SPUH | PXDtf | PXDbf | SP_DCSQT |
+            +------+-------+-------+----------+
+    However, the only requirement is that the header (SPUH) be first, all other areas are reached by pointers.
+
+
+    (1) SPUH (Sub-Picture Unit Header)
+    2 words (small endian - least significant byte last)
+            offset	name	    contents
+                0	SPDSZ	    the size of the total sub-picture data (which may span packets)
+                2	SP_DCSQTA	offset within the Sub-Picture Unit to the SP_DCSQT
+
+
+    (2) PXDtf and PXDbf
+
+    PiXel Data
+    These are the rle compressed pixel data for the top field (lines 1, 3, 5, etc) and
+    the bottom field (lines 2, 4, 6, etc) respectively
+    Individual pixels may have one of four values, commonly referred to as background (0), pattern (1), emphasis 1 (2),
+    and emphasis 2 (3).
+    Each coded value indicates the number of pixels having the same code value, and can be in one of four forms,
+    depending on the number of identical pixels
+            range	bits	format
+            1-3	    4	    n n c c
+            4-15	8	    0 0 n n n n c c
+            16-63	12	    0 0 0 0 n n n n n n c c
+            64-255	16	    0 0 0 0 0 0 n n n n n n n n c c
+    One special case, encoding a count of zero using the 16-bit format indicates the same pixel value until the end of the line.
+    If, at the end of a line, the bit count is not a multiple of 8, four fill bits of 0 are added.
+
+
+    (3) SP_DCSQT (Sub-Picture Display Control SeQuence Table)
+    This area contains blocks (SP_DCSQ) of commands to the decoder. Each SP_DCSQ begins with a 2 word header
+            offset	name	        contents
+                0	SP_DCSQ_STM	    delay to wait before executing these commands.
+                                    The units are 90KHz clock (same as PTM) divided by 1024 - see conversion aids
+                2	SP_NXT_DCSQ_SA	offset within the Sub-Picture Unit to the next SP_DCSQ.
+                                    If this is the last SP_DCSQ, it points to itself.
+
+    (4) Commands
+
+    There are eight commands available for Sub-Pictures.
+    The first SP_DCSQ should contain, as a minimum, SET_COLOR, SET_CONTR, SET_DAREA, and SET_DSPXA.
+
+    FF - CMD_END - ends one SP_DCSQ
+
+    00 - FSTA_DSP - Forced Start Display, no arguments
+
+    01 - STA_DSP - Start Display, no arguments
+
+    02 - STP_DSP - Stop Display, no arguments
+
+    03 - SET_COLOR - provides four indices into the CLUT for the current PGC to associate with the four pixel values.
+                     One nibble per pixel value for a total of 2 bytes.
+        e2 e1   p b
+
+    04 - SET_CONTR - directly provides the four contrast (alpha blend) values to associate with the four pixel values.
+                     One nibble per pixel value for a total of 2 bytes. 0x0 = transparent, 0xF = opaque
+        e2 e1   p b
+
+    05 - SET_DAREA - defines the display area, each pair (X and Y) of values is 3 bytes wide,
+                     for a total of 6 bytes, and has the form
+        sx sx   sx ex   ex ex   sy sy   sy ey   ey ey
+            sx = starting X coordinate
+            ex = ending X coordinate
+            sy = starting Y coordinate
+            ey = ending Y coordinate
+
+    06 - SET_DSPXA - defines the pixel data addresses.
+                     First a 2-byte offset to the top field data, followed by a 2-byte offset to the bottom field data,
+                     for a total of 4 bytes.
+
+    07 - CHG_COLCON - allows for changing the COLor and CONtrast within one or more areas of the display.
+                  This command contains a series of parameters, arranged in a hierarchy.
+                  Following the command byte is a 2-byte value for the total size of the parameter area, including the size word.
+                  The parameter sequence begins with a LN_CTLI, which defines a vertically bounded area of the display.
+                  The LN_CTLI may include from one to fifteen PX_CTLI parameters, which define a starting horizontal position
+                  and new color and contrast value to apply from that column on towards the right to the next PX_CTLI or
+                  the right side of the display.
+
+         LN_CTLI, 4 bytes, special value of 0f ff ff ff signifies the end of the parameter area
+                  (this termination code MUST be present as the last parameter)
+                    0 s   s s   n t   t t
+                        sss = csln, the starting (top-most) line number for this area
+                        n = number of PX_CTLI to follow
+                        ttt = ctln, the terminating (bottom-most) line number for this area
+
+         PX_CTLI, 6 bytes, defines a starting column and new color and contrast values
+                    bytes 0 and 1 - starting column number
+                    bytes 2 and 3 - new color values, as per SET_COLOR
+                    bytes 4 and 5 - new contrast values, as per SET_CONTR
+
+
+    Converting frames and time to SP_DCSQ_STM values
+
+    The direct method of converting time to delay values is to multiply time in seconds by 90000/1024 and truncate the value.
+    Rounding up will cause the display to occur one frame late.
+*/
 
     private void getPacketInfo() {
         dataIndex = dataSize + hsize - 4;
@@ -1103,25 +1304,30 @@ public class VideoPlayerActivity extends Activity implements
 //                    buf[dataIndex + 2] + ", " + buf[dataIndex + 3] + ", " + buf[dataIndex + 4] +
 //                    ", " + buf[dataIndex + 5] + ", " + buf[dataIndex + 6]);
 
-            switch (buf[dataIndex++]) {
+            switch (buf[dataIndex]) {
                 case 0x00:      // forced start displaying
+                    dataIndex++;
                     fForced = true;
                     break;
 
                 case 0x01:      // start displaying
+                    dataIndex++;
                     fForced = false;
                     break;
 
                 case 0x02:      // stop displaying
+                    dataIndex++;
                     delay = 1024 * t / 90;
                     break;
 
                 case 0x03:      // get palette
+                    dataIndex++;
                     pal = ((buf[dataIndex] << 8) | buf[dataIndex + 1]);
                     dataIndex = dataIndex + 2;
                     break;
 
                 case 0x04:      // get tridx data
+                    dataIndex++;
                     if ((buf[dataIndex] << 8 | buf[dataIndex + 1]) != 0) {
                         tr = ((buf[dataIndex] << 8) | buf[dataIndex + 1]);
                     }
@@ -1129,6 +1335,7 @@ public class VideoPlayerActivity extends Activity implements
                     break;
 
                 case 0x05:      // get rectangle
+                    dataIndex++;
                     int left = (buf[dataIndex] << 4) + (buf[dataIndex + 1] >> 4);
                     int top = (buf[dataIndex + 3] << 4) + (buf[dataIndex + 4] >> 4);
                     int right = ((buf[dataIndex + 1] & 0x0f) << 8) + (buf[dataIndex + 2] + 1);
@@ -1136,18 +1343,21 @@ public class VideoPlayerActivity extends Activity implements
                     rect = new Rect(left, top, right, bottom);
                     dataIndex = dataIndex + 6;
 
-                case 0x06:      // get offset
-                    nOffset[0] = (buf[dataIndex] << 8) + (buf[dataIndex + 1]);
+                case 0x06:      // get offset of top line (plane 0) and bottom line (plane 1)
+                    dataIndex++;
+                    nOffset[0] = (buf[dataIndex] << 8) + (buf[dataIndex + 1]) + hsize;
                     dataIndex = dataIndex + 2;
-                    nOffset[1] = (buf[dataIndex] << 8) + (buf[dataIndex + 1]);
+                    nOffset[1] = (buf[dataIndex] << 8) + (buf[dataIndex + 1]) + hsize;
                     dataIndex = dataIndex + 2;
                     break;
 
                 case (byte) 0xff:      // end of control block
+                    dataIndex++;
                     fBreak = true;
                     continue;
 
                 default:        // skip this control block
+                    dataIndex++;
                     fBreak = true;
                     break;
             }
@@ -1197,10 +1407,8 @@ public class VideoPlayerActivity extends Activity implements
         public void handleMessage(Message msg) {
             if (mVV_show.getCurrentPosition() <= maxRunningTime) {
                 countSub = getSubSyncIndexGraphic(mVV_show.getCurrentPosition());
-                mIV_subtitle.setImageBitmap(null);
-                getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos());
-//                mIV_subtitle.setImageBitmap(getBitmapSubtitle(recordPos));
-//                showLog("current running time : " + countSub + "position : " + recordPos);
+//                mIV_subtitle.setImageBitmap(null);
+                mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
             }
         }
     };
