@@ -4,16 +4,19 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.text.Html;
 import android.util.Log;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -37,13 +40,14 @@ import java.util.ArrayList;
 public class VideoPlayerActivity extends Activity implements
         MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
 
-    private final boolean nowDEBUG = false;
+    private final boolean nowDEBUG = true;
     private final String TAG = VideoPlayerActivity.class.getSimpleName();
     private void showLog(String msg) { if (nowDEBUG) { Log.d(TAG, msg);}}
     private void showToast(String toast_msg) { if (nowDEBUG) { Toast.makeText(this, toast_msg, Toast.LENGTH_LONG).show(); }}
 
     private final String ENCODING = "EUC-KR";    // default encoding method
     private final int BUF_LENGTH = 256 * 8 * 3;
+    private final int sleepTime = 500;         // 1000 means 1 second
 
     private int mCurrentPosition;                   // current playing pointer
     private ArrayList<VideoFileInfo> mVideoFileInfoList;    // video file media_player_icon_information list
@@ -78,6 +82,7 @@ public class VideoPlayerActivity extends Activity implements
     private boolean subStart = false;
     private int countSub;
     private long maxRunningTime = 0L;
+    private int savedCountSub = -1;
 
     private long timeSUBstart = -1;
     private long timeSUBend = -1;
@@ -141,7 +146,7 @@ public class VideoPlayerActivity extends Activity implements
     private int [] pixels = new int [740 * 480];
 
     private VideoView mVV_show;                     // video screen
-    private TextView mVV_subtitle;                  // text view subtitle
+    private TextView mTV_subtitle;                  // text view subtitle
     private ImageView mIV_subtitle;                 // image view subtitle
 
     private int volume_Max = 0;
@@ -157,6 +162,11 @@ public class VideoPlayerActivity extends Activity implements
     public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
     private Bundle extraVideoPlayerService;
     private Intent intentVideoPlayerService;
+
+    String sPathDownload = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
+    private int bcount = 0;
+    private String bmp [] = {"bmp01.bmp", "bmp02.bmp", "bmp03.bmp", "bmp04.bmp", "bmp05.bmp",
+            "bmp06.bmp", "bmp07.bmp", "bmp08.bmp", "bmp09.bmp", "bmp10.bmp"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -209,12 +219,11 @@ public class VideoPlayerActivity extends Activity implements
         requestedPathname = fullPathname.substring(0, i);          // get requested pathname
         requestedFilename = fullPathname.substring(i + 1, j);      // and filename
 
-        detectSubtitle();               // see if there exist .smi .srt .ass .ssa file
-
         mVV_show = (VideoView) findViewById(R.id.vv_show);
-        mVV_subtitle = (TextView)findViewById(R.id.vv_subtitle);
+        mTV_subtitle = (TextView)findViewById(R.id.vv_subtitle);
         mIV_subtitle = (ImageView)findViewById(R.id.iv_subtitle);
-        mVV_subtitle.setText("");
+
+        detectSubtitle();               // see if there exist .smi .srt .ass .ssa file
 
         mVV_show.setVideoPath(fullPathname);                        // setting video path
         mVV_show.requestFocus();                                    // set focus
@@ -260,10 +269,15 @@ public class VideoPlayerActivity extends Activity implements
         }
 
         if (useSmi || useSrt || useAss || useSsa) {
+            mIV_subtitle.setVisibility(View.GONE);
+            mTV_subtitle.setVisibility(View.VISIBLE);
+            mTV_subtitle.setText("");
             parsedTextSubtitle = new ArrayList<>();
         }
 
         if (useSub) {
+            mIV_subtitle.setVisibility(View.VISIBLE);
+            mTV_subtitle.setVisibility(View.GONE);
             parsedGraphicSubtitle = new ArrayList<>();
         }
     }
@@ -276,6 +290,7 @@ public class VideoPlayerActivity extends Activity implements
         for (int i : timearray) {
             countSub = getSubSyncIndexGraphic(i);
             mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
+//            mIV_subtitle.setImageBitmap(getBimage());
         }
 
         mVV_show.seekTo(0);
@@ -300,7 +315,7 @@ public class VideoPlayerActivity extends Activity implements
                 public void run() {
                     try {
                         while (true) {
-                            Thread.sleep(1000);
+                            Thread.sleep(sleepTime);
                             idxHandler.sendMessage(idxHandler.obtainMessage());
                         }
                     } catch (Throwable ignored) {
@@ -346,7 +361,7 @@ public class VideoPlayerActivity extends Activity implements
                 public void run() {
                     try {
                         while (true) {
-                            Thread.sleep(1000);
+                            Thread.sleep(sleepTime);
                             idxHandler.sendMessage(idxHandler.obtainMessage());
                         }
                     } catch (Throwable ignored) {
@@ -1002,7 +1017,9 @@ public class VideoPlayerActivity extends Activity implements
 
         getBitmapData();        // collect bitmap data from subtitle packet
 
-        graphic = Bitmap.createBitmap(pixels, 0, rect.right, rect.right, rect.bottom, Bitmap.Config.ARGB_8888);
+//        trimSubImage();         // cut off rest area
+
+        graphic = Bitmap.createBitmap(pixels, 0, rect.width(), rect.right, rect.bottom, Bitmap.Config.ARGB_8888);
         return graphic;
     }
 
@@ -1103,7 +1120,9 @@ public class VideoPlayerActivity extends Activity implements
             nOffset[nPlane] += 2;
 
             x = rect.left;
-            y++;
+            if (nPlane == 1) {
+                y++;
+            }
             nPlane = 1 - nPlane;        // go to the second line
         }
 
@@ -1134,40 +1153,53 @@ public class VideoPlayerActivity extends Activity implements
         }
 
         while (length-- > 0) {
-            pixels[ptr++] = c;            // delete temporarily
+            pixels[ptr] = c;            // delete temporarily
+            ptr++;
         }
     }
 
-//    private void trimSubImage() {
-//        for (int j = 0, cy = rect.height(); j < cy; j++) {
-//            for (int i = 0, cx = rect.width(); i < cx; i++, ptr++) {
-//                if (rgbReserved != 0) {
-//                    if (rect.top > j) {
-//                        rect.top = j;
-//                    }
-//
-//                    if (rect.bottom < j) {
-//                        rect.bottom = j;
-//                    }
-//
-//                    if (rect.left < i) {
-//                        rect.left = i;
-//                    }
-//
-//                    if (rect.right < i) {
-//                        rect.right = i;
-//                    }
-//                }
-//            }
-//        }
-//
-//        if ((rect.left > rect.right) || (rect.top > rect.bottom)) {
-//            return;
-//        }
-//
-//        // code for PC
-//
-//    }
+    private void trimSubImage() {
+        rect.left = rect.width();
+        rect.top = rect.height();
+        rect.right = 0;
+        rect.bottom = 0;
+        ptr = 0;
+
+        for (int j = 0, y = rect.height(); j < y; j++) {
+            for (int i = 0, x = rect.width(); i < x; i++, ptr++) {
+                if (rgbReserved != 0) {
+                    if (rect.top > j) { rect.top = j; }
+                    if (rect.bottom < j) { rect.bottom = j; }
+                    if (rect.left < i) { rect.left = i; }
+                    if (rect.right < i) { rect.right = i; }
+                }
+            }
+        }
+
+        if ((rect.left > rect.right) || (rect.top > rect.bottom)) { return; }
+
+        rect.right += 1;
+        rect.bottom += 1;
+
+        rect.left &= 0;
+        rect.top &= 0;
+        rect.right &= rect.width();
+        rect.bottom &= rect.height();
+
+        int w = rect.width();
+        int h = rect.height();
+        int offset = rect.top * rect.width() + rect.left;
+
+        rect.left += 1;
+        rect.top += 1;
+        rect.right += 1;
+        rect.bottom += 1;
+
+        for (h = rect.height(); h < 0; h--) {
+            pixels[offset] = 0;
+            offset += w;
+        }
+    }
 
     // offset moves 0.5 bytes (4 bits) because of fAligned value.
     private int getNibble() {
@@ -1373,7 +1405,7 @@ public class VideoPlayerActivity extends Activity implements
         public void handleMessage(Message msg) {
             if (mVV_show.getCurrentPosition() <= maxRunningTime) {
                 countSub = getSubSyncIndexText(mVV_show.getCurrentPosition());
-                mVV_subtitle.setText(Html.fromHtml(parsedTextSubtitle.get(countSub).getText()));
+                mTV_subtitle.setText(Html.fromHtml(parsedTextSubtitle.get(countSub).getText()));
             }
         }
     };
@@ -1407,11 +1439,25 @@ public class VideoPlayerActivity extends Activity implements
         public void handleMessage(Message msg) {
             if (mVV_show.getCurrentPosition() <= maxRunningTime) {
                 countSub = getSubSyncIndexGraphic(mVV_show.getCurrentPosition());
+                if (countSub != savedCountSub) {
+                    savedCountSub = countSub;
 //                mIV_subtitle.setImageBitmap(null);
                 mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
+//                    mIV_subtitle.setImageBitmap(getBimage());
+                }
             }
         }
     };
+
+    private Bitmap getBimage() {
+        Bitmap btm = BitmapFactory.decodeFile(sPathDownload + "/" + bmp[bcount]);
+        showLog("count : " + bcount);
+        bcount = bcount + 1;
+        if (bcount >= 10) {
+            bcount = 0;
+        }
+        return btm;
+    }
 
     public int getSubSyncIndexGraphic(long playTime) {
         int lowLimit = 0;
@@ -1467,6 +1513,10 @@ public class VideoPlayerActivity extends Activity implements
             int h = parsedTextSubtitle.size() - 1;
             maxRunningTime = parsedTextSubtitle.get(h).getTime();
             parsedTextSubtitle.add(new VideoPlayerTextSubtitle(maxRunningTime + 500, "The End"));
+        } else if (useSub) {
+            int h = parsedGraphicSubtitle.size() - 1;
+            maxRunningTime = parsedGraphicSubtitle.get(h).getTime();
+            parsedGraphicSubtitle.add(new VideoPlayerGraphicSubtitle(maxRunningTime + 500, 0L));
         }
     }
 }
