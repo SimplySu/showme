@@ -4,12 +4,10 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.text.Html;
@@ -33,6 +31,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
 public class VideoPlayerActivity extends Activity implements
@@ -45,7 +45,7 @@ public class VideoPlayerActivity extends Activity implements
 
     private final String ENCODING = "EUC-KR";       // default encoding method
     private final int BUF_LENGTH = 256 * 8 * 4;     // enough size
-    private final int sleepTime = 500;              // 1000 means 1 second
+    private final int sleepTime = 300;              // 1000 means 1 second
 
     private int mCurrentPosition;                   // current playing pointer
     private ArrayList<VideoFileInfo> mVideoFileInfoList;    // video file media_player_icon_information list
@@ -53,29 +53,6 @@ public class VideoPlayerActivity extends Activity implements
     private String requestedPathname = "";          // specified pathname by user from intent
     private String requestedFilename = "";          // specified filename by user from intent
     private String fullPathname = "";              // full path + filename
-
-    private int rgbReserved;
-
-    private boolean fForced = true;
-    private int delay = 0;
-    private int t = 0;
-    private boolean fBreak = false;
-    private int nextCtrlBlk;
-    private int pal;
-    private int tr;
-    private Rect rect = new Rect(0,0,0,0);
-    private int dataIndex;
-    private int [] nOffset = new int [2];
-    private int nPlane;
-    private int [] palPal = new int [4];
-    private int [] palTr = new int [4];
-    private int x;
-    private int y;
-    private int end0;
-    private int end1;
-    private int fAligned = 1;
-    private int offset;
-    private int [] pixels = new int [740 * 480];
 
     private VideoView mVV_show;                     // video screen
     private TextView mTV_subtitle;                  // text view subtitle
@@ -94,11 +71,6 @@ public class VideoPlayerActivity extends Activity implements
     public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
     private Bundle extraVideoPlayerService;
     private Intent intentVideoPlayerService;
-
-    String sPathDownload = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
-    private int bcount = 0;
-    private String bmp [] = {"bmp01.bmp", "bmp02.bmp", "bmp03.bmp", "bmp04.bmp", "bmp05.bmp",
-            "bmp06.bmp", "bmp07.bmp", "bmp08.bmp", "bmp09.bmp", "bmp10.bmp"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -173,6 +145,8 @@ public class VideoPlayerActivity extends Activity implements
     private String idxPathname = "";                // idx file pathname
     private File idxFile;                           // idx file
 
+    private byte [] subtitleFile;                     // buffer for reading all of .sub file
+
     private boolean useSmi = false;                 // true if we will use smi file
     private boolean useSrt = false;                 // true if we will use srt file
     private boolean useAss = false;                 // true if we will use ass file
@@ -228,6 +202,30 @@ public class VideoPlayerActivity extends Activity implements
             mIV_subtitle.setVisibility(View.VISIBLE);
             mTV_subtitle.setVisibility(View.GONE);
             parsedGraphicSubtitle = new ArrayList<>();
+
+            subtitleFile = new byte[(int) subFile.length()];
+
+            FileInputStream f = null;
+            try {
+                f = new FileInputStream(subFile);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            FileChannel ch = f.getChannel();
+            MappedByteBuffer mb = null;
+            try {
+                mb = ch.map(FileChannel.MapMode.READ_ONLY, 0L, ch.size());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            int fPtr = 0;
+
+            while(mb.remaining() > 0) {
+                mb.get(subtitleFile, fPtr, Math.min(mb.remaining(), 0x0800));
+//                showLog("current position : " + fPtr + "data : " + subtitleFile[fPtr + 0x16] + ", " + subtitleFile[fPtr + 0x1d] + ", " + subtitleFile[fPtr + 0x1e]);
+                fPtr = fPtr + 0x0800;
+            }
         }
     }
 
@@ -240,7 +238,8 @@ public class VideoPlayerActivity extends Activity implements
         // create bitmap testing code
         for (int i : timearray) {
             countSub = getSubSyncIndexGraphic(i);
-            mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
+            int pos = parsedGraphicSubtitle.get(countSub).getFilepos();
+            mIV_subtitle.setImageBitmap(getBitmapSubtitle(pos));
 //            mIV_subtitle.setImageBitmap(getBimage());
         }
 
@@ -798,11 +797,11 @@ public class VideoPlayerActivity extends Activity implements
     private int vob_ID;
     private int cell_ID;
     private int pts;
-    private long filePOS;
+    private int filePOS;
     private long savedTimeSub = -1;
     private int sizeCx = 0;
     private int sizeCy = 0;
-    private int[] palette = new int[16];            // save palette informatin on .idx file
+    private int[] palette = new int[16];            // save palette information on .idx file
     private boolean customColors;
     private int tridx;
     private int [] color = new int [4];
@@ -842,7 +841,7 @@ public class VideoPlayerActivity extends Activity implements
                             timeStartMillisecond = Integer.parseInt(t1.substring(0, t1.length()).trim());
                             timeSUB = ((timeStartHour * 60 + timeStartMinute) * 60 + timeStartSecond) * 1000 + timeStartMillisecond;
 
-                            filePOS = Long.parseLong(t2.trim(), 16);
+                            filePOS = Integer.parseInt(t2.trim(), 16);
 
                             if (savedTimeSub == -1) {
                                 parsedGraphicSubtitle.add(new VideoPlayerGraphicSubtitle(timeSUB, filePOS));
@@ -900,12 +899,6 @@ public class VideoPlayerActivity extends Activity implements
                 e.printStackTrace();
             }
 
-            try {
-                accessFile = new FileInputStream(new File(subFile.toString()));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-
             showLog("saved " + parsedGraphicSubtitle.size() + " subtitles");
             if (parsedGraphicSubtitle.size() <= 1) {
                 useSub = false;     // if we have just one line, ignore this subtitle
@@ -956,13 +949,12 @@ public class VideoPlayerActivity extends Activity implements
     thus, information length = packet size - data size = 0x0b70 - 0x0b51 = 0x1f bytes
 */
 
-    private FileInputStream accessFile;
-    private long savedFilePos;
-    private byte [] buf = new byte[0x0800];             // 2,048 bytes buffer for reading .sub file
-    private byte [] dataBuf = new byte[BUF_LENGTH];     // real data buffer
+    private int subIDXpointer;
+    private byte [] buf = new byte[0x0800];             // one unit
+    private byte [] pData = new byte[BUF_LENGTH];     // real data buffer
     private int numberOfRead;
     private int srcIndex;                               // buf index
-    private int dstIndex;                               // dataBuf index
+    private int dstIndex;                               // pData index
     private int copyLength;                             // data copy length
     private int sizeLeft;                               // remainging data size
 
@@ -977,27 +969,25 @@ public class VideoPlayerActivity extends Activity implements
 
     private Bitmap graphic;
 
-    private Bitmap getBitmapSubtitle(long filePos) {
+    private Bitmap getBitmapSubtitle(int filePos) {
         graphic = null;             // we will return null if the condition does not match
-        savedFilePos = filePos;     // save file position
+        subIDXpointer = filePos;     // save file position
 
-        try {
-            accessFile.skip(savedFilePos);
-            numberOfRead = accessFile.read(buf, 0, buf.length);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if ((subIDXpointer == 0x5800) || (subIDXpointer == 0xb000)) {
+            showLog("addr : " + subIDXpointer);
         }
 
-        if (numberOfRead != buf.length) { return graphic; }
-        savedFilePos = savedFilePos + buf.length;
+        // .sub data contains on subtitleFile[0] to subtitleFile[subtitleFile.length]
+        System.arraycopy(subtitleFile, subIDXpointer, buf, 0, buf.length);
+        subIDXpointer = subIDXpointer + buf.length;
 
         // check .sub file rule:
         if ((buf[0x00] != 0) || (buf[0x01] != 0) || (buf[0x02] != 1) || (buf[0x03] != -70)) { return graphic; }
         if ((buf[0x0e] != 0) || (buf[0x0f] != 0) || (buf[0x10] != 1) || (buf[0x11] != -67)) { return graphic; }
         if ((buf[0x15] & 0x80) == 0) { return graphic; }
         if ((buf[0x17] & 0xf0) != 32) { return graphic; }
-        if (((buf[buf[0x16] + 0x17]) & 0xe0) != 32) { return graphic; }
-        if ((buf[buf[0x16] + 0x17] & 0x1f) != langIdx) { return graphic; }
+        if (((buf[buf[0x16] + 0x17]) & 0xe0) != 32) { return graphic; }     // upper 3 bits = index (0x20 => 0x01)
+        if ((buf[buf[0x16] + 0x17] & 0x1f) != langIdx) { return graphic; }  // lower 5 bits = language
 
         // read packet header information
         packetSize = (buf[buf[0x16] + 0x18] << 8) + buf[buf[0x16] + 0x19];
@@ -1043,7 +1033,7 @@ public class VideoPlayerActivity extends Activity implements
     |                       |       |                       |
     +-----------------------+       +-----------------------+
     |   packet header 2     |       |                       |
-    +-----------------------+       |   data block 2        | <-- 0x0800 - (hsize or 0x18) bytes
+    +-----------------------+       |   data block 2        | <-- 0x0800 - (hsize=0x18 + buf[0x16]) bytes
     |                       |  ==>  |                       |
     |   data block 2        |       +-----------------------+
     |                       |       +-----------------------+
@@ -1059,34 +1049,29 @@ public class VideoPlayerActivity extends Activity implements
 
     private void condenseBuffer() {
         hsize = 0x18 + buf[0x16];
-        ptr = buf[hsize];
         nLang = buf[buf[0x16] + 0x17] & 0x1f;
 
         srcIndex = hsize;
         dstIndex = 0;
         sizeLeft = packetSize;
         copyLength = Math.min (sizeLeft, 0x0800 - hsize);
-        System.arraycopy(buf, srcIndex, dataBuf, dstIndex, copyLength);
+        System.arraycopy(buf, srcIndex, pData, dstIndex, copyLength);
         sizeLeft = sizeLeft - copyLength;
         dstIndex = dstIndex + copyLength;
 
         if (sizeLeft != 0) {
             while (true) {
-                try {
-                    accessFile.skip(savedFilePos);
-                    numberOfRead = accessFile.read(buf, 0, buf.length);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                savedFilePos = savedFilePos + buf.length;
+                System.arraycopy(subtitleFile, subIDXpointer, buf, 0, buf.length);
+                subIDXpointer = subIDXpointer + buf.length;
 
+                if ((buf[0x16]) == 0) break;
                 if ((buf[buf[0x16] + 0x17] & 0x1f) == langIdx) break;
             }
 
             hsize = 0x18 + buf[0x16];
             srcIndex = hsize;
             copyLength = Math.min (sizeLeft, 0x0800 - hsize);
-            System.arraycopy(buf, srcIndex, dataBuf, dstIndex, copyLength);
+            System.arraycopy(buf, srcIndex, pData, dstIndex, copyLength);
             sizeLeft = sizeLeft - copyLength;
             dstIndex = dstIndex + copyLength;
         }
@@ -1195,25 +1180,37 @@ public class VideoPlayerActivity extends Activity implements
     Rounding up will cause the display to occur one frame late.
 */
 
+    private boolean fBreak = false;
+    private int nextCtrlBlk;
+    private boolean fForced = true;
+    private int t = 0;
+    private int delay = 0;
+    private int pal;
+    private int tr;
+    private Rect rect = new Rect(0,0,0,0);
+
+    private int dataIndex;
+    private int [] nOffset = new int [2];
+    private int [] palPal = new int [4];
+    private int [] palTr = new int [4];
+
     private void getPacketInfo() {
         dataIndex = dataSize;
-        t = ((dataBuf[dataIndex] << 8) | dataBuf[dataIndex + 1]);
-//        showLog("t = " + dataBuf[dataIndex] + ", " + dataBuf[dataIndex + 1]);
+        t = ((pData[dataIndex] << 8) | pData[dataIndex + 1]);
         dataIndex = dataIndex + 2;
 
-        nextCtrlBlk = ((dataBuf[dataIndex] << 8) | dataBuf[dataIndex + 1]);
-//        showLog("nextCtrlBlk = " + dataBuf[dataIndex] + ", " + dataBuf[dataIndex + 1]);
+        nextCtrlBlk = ((pData[dataIndex] << 8) | pData[dataIndex + 1]);
         dataIndex = dataIndex + 2;
 
         // we should note that : dataSize < nextCtrlBlk < packetSize
         fBreak = false;
 
         do {
-//            showLog("parsing data = " + dataBuf[dataIndex] + ", " + dataBuf[dataIndex + 1] + ", " +
-//                    dataBuf[dataIndex + 2] + ", " + dataBuf[dataIndex + 3] + ", " + dataBuf[dataIndex + 4] +
-//                    ", " + dataBuf[dataIndex + 5] + ", " + dataBuf[dataIndex + 6]);
+//            showLog("parsing data = " + pData[dataIndex] + ", " + pData[dataIndex + 1] + ", " +
+//                    pData[dataIndex + 2] + ", " + pData[dataIndex + 3] + ", " + pData[dataIndex + 4] +
+//                    ", " + pData[dataIndex + 5] + ", " + pData[dataIndex + 6]);
 
-            switch (dataBuf[dataIndex]) {
+            switch (pData[dataIndex]) {
                 case 0x00:      // forced start displaying
                     dataIndex++;
                     fForced = true;
@@ -1231,33 +1228,33 @@ public class VideoPlayerActivity extends Activity implements
 
                 case 0x03:      // get palette
                     dataIndex++;
-                    pal = ((dataBuf[dataIndex] << 8) | dataBuf[dataIndex + 1]);
+                    pal = ((pData[dataIndex] << 8) | pData[dataIndex + 1]);
                     dataIndex = dataIndex + 2;
                     break;
 
                 case 0x04:      // get tridx data
                     dataIndex++;
-                    if ((dataBuf[dataIndex] << 8 | dataBuf[dataIndex + 1]) != 0) {
-                        tr = ((dataBuf[dataIndex] << 8) | dataBuf[dataIndex + 1]);
+                    if ((pData[dataIndex] << 8 | pData[dataIndex + 1]) != 0) {
+                        tr = ((pData[dataIndex] << 8) | pData[dataIndex + 1]);
                     }
                     dataIndex = dataIndex + 2;
                     break;
 
                 case 0x05:      // get rectangle
                     dataIndex++;
-                    int left = (dataBuf[dataIndex] << 4) + (dataBuf[dataIndex + 1] >> 4);
-                    int top = (dataBuf[dataIndex + 3] << 4) + (dataBuf[dataIndex + 4] >> 4);
-                    int right = ((dataBuf[dataIndex + 1] & 0x0f) << 8) + (dataBuf[dataIndex + 2] + 1);
-                    int bottom = ((dataBuf[dataIndex + 4] & 0x0f) << 8) + (dataBuf[dataIndex + 5] + 1);
+                    int left = (pData[dataIndex] << 4) + (pData[dataIndex + 1] >> 4);
+                    int top = (pData[dataIndex + 3] << 4) + (pData[dataIndex + 4] >> 4);
+                    int right = ((pData[dataIndex + 1] & 0x0f) << 8) + (pData[dataIndex + 2] + 1);
+                    int bottom = ((pData[dataIndex + 4] & 0x0f) << 8) + (pData[dataIndex + 5] + 1);
                     rect = new Rect(left, top, right, bottom);
                     showLog("rect(" + left + ", " + top + ", " + right + ", " + bottom);
                     dataIndex = dataIndex + 6;
 
                 case 0x06:      // get offset of top line (plane 0) and bottom line (plane 1)
                     dataIndex++;
-                    nOffset[0] = (dataBuf[dataIndex] << 8) + (dataBuf[dataIndex + 1]) + 4;
+                    nOffset[0] = (pData[dataIndex] << 8) + (pData[dataIndex + 1]);
                     dataIndex = dataIndex + 2;
-                    nOffset[1] = (dataBuf[dataIndex] << 8) + (dataBuf[dataIndex + 1]) + 4;
+                    nOffset[1] = (pData[dataIndex] << 8) + (pData[dataIndex + 1]);
                     dataIndex = dataIndex + 2;
                     break;
 
@@ -1292,6 +1289,12 @@ public class VideoPlayerActivity extends Activity implements
     // +-----------------------+ <-----+       |
     // |   information         |               |   (information length = packet size - data size)
     // +-----------------------+         <-----+
+
+    private int x;
+    private int y;
+    private int end0;
+    private int end1;
+    private int [] pixels = new int [740 * 480];
 
     private void getBitmapData() {
         dataPointer = dataSize;
@@ -1342,6 +1345,8 @@ public class VideoPlayerActivity extends Activity implements
 
         rect.bottom = Math.min(y, rect.bottom);
     }
+
+    private int rgbReserved;        // will be used for trim image
 
     private void drawPixels(int length, int colorid) {
         if ((length <= 0) || (x + length < rect.left) || (x >= rect.right) || (y < rect.top) || (y >= rect.bottom)) {
@@ -1415,10 +1420,14 @@ public class VideoPlayerActivity extends Activity implements
         }
     }
 
+    private int nPlane;
+    private int fAligned = 1;
+    private int offset;
+
     // offset moves 0.5 bytes (4 bits) because of fAligned value.
     private int getNibble() {
         offset = nOffset[nPlane];
-        int result = (dataBuf[offset] >> (fAligned << 2)) & 0x0f;
+        int result = (pData[offset] >> (fAligned << 2)) & 0x0f;
 
         if (fAligned == 1) {
             fAligned = 0;
@@ -1482,15 +1491,20 @@ public class VideoPlayerActivity extends Activity implements
         }
     };
 
-    private Bitmap getBimage() {
-        Bitmap btm = BitmapFactory.decodeFile(sPathDownload + "/" + bmp[bcount]);
-        showLog("count : " + bcount);
-        bcount = bcount + 1;
-        if (bcount >= 10) {
-            bcount = 0;
-        }
-        return btm;
-    }
+//    String sPathDownload = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
+//    private int bcount = 0;
+//    private String bmp [] = {"bmp01.bmp", "bmp02.bmp", "bmp03.bmp", "bmp04.bmp", "bmp05.bmp",
+//            "bmp06.bmp", "bmp07.bmp", "bmp08.bmp", "bmp09.bmp", "bmp10.bmp"};
+//
+//    private Bitmap getBimage() {
+//        Bitmap btm = BitmapFactory.decodeFile(sPathDownload + "/" + bmp[bcount]);
+//        showLog("count : " + bcount);
+//        bcount = bcount + 1;
+//        if (bcount >= 10) {
+//            bcount = 0;
+//        }
+//        return btm;
+//    }
 
     public int getSubSyncIndexGraphic(long playTime) {
         int lowLimit = 0;
@@ -1519,7 +1533,7 @@ public class VideoPlayerActivity extends Activity implements
         } else if (useSub) {
             int h = parsedGraphicSubtitle.size() - 1;
             maxRunningTime = parsedGraphicSubtitle.get(h).getTime();
-            parsedGraphicSubtitle.add(new VideoPlayerGraphicSubtitle(maxRunningTime + 500, 0L));
+            parsedGraphicSubtitle.add(new VideoPlayerGraphicSubtitle(maxRunningTime + 500, 0));
         }
     }
 
@@ -1534,8 +1548,8 @@ public class VideoPlayerActivity extends Activity implements
         CodeDetector detector = new CodeDetector(null);
 
         try {
-            while ((numberOfRead = fis.read(dataBuf)) > 0 && !detector.isDone()) {
-                detector.handleData(dataBuf, 0, numberOfRead);
+            while ((numberOfRead = fis.read(pData)) > 0 && !detector.isDone()) {
+                detector.handleData(pData, 0, numberOfRead);
             }
         } catch (IOException e) {
             e.printStackTrace();

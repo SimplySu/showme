@@ -2,9 +2,9 @@ package com.suwonsmartapp.hello.showme.video;
 
 class VideoPlayerGraphicSubtitle {
     long time;
-    long filepos;
+    int filepos;
 
-    VideoPlayerGraphicSubtitle(long time, long filepos) {
+    VideoPlayerGraphicSubtitle(long time, int filepos) {
         this.time = time;
         this.filepos = filepos;
     }
@@ -13,8 +13,8 @@ class VideoPlayerGraphicSubtitle {
 
     public void setTime(long time) { this.time = time; }
 
-    public long getFilepos() { return filepos; }
+    public int getFilepos() { return filepos; }
 
-    public void setFilepos(long filepos) { this.filepos = filepos; }
+    public void setFilepos(int filepos) { this.filepos = filepos; }
 
 }
