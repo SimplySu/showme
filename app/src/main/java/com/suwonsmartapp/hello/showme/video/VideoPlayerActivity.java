@@ -950,17 +950,12 @@ public class VideoPlayerActivity extends Activity implements
 
         getBitmapData();        // collect bitmap data from subtitle packet
 
-//        trimSubImage();         // cut off rest area
+//        trimSubImage();         // cut off meaningless area
 
 //        graphic = Bitmap.createBitmap(pixels, 0, sizeCx, sizeCx, sizeCy, Bitmap.Config.ARGB_8888);
         graphic = Bitmap.createBitmap(pixels, 0, sizeCx, sizeCx, sizeCy, Bitmap.Config.ARGB_8888);
-        if (graphic == null) {
-            showLog("Graphic bitmap NG for filepos = " + filePos);
-        } else {
-            showLog("Graphic bitmap OK for filepos = " + filePos);
-        }
-
-        return graphic;
+        Bitmap newGraphic = Bitmap.createScaledBitmap(graphic, sizeCx * 2, sizeCy * 2, true);
+        return newGraphic;
     }
 
 /*
@@ -1337,7 +1332,8 @@ For example : data length = 0x0b26
         ptr = rect.width() * (y - rect.top) + (x - rect.left);
 
         int c;
-        int [] myColor = {0x00000000, 0x00000000, 0x80808080, 0xffffffff};
+//        int [] myColor = {0x00000000, 0x00000000, 0x80808080, 0xffffffff};
+        int [] myColor = {0x00000000, 0x00000000, 0xff808080, 0xffffffff};
 
 //        if (!customColors) {
 //            c = palette[palPal[colorid]];
