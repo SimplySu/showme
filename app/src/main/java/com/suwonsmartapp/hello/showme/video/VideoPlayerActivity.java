@@ -911,6 +911,14 @@ public class VideoPlayerActivity extends Activity implements
     private int dataSize = 0;
     private int savedSize = 0;
 
+    final int IDmarkA = 0x00;           // indicator A = 00 00 01 ba
+    final int IDmarkB = 0x0e;           // indicator B = 00 00 01 bd
+    final int PESmark = 0x15;           // bit 7
+    final int OPTIONS = 0x16;           // option byte length
+    final int ID_LANG = 0x17;           // ID and language code
+    final int PACKET_SIZE = 0x18;       // packet size
+    final int DATA_SIZE = 0x1a;         // data size
+
     private Bitmap getBitmapSubtitle(int filePos) {
         Bitmap graphic = null;
         subIDXpointer = filePos;     // save file position
@@ -920,17 +928,17 @@ public class VideoPlayerActivity extends Activity implements
         subIDXpointer = subIDXpointer + buf.length;
 
         // check .sub file rule:
-        if ((unsigned(buf[0x00]) != 0x00) || (unsigned(buf[0x01]) != 0x00) || (unsigned(buf[0x02]) != 0x01) || (unsigned(buf[0x03]) != 0xba)) { return null; }
-        if ((unsigned(buf[0x0e]) != 0x00) || (unsigned(buf[0x0f]) != 0x00) || (unsigned(buf[0x10]) != 0x01) || (unsigned(buf[0x11]) != 0xbd)) { return null; }
-        if ((unsigned(buf[0x15]) & 0x80) == 0x00) { return null; }
-        if ((unsigned(buf[0x17]) & 0xf0) != 0x20) { return null; }
-        if (((unsigned(buf[unsigned(buf[0x16]) + 0x17])) & 0xe0) != 0x20) { return null; }        // upper 3 bits = index (0x20 => 0x01)
-        if ((unsigned(buf[unsigned(buf[0x16]) + 0x17]) & 0x1f) != langIdx) { return null; }     // lower 5 bits = language
+        if ((unsigned(buf[IDmarkA]) != 0x00) || (unsigned(buf[IDmarkA + 1]) != 0x00) || (unsigned(buf[IDmarkA + 2]) != 0x01) || (unsigned(buf[IDmarkA + 3]) != 0xba)) { return null; }
+        if ((unsigned(buf[IDmarkB]) != 0x00) || (unsigned(buf[IDmarkB + 1]) != 0x00) || (unsigned(buf[IDmarkB + 2]) != 0x01) || (unsigned(buf[IDmarkB + 3]) != 0xbd)) { return null; }
+        if ((unsigned(buf[PESmark]) & 0x80) == 0x00) { return null; }
+        if ((unsigned(buf[ID_LANG]) & 0xf0) != 0x20) { return null; }
+        if (((unsigned(buf[unsigned(buf[OPTIONS]) + ID_LANG])) & 0xe0) != 0x20) { return null; }        // upper 3 bits = index (0x20 => 0x01)
+        if ((unsigned(buf[unsigned(buf[OPTIONS]) + ID_LANG]) & 0x1f) != langIdx) { return null; }     // lower 5 bits = language
 
         // read packet header information
 //        showLog("data 1d~20 = " + buf[buf[0x16] + 0x18] + ", " + buf[buf[0x16] + 0x19] + ", " + buf[buf[0x16] + 0x1a] + ", " + buf[buf[0x16] + 0x1b]);
-        packetSize = ((unsigned(buf[unsigned(buf[0x16]) + 0x18])) << 8) + unsigned(buf[unsigned(buf[0x16]) + 0x19]);
-        dataSize = ((unsigned(buf[unsigned(buf[0x16]) + 0x1a])) << 8) + unsigned(buf[unsigned(buf[0x16]) + 0x1b]);
+        packetSize = ((unsigned(buf[unsigned(buf[OPTIONS]) + PACKET_SIZE])) << 8) + unsigned(buf[unsigned(buf[OPTIONS]) + PACKET_SIZE + 1]);
+        dataSize = ((unsigned(buf[unsigned(buf[OPTIONS]) + DATA_SIZE])) << 8) + unsigned(buf[unsigned(buf[OPTIONS]) + DATA_SIZE + 1]);
 
         if (packetSize > BUF_LENGTH) { return null; }
 
@@ -1009,8 +1017,8 @@ For example : data length = 0x0b26
     private int nLang;
 
     private void condenseBuffer() {
-        hsize = unsigned(buf[0x16]) + 0x18;
-        nLang = unsigned(buf[buf[0x16] + 0x17]) & 0x1f;
+        hsize = unsigned(buf[OPTIONS]) + PACKET_SIZE;
+        nLang = unsigned(buf[buf[OPTIONS] + ID_LANG]) & 0x1f;
 
         srcIndex = hsize;
         dstIndex = 0;
@@ -1025,11 +1033,10 @@ For example : data length = 0x0b26
                 System.arraycopy(subtitleFile, subIDXpointer, buf, 0, buf.length);
                 subIDXpointer = subIDXpointer + buf.length;
 
-//                if ((buf[0x16]) == 0) break;
-                if (unsigned(buf[buf[0x16] + 0x17]) == (langIdx | 0x20)) { break; }
+                if (unsigned(buf[buf[OPTIONS] + ID_LANG]) == (langIdx | 0x20)) { break; }
             }
 
-            hsize = unsigned(buf[0x16]) + 0x18;
+            hsize = unsigned(buf[OPTIONS]) + PACKET_SIZE;
             srcIndex = hsize;
             copyLength = Math.min (sizeLeft, 0x0800 - hsize);
             System.arraycopy(buf, srcIndex, pData, dstIndex, copyLength);
@@ -1156,10 +1163,17 @@ For example : data length = 0x0b26
     private int nextCtrlBlk;
     private boolean fBreak;
 
+    final int FORCED_START_DISPLAY = 0;         // forced start displaying
+    final int START_DISPLAY = 1;                // start displaying (at last, we will have this command)
+    final int STOP_DISPLAY = 2;                 // stop displaying
+    final int GET_PALETTE = 3;                  // next 2 bytes palette data
+    final int GET_TRIDX = 4;                    // next 2 bytes IDX
+    final int GET_RECTANGLE = 5;                // next 6 bytes (x1, y1, x2, y2) = (left, top, right, bottom)
+    final int GET_PLANE_OFFSET = 6;             // next 4 bytes (plane 0 : 2 bytes, plane 1 : 2 bytes) - interace mode
+    final int END_OF_CONTROL_BLOCK = 255;       // end of control block, other codes will be ignored, stop analyzing
+
     private void getPacketInfo() {
-        dataIndex = dataSize;
-//        showLog("data 0~3 = " + pData[dataIndex] + ", " + pData[dataIndex + 1] + ", " +
-//                pData[dataIndex + 2] + ", " + pData[dataIndex + 3]);
+        dataIndex = dataSize;       // before packet start, we will have 4 bytes of t(2 bytes) and next control block(2 bytes)
 
         t = ((unsigned(pData[dataIndex]) << 8) + unsigned(pData[dataIndex + 1]));
         dataIndex = dataIndex + 2;
@@ -1171,33 +1185,42 @@ For example : data length = 0x0b26
         fBreak = false;
 
         do {
-//            showLog("data 4~10 = " + pData[dataIndex] + ", " + pData[dataIndex + 1] + ", " +
-//                    pData[dataIndex + 2] + ", " + pData[dataIndex + 3] + ", " + pData[dataIndex + 4] +
-//                    ", " + pData[dataIndex + 5] + ", " + pData[dataIndex + 6]);
-
             switch (unsigned(pData[dataIndex])) {
-                case 0:      // forced start displaying
+                case FORCED_START_DISPLAY:      // forced start displaying
                     dataIndex++;
                     fForced = true;
                     break;
 
-                case 1:      // start displaying
+                case START_DISPLAY:      // start displaying
                     dataIndex++;
                     fForced = false;
                     break;
 
-                case 2:      // stop displaying
+                case STOP_DISPLAY:      // stop displaying
                     dataIndex++;
                     delay = 1024 * t / 90;
                     break;
 
-                case 3:      // get palette
+                case GET_PALETTE:      // get palette
                     dataIndex++;
                     pal = ((unsigned(pData[dataIndex]) << 8) + unsigned(pData[dataIndex + 1]));
                     dataIndex = dataIndex + 2;
+
+// the following code does not work correctly, so we will ignore this command(get palette).
+// instead, we will make another color palette named myColor.
+//                    int p;
+//                    p = (pal >> 12) & 0x0f;
+//                    myColor[0] = palette[p] & 0xff000000;   // make transparent
+//                    p = (pal >> 8) & 0x0f;
+//                    myColor[1] = palette[p];
+//                    p = (pal >> 4) & 0x0f;
+//                    myColor[2] = palette[p];
+//                    p = pal & 0x0f;
+//                    myColor[3] = palette[p];
+
                     break;
 
-                case 4:      // get tridx data
+                case GET_TRIDX:      // get tridx data
                     dataIndex++;
                     if ((unsigned(pData[dataIndex]) << 8) + unsigned(pData[dataIndex + 1]) != 0) {
                         tr = (unsigned(pData[dataIndex]) << 8) + unsigned(pData[dataIndex + 1]);
@@ -1205,7 +1228,7 @@ For example : data length = 0x0b26
                     dataIndex = dataIndex + 2;
                     break;
 
-                case 5:      // get rectangle
+                case GET_RECTANGLE:      // get rectangle
                     dataIndex++;
                     int left = (unsigned(pData[dataIndex]) << 4) + (unsigned(pData[dataIndex + 1]) >> 4);
                     int top = (unsigned(pData[dataIndex + 3]) << 4) + (unsigned(pData[dataIndex + 4]) >> 4);
@@ -1215,7 +1238,7 @@ For example : data length = 0x0b26
 //                    showLog("rect(" + left + ", " + top + " ~ " + right + ", " + bottom + ")");
                     dataIndex = dataIndex + 6;
 
-                case 6:      // get offset of top line (plane 0) and bottom line (plane 1)
+                case GET_PLANE_OFFSET:      // get offset of top line (plane 0) and bottom line (plane 1)
                     dataIndex++;
                     nOffset[0] = (unsigned(pData[dataIndex]) << 8) + unsigned(pData[dataIndex + 1]);
                     dataIndex = dataIndex + 2;
@@ -1224,7 +1247,7 @@ For example : data length = 0x0b26
                     dataIndex = dataIndex + 2;
                     break;
 
-                case 255:      // end of control block
+                case END_OF_CONTROL_BLOCK:      // end of control block
                     dataIndex++;
                     fBreak = true;
                     continue;
@@ -1313,6 +1336,27 @@ For example : data length = 0x0b26
         trimSubImage();
     }
 
+    // if alpha == 0xff, it is not transparent (white)
+    //
+    // for the reference,
+    // transparent white(0x00ffffff) = grey(0x00808080) = black(0x00000000)
+    // non-transparent white = 0xffffffff, grey = 0xff808080, black = 0xff000000
+    //
+    // if we change grey to 0x00808080, grey will be gone ! (i.e., black/white only)
+    // if we change grey to 0xffffffff, grey will be shown by white ! (i.e., black/white also)
+
+    private int tBLACK = 0x00000000 & 0xffffffff;       // transparent black
+    private int nBLACK = 0xff000000 & 0xffffffff;       // black
+    private int tGREY = 0x00808080 & 0xffffffff;        // transparent grey
+    private int nGREY = 0xff808080 & 0xffffffff;        // grey
+    private int tWHITE = 0x00ffffff & 0xffffffff;       // transparent white
+    private int nWHITE = 0xffffffff & 0xffffffff;       // white
+
+    // int [] myColor = {tWHITE, nWHITE, nGREY, nBLACK};         // original color
+    // int [] myColor = {tBLACK, nWHITE, nBLACK, nBLACK};        // my modified color
+    // int [] myColor = {tBLACK, tWHITE, nWHITE, nWHITE};        // reverse color
+    private int [] myColor = {tBLACK, nWHITE, nBLACK, nBLACK};      // modified color palette for android phone
+
     private int rgbReserved;        // will be used for trim image
     private int ptr = 0;
 
@@ -1332,9 +1376,7 @@ For example : data length = 0x0b26
         ptr = rect.width() * (y - rect.top) + (x - rect.left);
 
         int c;
-//        int [] myColor = {0x00000000, 0x00000000, 0x80808080, 0xffffffff};
-        int [] myColor = {0x00000000, 0x00000000, 0xff808080, 0xffffffff};
-
+        // original code : support 16 colors, but it does not work for android
 //        if (!customColors) {
 //            c = palette[palPal[colorid]];
 //            rgbReserved = (palTr[colorid] << 4) | palTr[colorid];
@@ -1342,7 +1384,7 @@ For example : data length = 0x0b26
 //            c = color[colorid];
 //        }
 
-        c = (myColor[colorid & 0x03]) & 0xffffffff;
+        c = myColor[colorid & 0x03];
 
         while (length-- > 0) {
             pixels[ptr] = c;            // put palette data
@@ -1454,7 +1496,7 @@ For example : data length = 0x0b26
                 countSub = getSubSyncIndexGraphic(mVV_show.getCurrentPosition());
                 if (countSub != savedCountSub) {
                     savedCountSub = countSub;
-                mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
+                    mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
                 }
             }
         }
@@ -1525,7 +1567,7 @@ For example : data length = 0x0b26
     // (byte [])  0000 0000 0000 0000 0000 0000 1111 1111 (255)
     //    int     1111 1111 1111 1111 1111 1111 1111 1111 (-1)
     //  (& 0xff)  0000 0000 0000 0000 0000 0000 1111 1111 (255)
-    private int unsigned(byte a) {
-        return (int) (a  & 0xff);
+    private int unsigned(byte chr) {
+        return (int) (chr  & 0xff);
     }
 }
