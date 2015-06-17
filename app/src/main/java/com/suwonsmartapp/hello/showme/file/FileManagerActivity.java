@@ -1,6 +1,7 @@
 package com.suwonsmartapp.hello.showme.file;
 
 import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.Stack;
 
 public class FileManagerActivity extends AppCompatActivity implements
-        AdapterView.OnItemClickListener {
+        AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
 
     private static final String TAG = FileManagerActivity.class.getSimpleName();
     private void showLog(String msg) { Log.d(TAG, msg); }
@@ -78,6 +79,10 @@ public class FileManagerActivity extends AppCompatActivity implements
     public static final int REQUEST_CODE_IMAGE = 0x0100;
     public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
 
+    private boolean fAllowded = false;      // true if delete is allowded
+    List<File> fileList;
+    FileListAdapter fileListAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,9 +98,13 @@ public class FileManagerActivity extends AppCompatActivity implements
         mFileStack = new Stack<>();
 
         setupHome();    // display categorized initial screen
+
+        mListView.setOnItemClickListener(this);      // handle if user selected title directly
+        mListView.setOnItemLongClickListener(this);
     }
 
     private void setupHome() {
+        fAllowded = false;      // root can not be deleted
         findExtSd();    // setup path name on externalSdCard if secondary SD card exists
 
         FileManagerInfo root = new FileManagerInfo();
@@ -160,7 +169,6 @@ public class FileManagerActivity extends AppCompatActivity implements
 
         mFileManagerAdapter = new FileManagerAdapter(getApplicationContext(), mTitleList);
         mListView.setAdapter(mFileManagerAdapter);
-        mListView.setOnItemClickListener(this);      // handle if user selected title directly
     }
 
     private void findExtSd() {
@@ -324,7 +332,7 @@ public class FileManagerActivity extends AppCompatActivity implements
             return;
         }
 
-        List<File> fileList = new ArrayList<>();
+        fileList = new ArrayList<>();
 
         // for (int i = 0; i < files.length; i++) {
         // File f = files[i];
@@ -338,8 +346,9 @@ public class FileManagerActivity extends AppCompatActivity implements
         Collections.sort(fileList);
         Collections.sort(fileList, mFolderAscComparator);
 
-        FileListAdapter fileListAdapter = new FileListAdapter(getApplicationContext(), fileList);
+        fileListAdapter = new FileListAdapter(getApplicationContext(), fileList);
         mListView.setAdapter(fileListAdapter);
+        fAllowded = true;       // we can delete file or directory
     }
 
     Comparator<File> mDescComparator = new Comparator<File>() {
@@ -428,6 +437,82 @@ public class FileManagerActivity extends AppCompatActivity implements
                     mCurrentPosition = data.getExtras().getInt("CurrentPosition");
                 }
                 break;
+        }
+    }
+
+    @Override
+    public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setTitle("Confirm DELETE.");
+        builder.setMessage("Are you sure?");
+
+        builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                if (fAllowded) {                        // can we delete file or directory ?
+                    Object item = mListView.getAdapter().getItem(position);
+                    if (item instanceof File) {
+                        File fileData = (File) item;
+
+                            String absPath = fileData.getAbsolutePath();
+                            if (fileData.isDirectory()) {
+                                // delete directory as well as it's files
+                                boolean wellDeleted = deleteDir(absPath);
+                                fileList.remove(position);
+                                fileListAdapter.notifyDataSetChanged();
+
+                                if (wellDeleted) {
+                                    showToast("Folder deleted.");
+                                } else {
+                                    showToast("Cannot delete this folder.");
+                                }
+                            } else {
+                                // delete single file
+                                File file = new File(absPath);
+                                boolean deleted = file.delete();
+
+                                if (deleted) {
+                                    fileList.remove(position);
+                                    fileListAdapter.notifyDataSetChanged();
+                                    showToast("File deleted.");
+                                } else {
+                                    showToast("Cannot delete this file.");
+                                }
+                            }
+                    }
+                }
+                dialog.dismiss();
+            }
+        });
+
+        builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        AlertDialog alert = builder.create();       // if yes, we will show yes/no alert
+        alert.show();
+        return true;
+    }
+
+    public boolean deleteDir(String aPath) {
+        File file = new File(aPath);
+        if (file.exists()) {
+            File[] childFileList = file.listFiles();
+            for (File childFile : childFileList) {
+                if (childFile.isDirectory()) {
+                    deleteDir(childFile.getAbsolutePath());
+                }
+                else {
+                    childFile.delete();
+                }
+            }
+            file.delete();
+            return true;
+        } else {
+            return false;
         }
     }
 }

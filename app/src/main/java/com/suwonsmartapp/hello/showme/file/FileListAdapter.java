@@ -17,16 +17,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-/**
- * Created by junsuk on 15. 5. 6..
- *
- * 라이브러리 프로젝트 작성 방법
- *
- * 1. File -> New -> New Module -> Android Library Module
- * 2. 라이브러리로 빼고 싶은 클래스를 복사한다
- * 3. 라이브러리 프로젝트에서 우클릭 -> Make Module
- * 4. 에러가 없으면 성공
- */
 public class FileListAdapter extends BaseAdapter {
 
     private List<File> mData;
@@ -96,14 +86,14 @@ public class FileListAdapter extends BaseAdapter {
         if (file.isDirectory()) {
             if (file.canRead()) {
                 holder.fileSize.setText("<dir>");
-                holder.fileName.setTextColor(Color.parseColor("#ffff00"));
-                holder.fileSize.setTextColor(Color.parseColor("#ffff00"));
-                holder.modified.setTextColor(Color.parseColor("#ffff00"));
+                holder.fileName.setTextColor(Color.parseColor("#ffffff"));
+                holder.fileSize.setTextColor(Color.parseColor("#ffffff"));
+                holder.modified.setTextColor(Color.parseColor("#ffffff"));
             } else {
                 holder.fileSize.setText("<dir>");
-                holder.fileName.setTextColor(Color.parseColor("#0000ff"));
-                holder.fileSize.setTextColor(Color.parseColor("#0000ff"));
-                holder.modified.setTextColor(Color.parseColor("#0000ff"));
+                holder.fileName.setTextColor(Color.parseColor("#c0c0c0"));
+                holder.fileSize.setTextColor(Color.parseColor("#c0c0c0"));
+                holder.modified.setTextColor(Color.parseColor("#c0c0c0"));
             }
         } else {
             long size = file.length() / 1024;
@@ -112,9 +102,9 @@ public class FileListAdapter extends BaseAdapter {
             } else {
                 holder.fileSize.setText(mDecimalFormat.format(size) + "k");
             }
-            holder.fileName.setTextColor(Color.parseColor("#ffffff"));
-            holder.fileSize.setTextColor(Color.parseColor("#ffffff"));
-            holder.modified.setTextColor(Color.parseColor("#ffffff"));
+            holder.fileName.setTextColor(Color.parseColor("#fffafa"));
+            holder.fileSize.setTextColor(Color.parseColor("#fffafa"));
+            holder.modified.setTextColor(Color.parseColor("#fffafa"));
         }
 
         holder.modified.setText(mDateFormat.format(new Date(file.lastModified())));

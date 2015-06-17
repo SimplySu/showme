@@ -252,6 +252,7 @@ public class AudioMessengerService extends Service
             mMediaPlayer.reset();
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mMediaPlayer.setOnPreparedListener(this);
+            // for sleep mode, do not sleep. go on playing music
             mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
             mMediaPlayer.setDataSource(getApplicationContext(), mPlayAudioFileInfo.getSongUri());
             mMediaPlayer.prepare();
