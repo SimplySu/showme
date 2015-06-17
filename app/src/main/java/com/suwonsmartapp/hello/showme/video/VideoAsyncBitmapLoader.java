@@ -15,12 +15,6 @@ import android.widget.ImageView;
 
 import java.lang.ref.WeakReference;
 
-/**
- * Created by junsuk on 15. 4. 8..
- *
- * 비동기로 Bitmap 을 로드하는 클래스
- * 메모리 캐시를 사용
- */
 public class VideoAsyncBitmapLoader {
 
     private static final int MAX_CACHE_SIZE = 10;
@@ -35,16 +29,7 @@ public class VideoAsyncBitmapLoader {
 
     private TransitionDrawable mTransitionDrawable;
 
-    /**
-     * VideoAsyncBitmapLoader 사용시 setBitmapLoadListener 에 설정 하는 리스너
-     */
     public interface BitmapLoadListener {
-        /**
-         * 해당 위치의 Bitmap 을 리턴하도록 구현
-         *
-         * @param position 포지션
-         * @return 비트맵
-         */
         Bitmap getBitmap(int position);
     }
 
@@ -60,12 +45,6 @@ public class VideoAsyncBitmapLoader {
         mTransparentColorDrawable = new ColorDrawable(Color.TRANSPARENT);
     }
 
-    /**
-     * 어댑터의 getView에서 이미지뷰에 동적 로딩
-     *
-     * @param position getView 의 position
-     * @param imageView 이미지를 설정 할 이미지뷰
-     */
     public void loadBitmap(int position, ImageView imageView) {
         final String imageKey = String.valueOf(position);
 
@@ -132,10 +111,10 @@ public class VideoAsyncBitmapLoader {
 
                 final ImageView imageView = mImageViewReference.get();
                 if (imageView != null) {
-                    // ImageView 에서 Task를 얻음
+                    // get task from ImageView
                     final AsyncBitmapLoaderTask bitmapLoaderTask = getAsyncBitmapLoaderTask(imageView);
 
-                    // 같은 Task이면 비트맵을 설정
+                    // setup bitmap if the same task
                     if (this == bitmapLoaderTask && imageView != null) {
                         mTransitionDrawable.startTransition(500);
                         imageView.setImageDrawable(mTransitionDrawable);
@@ -176,16 +155,16 @@ public class VideoAsyncBitmapLoader {
         if (task != null) {
             final int taskPosition = task.position;
             if (taskPosition == -1 || taskPosition != position) {
-                // 이전 Task 를 캔슬
+                // cancel previous task
                 task.cancel(true);
                 Log.d("VideoAsyncBitmapLoader", "cancel : " + position);
             } else {
-                // 같은 Task 일 경우, 실행 하지 않음
+                // do not execute if the same task
                 Log.d("VideoAsyncBitmapLoader", "false");
                 return false;
             }
         }
-        // 새로운 Task 실행
+        // execute new task
         return true;
     }
 
@@ -195,5 +174,4 @@ public class VideoAsyncBitmapLoader {
             mVideoImageCache = null;
         }
     }
-
 }

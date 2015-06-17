@@ -93,7 +93,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
                 value = intent.getStringExtra("FilePath");
                 showLog(value);
             } else {
-                showToast("잘못된 파일입니다.");
+                showToast("Wrong file.");
                 finish();
             }
             requestedPathname = value.substring(0, value.lastIndexOf('/'));
@@ -158,7 +158,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
                 }
             }
         } else {
-            showToast("영상 파일이 없습니다.");          // no video found
+            showToast("No file to show.");          // no video found
         }
     }
 

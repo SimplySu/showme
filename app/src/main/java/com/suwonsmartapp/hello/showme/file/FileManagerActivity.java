@@ -267,12 +267,12 @@ public class FileManagerActivity extends AppCompatActivity implements
                                 // if the extension is not audio, video, or image, use chooser for user selection
                                 Intent intent = new Intent(Intent.ACTION_VIEW);
                                 intent.setDataAndType(Uri.fromFile(fileData), mimeType(fileData.getAbsolutePath()));
-                                startActivity(Intent.createChooser(intent, "파일선택..."));
+                                startActivity(Intent.createChooser(intent, "Select file..."));
                             } else {
-                                showLog("실행할 수 없습니다.");
+                                showLog("Cannot execute it.");
                             }
                         } catch (ActivityNotFoundException e) {
-                            showToast("실행할 앱이 없습니다.");
+                            showToast("No APP to be executed.");
                             break;
                         }
                 }

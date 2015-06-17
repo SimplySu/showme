@@ -6,9 +6,6 @@ import android.database.Cursor;
 import android.widget.CursorAdapter;
 import android.widget.ImageView;
 
-/**
- * Created by junsuk on 2015-04-28.
- */
 public abstract class VideoAsyncBitmapAdapter extends CursorAdapter {
 
     private VideoAsyncBitmapLoader mVideoAsyncBitmapLoader;

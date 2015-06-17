@@ -50,9 +50,8 @@ public class FileListAdapter extends BaseAdapter {
         ViewHolder holder;
 
         if (convertView == null) {
-            // View 를 처음 로딩할 때, Data 를 처음 셋팅할 때
-            LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(
-                    Context.LAYOUT_INFLATER_SERVICE);
+            // When we load the View at very first time, or setting Data at very first time
+            LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.file_manager_filelist, null);
             ImageView fileicon = (ImageView) convertView.findViewById(R.id.file_list_icon);
             TextView filename = (TextView) convertView.findViewById(R.id.tv_filename);
@@ -67,11 +66,11 @@ public class FileListAdapter extends BaseAdapter {
 
             convertView.setTag(holder);
         } else {
-            // View, Data 재사용
+            // reuse View, and Data
             holder = (ViewHolder) convertView.getTag();
         }
 
-        // position 위치의 데이터를 취득
+        // get current position and data
         File file = (File) getItem(position);
         String currentFilename = file.getName();
         holder.fileName.setText(currentFilename);
@@ -82,7 +81,7 @@ public class FileListAdapter extends BaseAdapter {
             holder.fileIcon.setImageResource(determineMimeType(currentFilename));
         }
 
-        // 디렉토리인지 아닌지
+        // see if folder or not
         if (file.isDirectory()) {
             if (file.canRead()) {
                 holder.fileSize.setText("<dir>");
@@ -109,7 +108,7 @@ public class FileListAdapter extends BaseAdapter {
 
         holder.modified.setText(mDateFormat.format(new Date(file.lastModified())));
 
-        // 완성된 View return
+        // return completed View
         return convertView;
     }
 
@@ -229,7 +228,7 @@ public class FileListAdapter extends BaseAdapter {
         return R.drawable.file_other_;
     }
 
-    // ViewHolder 패턴
+    // ViewHolder pattern
     static class ViewHolder {
         ImageView fileIcon;
         TextView fileName;

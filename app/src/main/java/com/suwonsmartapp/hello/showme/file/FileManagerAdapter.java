@@ -57,7 +57,7 @@ public class FileManagerAdapter extends BaseAdapter {
 
             convertView.setTag(holder);
         } else {
-            // View, Data 재사용
+            // reuse View, and Data
             holder = (ViewHolder) convertView.getTag();
         }
 
@@ -73,7 +73,7 @@ public class FileManagerAdapter extends BaseAdapter {
         return convertView;
     }
 
-    // ViewHolder 패턴
+    // ViewHolder pattern
     static class ViewHolder {
         ImageView vhIcon;
         TextView vhName;

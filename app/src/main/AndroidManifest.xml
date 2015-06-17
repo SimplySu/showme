@@ -63,6 +63,7 @@
 
         <activity
             android:name=".showme.image.ImageFileListActivity"
+            android:theme="@style/AppTheme"
             android:label="@string/title_activity_image" >
         </activity>
 

@@ -80,7 +80,7 @@ public class VideoPlayerActivity extends Activity implements
             mCurrentPosition = intent.getIntExtra("currentPosition", -1);
             mVideoFileInfoList = intent.getParcelableArrayListExtra("videoInfoList");
         } else {
-            showToast("잘못된 파일입니다.");
+            showToast("Wrong file.");
             finish();
         }
 

@@ -2,7 +2,6 @@ package com.suwonsmartapp.hello.showme.image;
 
 import android.content.ContentUris;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,6 +16,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -50,17 +51,22 @@ public class ImageFileListActivity extends AppCompatActivity {
     public static final int REQUEST_CODE_VIDEO_PLAYER = 0x0020;
     public static final int REQUEST_CODE_IMAGE = 0x0100;
     public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
-    private Bundle extraAudioService;
-    private Intent intentAudioService;
+    private Bundle imageFileListService;
+    private Intent intentImageService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        // delete title bar and use full screen
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        super.onCreate(savedInstanceState);     // for AppCompatActivity
+
         setContentView(R.layout.image_file_list);
         showLog("onCreate");
 
         // fix the screen for portrait
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+//        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         readIntent();                       // get pathname and filename
 
@@ -84,7 +90,7 @@ public class ImageFileListActivity extends AppCompatActivity {
                 value = intent.getStringExtra("FilePath");
                 showLog(value);
             } else {
-                showToast("잘못된 파일입니다.");
+                showToast("Wrong file.");
                 finish();
             }
             requestedPathname = value.substring(0, value.lastIndexOf('/'));
@@ -141,7 +147,7 @@ public class ImageFileListActivity extends AppCompatActivity {
                 }
             }
         } else {
-            showToast("표시할 파일이 없습니다.");          // no image found
+            showToast("No file to show.");          // no image found
         }
     }
 
@@ -185,11 +191,11 @@ public class ImageFileListActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
 
-        extraAudioService = new Bundle();
-        intentAudioService = new Intent();
-        extraAudioService.putInt("CurrentPosition", mCurrentPosition);
-        intentAudioService.putExtras(extraAudioService);
-        this.setResult(RESULT_OK, intentAudioService);
+        imageFileListService = new Bundle();
+        intentImageService = new Intent();
+        imageFileListService.putInt("CurrentPosition", mCurrentPosition);
+        intentImageService.putExtras(imageFileListService);
+        this.setResult(RESULT_OK, intentImageService);
 
         super.onDestroy();
     }

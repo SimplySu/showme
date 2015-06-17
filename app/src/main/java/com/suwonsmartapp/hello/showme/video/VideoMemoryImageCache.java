@@ -6,9 +6,6 @@ import android.support.v4.util.LruCache;
 
 import java.io.File;
 
-/**
- * Created by sol on 2015-04-07.
- */
 public class VideoMemoryImageCache implements VideoImageCache {
     private LruCache<String, Bitmap> lruCache;
 
