@@ -73,14 +73,14 @@ public class VideoPlayerActivity extends Activity implements
         setContentView(R.layout.video_player_activity);
         // fix the screen for portrait
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        showLog("onCreate");
+//        showLog("onCreate");
 
         Intent intent = getIntent();
         if (intent != null) {
             mCurrentPosition = intent.getIntExtra("currentPosition", -1);
             mVideoFileInfoList = intent.getParcelableArrayListExtra("videoInfoList");
         } else {
-            showToast("Wrong file.");
+            showToast(getString(R.string.msg_wrong_file));
             finish();
         }
 
@@ -1488,7 +1488,7 @@ For example : data length = 0x0b26
         if (useSmi || useSrt || useAss || useSsa) {
             int h = parsedTextSubtitle.size() - 1;
             maxRunningTime = parsedTextSubtitle.get(h).getTime();
-            parsedTextSubtitle.add(new VideoPlayerTextSubtitle(maxRunningTime + 500, "The End"));
+            parsedTextSubtitle.add(new VideoPlayerTextSubtitle(maxRunningTime + 500, getString(R.string.msg_end)));
         } else if (useSub) {
             int h = parsedGraphicSubtitle.size() - 1;
             maxRunningTime = parsedGraphicSubtitle.get(h).getTime();

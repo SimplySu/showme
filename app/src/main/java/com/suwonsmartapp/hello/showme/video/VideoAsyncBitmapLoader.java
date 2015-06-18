@@ -10,7 +10,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.os.AsyncTask;
-import android.util.Log;
 import android.widget.ImageView;
 
 import java.lang.ref.WeakReference;
@@ -88,7 +87,7 @@ public class VideoAsyncBitmapLoader {
             }
 
             position = params[0];
-            Log.d("VideoAsyncBitmapLoader", "position : " + position);
+//            Log.d("VideoAsyncBitmapLoader", "position : " + position);
 
             final Bitmap bitmap = mBitmapLoadListener.getBitmap(position);
 
@@ -157,10 +156,10 @@ public class VideoAsyncBitmapLoader {
             if (taskPosition == -1 || taskPosition != position) {
                 // cancel previous task
                 task.cancel(true);
-                Log.d("VideoAsyncBitmapLoader", "cancel : " + position);
+//                Log.d("VideoAsyncBitmapLoader", "cancel : " + position);
             } else {
                 // do not execute if the same task
-                Log.d("VideoAsyncBitmapLoader", "false");
+//                Log.d("VideoAsyncBitmapLoader", "false");
                 return false;
             }
         }

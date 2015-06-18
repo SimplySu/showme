@@ -87,7 +87,7 @@ public class FileManagerActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.file_manager_main);
-        showLog("onCreate");
+//        showLog("onCreate");
 
         // fix the screen for portrait
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -109,49 +109,49 @@ public class FileManagerActivity extends AppCompatActivity implements
 
         FileManagerInfo root = new FileManagerInfo();
         root.setIconName(R.drawable.icon_root);
-        root.setFolderName("루트");
+        root.setFolderName(getString(R.string.root));
         root.setFolderPath(sPathRoot);
 
         FileManagerInfo sdcard = new FileManagerInfo();
         sdcard.setIconName(R.drawable.icon_sdcard);
-        sdcard.setFolderName("내부 메모리");
+        sdcard.setFolderName(getString(R.string.sdcard));
         sdcard.setFolderPath(sPathSdcard);
 
         FileManagerInfo extsdcard = new FileManagerInfo();
         if (externalSdCard != null) {
             extsdcard.setIconName(R.drawable.icon_extsd);
-            extsdcard.setFolderName("확장 메모리");
+            extsdcard.setFolderName(getString(R.string.extsdcard));
             extsdcard.setFolderPath(externalSdCard);
         }
 
         FileManagerInfo music = new FileManagerInfo();
         music.setIconName(R.drawable.icon_music);
-        music.setFolderName("음악");
+        music.setFolderName(getString(R.string.music));
         music.setFolderPath(sPathMusic);
 
         FileManagerInfo movie = new FileManagerInfo();
         movie.setIconName(R.drawable.icon_movie);
-        movie.setFolderName("동영상");
+        movie.setFolderName(getString(R.string.movie));
         movie.setFolderPath(sPathMovie);
 
         FileManagerInfo dcim = new FileManagerInfo();
         dcim.setIconName(R.drawable.icon_picture);
-        dcim.setFolderName("사진");
+        dcim.setFolderName(getString(R.string.picture));
         dcim.setFolderPath(sPathDCIM);
 
         FileManagerInfo picture = new FileManagerInfo();
         picture.setIconName(R.drawable.icon_image);
-        picture.setFolderName("그림");
+        picture.setFolderName(getString(R.string.image));
         picture.setFolderPath(sPathPicture);
 
         FileManagerInfo download = new FileManagerInfo();
         download.setIconName(R.drawable.icon_download);
-        download.setFolderName("다운로드");
+        download.setFolderName(getString(R.string.download));
         download.setFolderPath(sPathDownload);
 
         FileManagerInfo document = new FileManagerInfo();
         document.setIconName(R.drawable.icon_document);
-        document.setFolderName("문서");
+        document.setFolderName(getString(R.string.document));
         document.setFolderPath(sPathDocument);
 
         mTitleList = new ArrayList<>();
@@ -269,10 +269,10 @@ public class FileManagerActivity extends AppCompatActivity implements
                                 intent.setDataAndType(Uri.fromFile(fileData), mimeType(fileData.getAbsolutePath()));
                                 startActivity(Intent.createChooser(intent, "Select file..."));
                             } else {
-                                showLog("Cannot execute it.");
+                                showLog(getString(R.string.msg_cant_execute));
                             }
                         } catch (ActivityNotFoundException e) {
-                            showToast("No APP to be executed.");
+                            showToast(getString(R.string.msg_no_app));
                             break;
                         }
                 }
@@ -323,9 +323,9 @@ public class FileManagerActivity extends AppCompatActivity implements
 
         if (files == null) {
             AlertDialog.Builder builder = new AlertDialog.Builder(FileManagerActivity.this);
-            builder.setTitle("오류")
-                    .setMessage("파일/폴더를 열 수 없습니다!")
-                    .setPositiveButton("확인", null)
+            builder.setTitle(getString(R.string.msg_error))
+                    .setMessage(getString(R.string.msg_cant_open))
+                    .setPositiveButton(getString(R.string.msg_confirm), null)
                     .show();
             String pathBack = mFileStack.pop();
             setCurrentPath(pathBack);
@@ -444,10 +444,10 @@ public class FileManagerActivity extends AppCompatActivity implements
     public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        builder.setTitle("Confirm DELETE.");
-        builder.setMessage("Are you sure?");
+        builder.setTitle(getString(R.string.msg_confirm_delete));
+        builder.setMessage(getString(R.string.msg_are_you_sure));
 
-        builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(getString(R.string.msg_yes), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 if (fAllowded) {                        // can we delete file or directory ?
                     Object item = mListView.getAdapter().getItem(position);
@@ -462,9 +462,9 @@ public class FileManagerActivity extends AppCompatActivity implements
                                 fileListAdapter.notifyDataSetChanged();
 
                                 if (wellDeleted) {
-                                    showToast("Folder deleted.");
+                                    showToast(getString(R.string.msg_del_dir));
                                 } else {
-                                    showToast("Cannot delete this folder.");
+                                    showToast(getString(R.string.msg_cant_del_dir));
                                 }
                             } else {
                                 // delete single file
@@ -474,9 +474,9 @@ public class FileManagerActivity extends AppCompatActivity implements
                                 if (deleted) {
                                     fileList.remove(position);
                                     fileListAdapter.notifyDataSetChanged();
-                                    showToast("File deleted.");
+                                    showToast(getString(R.string.msg_del_file));
                                 } else {
-                                    showToast("Cannot delete this file.");
+                                    showToast(getString(R.string.msg_cant_del_file));
                                 }
                             }
                     }
@@ -485,7 +485,7 @@ public class FileManagerActivity extends AppCompatActivity implements
             }
         });
 
-        builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(getString(R.string.msg_no), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();

@@ -88,7 +88,7 @@ public class AudioFileListActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.audio_list_and_mini_player);
-        showLog("onCreate");
+//        showLog("onCreate");
 
         // fix the screen for portrait
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -140,7 +140,7 @@ public class AudioFileListActivity extends AppCompatActivity
                 value = intent.getStringExtra("FilePath");
                 showLog(value);
             } else {
-                showToast("잘못된 파일입니다.");
+                showToast(getString(R.string.msg_wrong_file));
                 finish();
             }
             requestedPathname = value.substring(0, value.lastIndexOf('/'));
@@ -149,7 +149,7 @@ public class AudioFileListActivity extends AppCompatActivity
     }
 
     private void setupViews() {
-        showLog("setupViews");
+//        showLog("setupViews");
         mAudioFileInfoList = new ArrayList<>();         // create audio file lists
 
         mLlMiniMiniPlayer = (LinearLayout) findViewById(R.id.mini_audio_player);
@@ -184,7 +184,7 @@ public class AudioFileListActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        showLog("onResume - isAudioPlayerServiceRunning : " + String.valueOf(isAudioPlayerServiceRunning()));
+//        showLog("onResume - isAudioPlayerServiceRunning : " + String.valueOf(isAudioPlayerServiceRunning()));
 
         if (isAudioPlayerServiceRunning()) {
             setMiniPlayer();
@@ -194,7 +194,7 @@ public class AudioFileListActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        showLog("onDestroy  - mBoundMessenger : " + String.valueOf(mBoundMessenger));
+//        showLog("onDestroy  - mBoundMessenger : " + String.valueOf(mBoundMessenger));
 
         if (mBoundMessenger) {
             unbindService(mServiceConnection);
@@ -209,7 +209,7 @@ public class AudioFileListActivity extends AppCompatActivity
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        showLog("onItemClick");
+//        showLog("onItemClick");
         mCurrentPosition = position;        // save position when user clicked current view
         updateTitleListView();
 
@@ -221,7 +221,7 @@ public class AudioFileListActivity extends AppCompatActivity
 
     @Override
     public void onClick(View v) {
-        showLog("onClick");
+//        showLog("onClick");
         switch (v.getId()) {
             case R.id.btn_previous_song:
                 previous();                 // play the previous title
@@ -238,7 +238,7 @@ public class AudioFileListActivity extends AppCompatActivity
     }
 
     private void prepareTitleToPlay() {
-        showLog("prepareTitleToPlay");
+//        showLog("prepareTitleToPlay");
 
         // query : syncronized processing (can be slow)
         // loader : asyncronized processing
@@ -264,14 +264,14 @@ public class AudioFileListActivity extends AppCompatActivity
                         new String[] {requestedPathname + "/%"},        // Selection criteria
                         sortOrder);                 // The sort order for the returned rows
 
-        showLog("query result : " + String.valueOf(mCursor));
+//        showLog("query result : " + String.valueOf(mCursor));
 
         mAudioFileInfoList = new ArrayList<>();     // initialize info list
 
         if (mCursor != null) {
             mCursor.moveToFirst();              // from the start of data base
 
-            showLog("searched file count : " + String.valueOf(mCursor.getCount()));
+//            showLog("searched file count : " + String.valueOf(mCursor.getCount()));
 
             for (int i = 0; i < mCursor.getCount(); i++) {
                 mCursor.moveToPosition(i);      // get next row of data base
@@ -294,7 +294,7 @@ public class AudioFileListActivity extends AppCompatActivity
                 }
             }
         } else {
-            showToast("음악 파일이 없습니다.");          // no music found
+            showToast(getString(R.string.msg_no_music));          // no music found
         }
     }
 
@@ -303,25 +303,21 @@ public class AudioFileListActivity extends AppCompatActivity
     // we will include subdirectories also.
     private boolean isDirectoryMatch() {
         String fullPath = mCursor.getString(3);         // get full path name
-        int i = fullPath.lastIndexOf('/');              // search last slash
-        int j = fullPath.length();                      // get fullpath's length
-        String pathname = fullPath.substring(0, i);     // get pathname only
-        String filename = fullPath.substring(i + 1, j); // get filename only
+        String pathname = fullPath.substring(0, fullPath.lastIndexOf('/'));     // get pathname only
+        String filename = fullPath.substring(fullPath.lastIndexOf('/') + 1, fullPath.length()); // get filename only
 
-        showLog(filename);
+//        showLog(filename);
 
-        int k = requestedPathname.length();             // get requested path length
-        int l = pathname.length();                      // get current pathname length
-        if (l < k) {                                    // if current pathname is shorter than requested
+        if (pathname.length() < requestedPathname.length()) { // if current pathname is shorter than requested
             return false;                               // we don't need to compare it
         }
 
-        String s = pathname.substring(0, k);            // compare just we requested for subdirectory
+        String s = pathname.substring(0, requestedPathname.length()); // compare just we requested for subdirectory
         return s.equals(requestedPathname);             // see if this directory is matching ?
     }
 
     private void setMiniPlayer() {
-        showLog("setMiniPlayer");
+//        showLog("setMiniPlayer");
         Intent service = new Intent(getApplicationContext(), AudioMessengerService.class);
         service.putExtra("activity", AudioFileListActivity.class.getSimpleName());
         bindService(service, mServiceConnection, Context.BIND_ADJUST_WITH_ACTIVITY);
@@ -335,7 +331,7 @@ public class AudioFileListActivity extends AppCompatActivity
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            showLog("onServiceConnected");
+//            showLog("onServiceConnected");
             mMsgOfListAndService = new Messenger(service);
             mBoundMessenger = true;
 
@@ -350,7 +346,7 @@ public class AudioFileListActivity extends AppCompatActivity
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            showLog("onServiceDisconnected");
+//            showLog("onServiceDisconnected");
             mMsgOfListAndService = null;
             mBoundMessenger = false;
         }
@@ -417,11 +413,11 @@ public class AudioFileListActivity extends AppCompatActivity
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if (AudioMessengerService.class.getName().equals(service.service.getClassName())) {
-                showLog("isAudioPlayerServiceRunning : true");
+//                showLog("isAudioPlayerServiceRunning : true");
                 return true;
             }
         }
-        showLog("isAudioPlayerServiceRunning : false");
+//        showLog("isAudioPlayerServiceRunning : false");
         return false;
     }
 
@@ -462,25 +458,25 @@ public class AudioFileListActivity extends AppCompatActivity
     }
 
     private void updateTitleListView() {
-        showLog("updateTitleListView");
+//        showLog("updateTitleListView");
         mAudioListAdapter.setmCurrentPosition(mCurrentPosition);
         mAudioListAdapter.notifyDataSetChanged();
     }
 
     private void restartOrPause() {
-        showLog("restartOrPause");
+//        showLog("restartOrPause");
         Intent songListActivity = new Intent(HOME + "AudioMessengerService.Play");
         sendBroadcast(songListActivity);
     }
 
     private void previous() {
-        showLog("previous");
+//        showLog("previous");
         Intent songListActivity = new Intent(HOME + "AudioMessengerService.Previous");
         sendBroadcast(songListActivity);
     }
 
     private void next() {
-        showLog("next");
+//        showLog("next");
         Intent songListActivity = new Intent(HOME + "AudioMessengerService.Next");
         sendBroadcast(songListActivity);
     }
@@ -488,7 +484,7 @@ public class AudioFileListActivity extends AppCompatActivity
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            showLog("onReceive : BroadcastReceiver");
+//            showLog("onReceive : BroadcastReceiver");
             String action = intent.getAction();
             if ((HOME + "AudioFileListActivity.STOP").equals(action)) {
                 if (mBoundMessenger) {
@@ -506,7 +502,7 @@ public class AudioFileListActivity extends AppCompatActivity
     };
 
     private void registerCallReceiver(){
-        showLog("registerCallReceiver");
+//        showLog("registerCallReceiver");
         if(!mIsReceiverRegistered){
             IntentFilter filter = new IntentFilter();
             filter.addAction(HOME + "AudioFileListActivity.STOP");
@@ -517,7 +513,7 @@ public class AudioFileListActivity extends AppCompatActivity
     }
 
     private void unregisterCallReceiver(){
-        showLog("unregisterCallReceiver");
+//        showLog("unregisterCallReceiver");
         if(mIsReceiverRegistered){
             unregisterReceiver(mBroadcastReceiver);
             mIsReceiverRegistered = false;

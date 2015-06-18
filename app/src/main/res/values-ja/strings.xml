@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">ShowMe</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_file">ShowMe(File)</string>
+    <string name="title_activity_audio">ShowMe(Audio)</string>
+    <string name="title_activity_video">ShowMe(Video)</string>
+    <string name="title_activity_image">ShowMe(Image)</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_media_player">MediaPlayerActivity</string>
+
+    <string name="title_activity_start">StartActivity</string>
+
+    <string name="title_activity_notification">ShowMe(Notification)</string>
+    <string name="title_activity_pending_intent_target">ShowMe(PendingIntent)</string>
+
+    <string name="title_audio_file_list_activity">ShowMe(Audio)</string>
+    <string name="title_audio_player_activity">ShowMe(Audio)</string>
+    <string name="local_service_started">ShowMe(service)</string>
+
+    <string name="root">ルーツ</string>
+    <string name="sdcard">内部メモリー</string>
+    <string name="extsdcard">擴張メモリー</string>
+    <string name="music">音楽</string>
+    <string name="movie">動画像</string>
+    <string name="picture">写真</string>
+    <string name="image">絵図</string>
+    <string name="download">ダウンロード</string>
+    <string name="document">文書</string>
+    <string name="msg_error">エラー</string>
+    <string name="msg_confirm">確認</string>
+    <string name="msg_yes">はい</string>
+    <string name="msg_no">いいえ</string>
+    <string name="msg_end">終</string>
+    <string name="msg_confirm_delete">削除確認</string>
+    <string name="msg_wrong_file">誤ったファイルです。</string>
+    <string name="msg_cant_open">ファイル/フォルダーを開くことができません。</string>
+    <string name="msg_cant_execute">実行することはできません。</string>
+    <string name="msg_cant_del_dir">このフォルダーを消すことができません。</string>
+    <string name="msg_cant_del_file">このファイルを消すことができません。</string>
+    <string name="msg_no_app">実行させるアプリがありません。</string>
+    <string name="msg_are_you_sure">本当に消しますか？</string>
+    <string name="msg_del_dir">フォルダーが消されました。</string>
+    <string name="msg_del_file">ファイルが消されました。</string>
+    <string name="msg_no_music">音楽ファイルがありません。</string>
+    <string name="msg_no_image">表示するファイルがありません。</string>
+    <string name="msg_no_movie">再生するファイルがありません。</string>
+
+</resources>

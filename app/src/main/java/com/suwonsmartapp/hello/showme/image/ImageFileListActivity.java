@@ -63,7 +63,7 @@ public class ImageFileListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);     // for AppCompatActivity
 
         setContentView(R.layout.image_file_list);
-        showLog("onCreate");
+//        showLog("onCreate");
 
         // fix the screen for portrait
 //        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -76,7 +76,7 @@ public class ImageFileListActivity extends AppCompatActivity {
 
         mViewPager = (ViewPager)findViewById(R.id.viewPager);
         mCurrentPosition = searchPictureIndex();      // search picture index which was specified by user
-        showLog("returned index : " + mCurrentPosition);
+//        showLog("returned index : " + mCurrentPosition);
 
         mMyAdapter = new MyAdapter(getSupportFragmentManager(), mImageFileInfoList);
         mViewPager.setAdapter(mMyAdapter);
@@ -90,7 +90,7 @@ public class ImageFileListActivity extends AppCompatActivity {
                 value = intent.getStringExtra("FilePath");
                 showLog(value);
             } else {
-                showToast("Wrong file.");
+                showToast(getString(R.string.msg_wrong_file));
                 finish();
             }
             requestedPathname = value.substring(0, value.lastIndexOf('/'));
@@ -119,14 +119,14 @@ public class ImageFileListActivity extends AppCompatActivity {
                         new String[] {requestedPathname + "/%"},        // Selection criteria
                         sortOrder);                 // The sort order for the returned rows
 
-        showLog("query result : " + String.valueOf(mCursor));
+//        showLog("query result : " + String.valueOf(mCursor));
 
         mImageFileInfoList = new ArrayList<>();     // initialize info list
 
         if (mCursor != null) {
             mCursor.moveToFirst();              // from the start of data base
 
-            showLog("searched file count : " + String.valueOf(mCursor.getCount()));
+//            showLog("searched file count : " + String.valueOf(mCursor.getCount()));
 
             for (int i = 0; i < mCursor.getCount(); i++) {
                 mCursor.moveToPosition(i);      // get next row of data base
@@ -147,7 +147,7 @@ public class ImageFileListActivity extends AppCompatActivity {
                 }
             }
         } else {
-            showToast("No file to show.");          // no image found
+            showToast(getString(R.string.msg_no_image));          // no image found
         }
     }
 
@@ -161,26 +161,24 @@ public class ImageFileListActivity extends AppCompatActivity {
         String pathname = fullPath.substring(0, i);     // get pathname only
         String filename = fullPath.substring(i + 1, j); // get filename only
 
-        showLog(filename);
+//        showLog(filename);
 
-        int k = requestedPathname.length();             // get requested path length
-        int l = pathname.length();                      // get current pathname length
-        if (l < k) {                                    // if current pathname is shorter than requested
+        if (pathname.length() < requestedPathname.length()) {        // if current pathname is shorter than requested
             return false;                               // we don't need to compare it
         }
 
-        String s = pathname.substring(0, k);            // compare just we requested for subdirectory
+        String s = pathname.substring(0, requestedPathname.length()); // compare just we requested for subdirectory
         return s.equals(requestedPathname);             // see if this directory is matching ?
     }
 
     // search matched title with specified by user
     private int searchPictureIndex() {
-        showLog("Picture count : " + mImageFileInfoList.size());
+//        showLog("Picture count : " + mImageFileInfoList.size());
         for (int i = 0; i < mImageFileInfoList.size(); i++) {
             ImageFileInfo imageFileInfo = mImageFileInfoList.get(i);    // read image file
-            showLog("requested filename : " + requestedFilename);
-            showLog("we found : " + imageFileInfo.getDisplayName());
-            showLog("current index : " + i);
+//            showLog("requested filename : " + requestedFilename);
+//            showLog("we found : " + imageFileInfo.getDisplayName());
+//            showLog("current index : " + i);
             if (requestedFilename.equals(imageFileInfo.getDisplayName())) {
                 return i;          // return matched index
             }
@@ -190,7 +188,6 @@ public class ImageFileListActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-
         imageFileListService = new Bundle();
         intentImageService = new Intent();
         imageFileListService.putInt("CurrentPosition", mCurrentPosition);
@@ -202,9 +199,7 @@ public class ImageFileListActivity extends AppCompatActivity {
 
     // custom adapter for displaying image file using fragment method
     public class MyAdapter extends FragmentPagerAdapter {
-
         private ArrayList<ImageFileInfo> mData;    // image file media_player_icon_information list
-
         public MyAdapter(FragmentManager fm, ArrayList<ImageFileInfo> data) {
             super(fm);
             mData = data;
@@ -219,20 +214,17 @@ public class ImageFileListActivity extends AppCompatActivity {
         public int getCount() {
             return mData.size();
         }
-
         public void setData(ArrayList<ImageFileInfo> data) {
             mData = data;
         }
     }
 
     public static class ImageFragment extends Fragment {
-
         private ImageView mImageView;
 
         // Singleton Pattern : make just one instance, and can be accessed at everywhere
         public static Fragment getInstance(ImageFileInfo imageFileInfo) {
             ImageFragment fragment = new ImageFragment();
-
             Bundle args = new Bundle();
             args.putParcelable("imageinfo", imageFileInfo);
             fragment.setArguments(args);
@@ -247,7 +239,6 @@ public class ImageFileListActivity extends AppCompatActivity {
 
             ImageFileInfo imageinfo = getArguments().getParcelable("imageinfo");
             mImageView.setImageURI(imageinfo.getImageUri());
-
             return rootView;
         }
     }

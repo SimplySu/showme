@@ -96,7 +96,7 @@ public class AudioLoadBitmap {
     }
 
     public void addBitmapToMemoryCache(String albumIdKey, Bitmap bitmap) {
-        showLog("addBitmapToMemoryCache");
+//        showLog("addBitmapToMemoryCache");
 
         if (getBitmapFromMemoryCache(albumIdKey) == null) {
             mAudioImageCache.getmMemoryCache().put(albumIdKey, bitmap);

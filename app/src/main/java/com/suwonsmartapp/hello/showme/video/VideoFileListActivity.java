@@ -58,7 +58,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.video_player_filelist);
-        showLog("onCreate");
+//        showLog("onCreate");
 
         mVideoFileInfoList = new ArrayList<>();
 
@@ -93,7 +93,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
                 value = intent.getStringExtra("FilePath");
                 showLog(value);
             } else {
-                showToast("Wrong file.");
+                showToast(getString(R.string.msg_wrong_file));
                 finish();
             }
             requestedPathname = value.substring(0, value.lastIndexOf('/'));
@@ -104,7 +104,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
     }
 
     private void prepareTitleToPlay() {
-        showLog("prepareTitleToPlay");
+//        showLog("prepareTitleToPlay");
 
         // query : syncronized processing (can be slow)
         // loader : asyncronized processing
@@ -129,14 +129,14 @@ public class VideoFileListActivity extends AppCompatActivity implements
                         new String[] {requestedPathname + "/%"},        // Selection criteria
                         sortOrder);                 // The sort order for the returned rows
 
-        showLog("query result : " + String.valueOf(mCursor));
+//        showLog("query result : " + String.valueOf(mCursor));
 
         mVideoFileInfoList = new ArrayList<>();     // initialize info list
 
         if (mCursor != null) {
             mCursor.moveToFirst();              // from the start of data base
 
-            showLog("searched file count : " + String.valueOf(mCursor.getCount()));
+//            showLog("searched file count : " + String.valueOf(mCursor.getCount()));
 
             for (int i = 0; i < mCursor.getCount(); i++) {
                 mCursor.moveToPosition(i);      // get next row of data base
@@ -158,7 +158,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
                 }
             }
         } else {
-            showToast("No file to show.");          // no video found
+            showToast(getString(R.string.msg_no_movie));          // no video found
         }
     }
 
