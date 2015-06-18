@@ -246,7 +246,8 @@ public class ImageFileListActivity extends AppCompatActivity {
             mImageView = (ImageView)rootView.findViewById(R.id.iv_image);
 
             mAttacher = new PhotoViewAttacher(mImageView);
-            mAttacher.setScaleType(ImageView.ScaleType.FIT_CENTER);        // FIT_XY will expand picture
+            mAttacher.setScaleType(ImageView.ScaleType.FIT_CENTER); // if we change it to MATRIX, system will die.
+            mAttacher.update();
 
             ImageFileInfo imageinfo = getArguments().getParcelable("imageinfo");
             mImageView.setImageURI(imageinfo.getImageUri());
