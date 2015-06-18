@@ -3,6 +3,7 @@ package com.suwonsmartapp.hello.showme.image;
 import android.content.ContentUris;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -22,6 +23,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.suwonsmartapp.hello.R;
+import com.suwonsmartapp.hello.showme.photoview.PhotoViewAttacher;
 
 import java.util.ArrayList;
 
@@ -75,6 +77,7 @@ public class ImageFileListActivity extends AppCompatActivity {
         prepareFileToShow();               // setup files for showing
 
         mViewPager = (ViewPager)findViewById(R.id.viewPager);
+        mViewPager.setOffscreenPageLimit(1);
         mCurrentPosition = searchPictureIndex();      // search picture index which was specified by user
 //        showLog("returned index : " + mCurrentPosition);
 
@@ -88,7 +91,7 @@ public class ImageFileListActivity extends AppCompatActivity {
         if (intent != null) {
             if (intent.hasExtra("FilePath")) {
                 value = intent.getStringExtra("FilePath");
-                showLog(value);
+//                showLog(value);
             } else {
                 showToast(getString(R.string.msg_wrong_file));
                 finish();
@@ -156,10 +159,8 @@ public class ImageFileListActivity extends AppCompatActivity {
     // we will include subdirectories also.
     private boolean isDirectoryMatch() {
         String fullPath = mCursor.getString(2);         // get full path name
-        int i = fullPath.lastIndexOf('/');              // search last slash
-        int j = fullPath.length();                      // get fullpath's length
-        String pathname = fullPath.substring(0, i);     // get pathname only
-        String filename = fullPath.substring(i + 1, j); // get filename only
+        String pathname = fullPath.substring(0, fullPath.lastIndexOf('/'));     // get pathname only
+        String filename = fullPath.substring(fullPath.lastIndexOf('/') + 1, fullPath.length()); // get filename only
 
 //        showLog(filename);
 
@@ -217,9 +218,16 @@ public class ImageFileListActivity extends AppCompatActivity {
         public void setData(ArrayList<ImageFileInfo> data) {
             mData = data;
         }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            super.destroyItem(container, position, object);
+            ((Fragment) object).getFragmentManager().beginTransaction().remove((Fragment)object).commit();
+        }
     }
 
     public static class ImageFragment extends Fragment {
+        PhotoViewAttacher mAttacher;
         private ImageView mImageView;
 
         // Singleton Pattern : make just one instance, and can be accessed at everywhere
@@ -237,9 +245,18 @@ public class ImageFileListActivity extends AppCompatActivity {
             View rootView = inflater.inflate(R.layout.image_fragment, container, false);
             mImageView = (ImageView)rootView.findViewById(R.id.iv_image);
 
+            mAttacher = new PhotoViewAttacher(mImageView);
+            mAttacher.setScaleType(ImageView.ScaleType.FIT_XY);
+
             ImageFileInfo imageinfo = getArguments().getParcelable("imageinfo");
             mImageView.setImageURI(imageinfo.getImageUri());
             return rootView;
+        }
+
+        @Override
+        public void onDestroy() {
+            super.onDestroy();
+            ((BitmapDrawable) mImageView.getDrawable()).getBitmap().recycle();
         }
     }
 }

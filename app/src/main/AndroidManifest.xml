@@ -75,6 +75,10 @@
             android:label="@string/title_audio_player_activity">
         </activity>
 
+        <activity android:name=".showme.flipper.ImageViewActivity"
+            android:label="@string/title_activity_image">
+        </activity>
+
         <service
             android:name=".showme.audio.AudioMessengerService"
             android:enabled="true"

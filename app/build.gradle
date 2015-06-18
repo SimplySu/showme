@@ -19,8 +19,8 @@ android {
     }
 
 //    sourceSets {
-//        main {
-//            jniLibs.srcDir "src/main/jni/libs"
+//        image_main {
+//            jniLibs.srcDir "src/image_main/jni/libs"
 //        }
 //    }
 

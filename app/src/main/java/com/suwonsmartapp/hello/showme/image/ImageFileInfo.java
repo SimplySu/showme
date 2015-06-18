@@ -65,7 +65,7 @@ public class ImageFileInfo implements Parcelable {
         imageUri = in.readParcelable(ClassLoader.getSystemClassLoader());
     }
 
-    public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
+    public static final Creator CREATOR = new Creator() {
         public ImageFileInfo createFromParcel(Parcel in) {
             return new ImageFileInfo(in);
         }
