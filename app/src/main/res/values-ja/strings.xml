@@ -31,7 +31,7 @@
     <string name="msg_confirm">確認</string>
     <string name="msg_yes">はい</string>
     <string name="msg_no">いいえ</string>
-    <string name="msg_end">終</string>
+    <string name="msg_end">終わり</string>
     <string name="msg_confirm_delete">削除確認</string>
     <string name="msg_wrong_file">誤ったファイルです。</string>
     <string name="msg_cant_open">ファイル/フォルダーを開くことができません。</string>

@@ -31,7 +31,7 @@
     <string name="msg_confirm">确认</string>
     <string name="msg_yes">是</string>
     <string name="msg_no">否</string>
-    <string name="msg_end">终</string>
+    <string name="msg_end">结束</string>
     <string name="msg_confirm_delete">确认删除</string>
     <string name="msg_wrong_file">无效文件。</string>
     <string name="msg_cant_open">无法打开文件/文件夹。</string>

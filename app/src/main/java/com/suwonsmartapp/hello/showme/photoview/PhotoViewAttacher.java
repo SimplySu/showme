@@ -45,8 +45,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener, OnGe
     private boolean mAllowParentInterceptOnEdge = true;
     private boolean mBlockParentIntercept = false;
 
-    private static void checkZoomLevels(float minZoom, float midZoom,
-                                        float maxZoom) {
+    private static void checkZoomLevels(float minZoom, float midZoom, float maxZoom) {
         if (minZoom >= midZoom) {
             throw new IllegalArgumentException("MinZoom has to be less than MidZoom");
         } else if (midZoom >= maxZoom) {
@@ -356,8 +355,7 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener, OnGe
 // Instead we have to replicate the work, keeping track of the ImageView's bounds and then checking
 // if the values change.
 
-                if (top != mIvTop || bottom != mIvBottom || left != mIvLeft
-                        || right != mIvRight) {
+                if (top != mIvTop || bottom != mIvBottom || left != mIvLeft || right != mIvRight) {
                     // Update our base matrix, as the bounds have changed
                     updateBaseMatrix(imageView.getDrawable());
 
