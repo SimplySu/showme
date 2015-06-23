@@ -3,6 +3,8 @@ package com.suwonsmartapp.hello.showme.image;
 import android.content.ContentUris;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -103,6 +105,8 @@ public class ImageFileListActivity extends AppCompatActivity {
 
     private void prepareFileToShow() {
 
+        Uri uri = MediaStore.Files.getContentUri("external");
+
         String[] projection = {
                 MediaStore.Images.Media._ID,             // picture ID
                 MediaStore.Images.Media.TITLE,           // full pathname
@@ -112,12 +116,12 @@ public class ImageFileListActivity extends AppCompatActivity {
                 MediaStore.MediaColumns.DATA             // URI
         };
 
-        String selection = MediaStore.Images.Media.DATA + " like ?";
-        String sortOrder = MediaStore.Images.Media.DISPLAY_NAME + " ASC";
+        String selection = "_data like ? AND mime_type IS NOT NULL";
+        String sortOrder = "_display_name ASC";
 
         mCursor = getContentResolver()
-                .query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,    // The content URI of the words table
-                        projection,                 // The columns to return for each row
+                .query(uri,    // The content URI of the words table
+                        null,                 // The columns to return for each row
                         selection,                  //  selection criteria
                         new String[] {requestedPathname + "/%"},        // Selection criteria
                         sortOrder);                 // The sort order for the returned rows
@@ -136,12 +140,12 @@ public class ImageFileListActivity extends AppCompatActivity {
 
                 if (isDirectoryMatch()) {      // select matched directory only
                     imageFileInfo = new ImageFileInfo();
-                    imageFileInfo.setId(mCursor.getLong(0));                // file ID
-                    imageFileInfo.setTitle(mCursor.getString(1));           // filename
-                    imageFileInfo.setData(mCursor.getString(2));            // full pathname
-                    imageFileInfo.setDisplayName(mCursor.getString(3));     // filename
-                    imageFileInfo.setSize(mCursor.getLong(4));              // file size
-                    imageFileInfo.setUriData(mCursor.getString(5));         // URI data
+                    imageFileInfo.setId(mCursor.getLong(mCursor.getColumnIndex(MediaStore.Images.Media._ID)));                // file ID
+                    imageFileInfo.setTitle(mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.TITLE)));           // filename
+                    imageFileInfo.setData(mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.DATA)));            // full pathname
+                    imageFileInfo.setDisplayName(mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)));     // filename
+                    imageFileInfo.setSize(mCursor.getLong(mCursor.getColumnIndex(MediaStore.Images.Media.SIZE)));              // file size
+                    imageFileInfo.setUriData(mCursor.getString(mCursor.getColumnIndex(MediaStore.Images.Media.DATA)));         // URI data
 
                     Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, imageFileInfo.getId());
                     imageFileInfo.setImageUri(contentUri);                   // get image media_player_icon_android
@@ -158,7 +162,7 @@ public class ImageFileListActivity extends AppCompatActivity {
     // return false if it is not.
     // we will include subdirectories also.
     private boolean isDirectoryMatch() {
-        String fullPath = mCursor.getString(2);         // get full path name
+        String fullPath = mCursor.getString(mCursor.getColumnIndex("_data"));         // get full path name
         String pathname = fullPath.substring(0, fullPath.lastIndexOf('/'));     // get pathname only
         String filename = fullPath.substring(fullPath.lastIndexOf('/') + 1, fullPath.length()); // get filename only
 
@@ -250,7 +254,10 @@ public class ImageFileListActivity extends AppCompatActivity {
             mAttacher.update();
 
             ImageFileInfo imageinfo = getArguments().getParcelable("imageinfo");
-            mImageView.setImageURI(imageinfo.getImageUri());
+            Log.d(TAG, imageinfo.getImageUri().toString());
+            Bitmap bitmap = BitmapFactory.decodeFile(imageinfo.getData());
+            mImageView.setImageBitmap(bitmap);
+//            mImageView.setImageURI(imageinfo.getImageUri());
             return rootView;
         }
 

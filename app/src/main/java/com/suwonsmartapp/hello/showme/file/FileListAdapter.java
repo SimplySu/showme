@@ -99,11 +99,22 @@ public class FileListAdapter extends BaseAdapter {
         mAudioAsyncBitmapLoader.setBitmapLoadListener(new VideoAsyncBitmapLoader.BitmapLoadListener() {
             @Override
             public Bitmap getBitmap(int position) {
-//                Cursor cursor = (Cursor) getItem(position);
+                File file = (File) getItem(position);
+
+                final Cursor cursor = mContext.getContentResolver().query(
+                        MediaStore.Files.getContentUri("external"),
+                        null,
+                        "_data = ?",
+                        new String[]{file.getAbsolutePath()},
+                        "_display_name ASC");
+                cursor.moveToFirst();
+                int index = cursor.getColumnIndex("_id");
+                long id = cursor.getLong(index);
+
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inSampleSize = 1;   // 1 = no sample, 2^n = smaller
 
-                Uri audioUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, aCursor.getLong(0));
+                Uri audioUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
                 MediaMetadataRetriever retriever = new MediaMetadataRetriever();
                 retriever.setDataSource(mContext, audioUri);
                 byte data[] = retriever.getEmbeddedPicture();
@@ -116,12 +127,29 @@ public class FileListAdapter extends BaseAdapter {
         mImageAsyncBitmapLoader.setBitmapLoadListener(new VideoAsyncBitmapLoader.BitmapLoadListener() {
             @Override
             public Bitmap getBitmap(int position) {
-                Cursor cursor = (Cursor) getItem(position);
+                File file = (File)getItem(position);
+
+                final Cursor cursor = mContext.getContentResolver().query(
+                        MediaStore.Files.getContentUri("external"),
+                        null,
+                        "_data = ?",
+                        new String[] { file.getAbsolutePath() },
+                        "_display_name ASC");
+                cursor.moveToFirst();
+                int index = cursor.getColumnIndex("_id");
+                long id = cursor.getLong(index);
+
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inSampleSize = 1;   // 1 = no sample, 2^n = smaller
+
                 Bitmap thumbnail = MediaStore.Images.Thumbnails.getThumbnail(
-                        mContext.getContentResolver(), cursor.getLong(0),
+                        mContext.getContentResolver(), id,
                         MediaStore.Images.Thumbnails.MINI_KIND, options);
+
+                if (thumbnail == null) {
+                    options.inSampleSize = 8;
+                    thumbnail = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+                }
                 return thumbnail;
             }
         });
@@ -130,16 +158,32 @@ public class FileListAdapter extends BaseAdapter {
         mVideoAsyncBitmapLoader.setBitmapLoadListener(new VideoAsyncBitmapLoader.BitmapLoadListener() {
             @Override
             public Bitmap getBitmap(int position) {
-                Cursor cursor = (Cursor) getItem(position);
+                File file = (File)getItem(position);
+
+                final Cursor cursor = mContext.getContentResolver().query(
+                        MediaStore.Files.getContentUri("external"),
+                        null,
+                        "_data = ?",
+                        new String[] { file.getAbsolutePath() },
+                        "_display_name ASC");
+                cursor.moveToFirst();
+                int index = cursor.getColumnIndex("_id");
+                long id = cursor.getLong(index);
+
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inSampleSize = 1;   // 1 = no sample, 2^n = smaller
+
                 Bitmap thumbnail = MediaStore.Video.Thumbnails.getThumbnail(
-                        mContext.getContentResolver(), cursor.getLong(0),
+                        mContext.getContentResolver(), id,
                         MediaStore.Video.Thumbnails.MINI_KIND, options);
+
+                if (thumbnail == null) {
+                    options.inSampleSize = 8;
+                    thumbnail = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+                }
                 return thumbnail;
             }
         });
-
     }
 
     @Override
@@ -184,7 +228,6 @@ public class FileListAdapter extends BaseAdapter {
 
         // get current position and data
         File file = (File) getItem(position);
-        makeCursor(file);
         String currentFilename = file.getName();
         holder.fileName.setText(currentFilename);
 
@@ -225,75 +268,6 @@ public class FileListAdapter extends BaseAdapter {
 
         // return completed View
         return convertView;
-    }
-
-    private void makeCursor(File file) {
-
-        // for the audio
-        String[] projectionA = {
-                MediaStore.Audio.Media._ID,                 // album ID
-                MediaStore.Audio.Media.ARTIST,              // artist
-                MediaStore.Audio.Media.TITLE,               // title
-                MediaStore.Audio.Media.DATA,                // full pathname
-                MediaStore.Audio.Media.DISPLAY_NAME,        // filename
-                MediaStore.Audio.Media.DURATION,            // play time
-                MediaStore.Audio.Media.ALBUM_ID,            // album ID
-                MediaStore.MediaColumns.DATA
-        };
-
-        String pathA = file.getPath();
-        String selectionA = MediaStore.Audio.Media.DATA + " like ?";
-        String sortOrderA = MediaStore.Audio.Media.TITLE + " ASC";
-
-        aCursor = mContext.getContentResolver()
-                .query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,    // The content URI of the words table
-                        projectionA,                 // The columns to return for each row
-                        selectionA,                  //  selection criteria
-                        new String[] {pathA + "/%"},        // Selection criteria
-                        sortOrderA);                 // The sort order for the returned rows
-
-        // for the image
-        String[] projectionI = {
-                MediaStore.Images.Media._ID,             // picture ID
-                MediaStore.Images.Media.TITLE,           // full pathname
-                MediaStore.Images.Media.DATA,            // full pathname
-                MediaStore.Images.Media.DISPLAY_NAME,    // filename only
-                MediaStore.Images.Media.SIZE,            // file length
-                MediaStore.MediaColumns.DATA             // URI
-        };
-
-        String pathI = file.getPath();
-        String selectionI = MediaStore.Images.Media.DATA + " like ?";
-        String sortOrderI = MediaStore.Images.Media.DISPLAY_NAME + " ASC";
-
-        iCursor = mContext.getContentResolver()
-                .query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,    // The content URI of the words table
-                        projectionI,                 // The columns to return for each row
-                        selectionI,                  //  selection criteria
-                        new String[] {pathI + "/%"},        // Selection criteria
-                        sortOrderI);                 // The sort order for the returned rows
-
-        // for the video
-        String[] projectionV = {
-                MediaStore.Video.Media._ID,                 // album ID
-                MediaStore.Video.Media.ARTIST,              // artist
-                MediaStore.Video.Media.TITLE,               // title
-                MediaStore.Video.Media.DATA,                // full pathname
-                MediaStore.Video.Media.DISPLAY_NAME,        // filename
-                MediaStore.Video.Media.DURATION,            // play time
-                MediaStore.MediaColumns.DATA
-        };
-
-        String pathV = file.getPath();
-        String selectionV = MediaStore.Video.Media.DATA + " like ?";
-        String sortOrderV = MediaStore.Video.Media.TITLE + " ASC";
-
-        vCursor = mContext.getContentResolver()
-                .query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,    // The content URI of the words table
-                        projectionV,                 // The columns to return for each row
-                        selectionV,                  //  selection criteria
-                        new String[] {pathV + "/%"},        // Selection criteria
-                        sortOrderV);                 // The sort order for the returned rows
     }
 
     private boolean seeIfKnownType(String file, int pos, ImageView v) {
