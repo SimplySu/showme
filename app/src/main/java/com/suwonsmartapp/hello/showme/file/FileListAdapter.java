@@ -95,95 +95,95 @@ public class FileListAdapter extends BaseAdapter {
         mContext = context;
         mData = data;
 
-        mAudioAsyncBitmapLoader = new VideoAsyncBitmapLoader(context);
-        mAudioAsyncBitmapLoader.setBitmapLoadListener(new VideoAsyncBitmapLoader.BitmapLoadListener() {
-            @Override
-            public Bitmap getBitmap(int position) {
-                File file = (File) getItem(position);
-
-                final Cursor cursor = mContext.getContentResolver().query(
-                        MediaStore.Files.getContentUri("external"),
-                        null,
-                        "_data = ?",
-                        new String[]{file.getAbsolutePath()},
-                        "_display_name ASC");
-                cursor.moveToFirst();
-                int index = cursor.getColumnIndex("_id");
-                long id = cursor.getLong(index);
-
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inSampleSize = 1;   // 1 = no sample, 2^n = smaller
-
-                Uri audioUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-                MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-                retriever.setDataSource(mContext, audioUri);
-                byte data[] = retriever.getEmbeddedPicture();
-                Bitmap thumbnail = BitmapFactory.decodeByteArray(data, 0, data.length);
-                return thumbnail;
-            }
-        });
-
-        mImageAsyncBitmapLoader = new VideoAsyncBitmapLoader(context);
-        mImageAsyncBitmapLoader.setBitmapLoadListener(new VideoAsyncBitmapLoader.BitmapLoadListener() {
-            @Override
-            public Bitmap getBitmap(int position) {
-                File file = (File)getItem(position);
-
-                final Cursor cursor = mContext.getContentResolver().query(
-                        MediaStore.Files.getContentUri("external"),
-                        null,
-                        "_data = ?",
-                        new String[] { file.getAbsolutePath() },
-                        "_display_name ASC");
-                cursor.moveToFirst();
-                int index = cursor.getColumnIndex("_id");
-                long id = cursor.getLong(index);
-
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inSampleSize = 1;   // 1 = no sample, 2^n = smaller
-
-                Bitmap thumbnail = MediaStore.Images.Thumbnails.getThumbnail(
-                        mContext.getContentResolver(), id,
-                        MediaStore.Images.Thumbnails.MINI_KIND, options);
-
-                if (thumbnail == null) {
-                    options.inSampleSize = 8;
-                    thumbnail = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
-                }
-                return thumbnail;
-            }
-        });
-
-        mVideoAsyncBitmapLoader = new VideoAsyncBitmapLoader(context);
-        mVideoAsyncBitmapLoader.setBitmapLoadListener(new VideoAsyncBitmapLoader.BitmapLoadListener() {
-            @Override
-            public Bitmap getBitmap(int position) {
-                File file = (File)getItem(position);
-
-                final Cursor cursor = mContext.getContentResolver().query(
-                        MediaStore.Files.getContentUri("external"),
-                        null,
-                        "_data = ?",
-                        new String[] { file.getAbsolutePath() },
-                        "_display_name ASC");
-                cursor.moveToFirst();
-                int index = cursor.getColumnIndex("_id");
-                long id = cursor.getLong(index);
-
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inSampleSize = 1;   // 1 = no sample, 2^n = smaller
-
-                Bitmap thumbnail = MediaStore.Video.Thumbnails.getThumbnail(
-                        mContext.getContentResolver(), id,
-                        MediaStore.Video.Thumbnails.MINI_KIND, options);
-
-                if (thumbnail == null) {
-                    options.inSampleSize = 8;
-                    thumbnail = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
-                }
-                return thumbnail;
-            }
-        });
+//        mAudioAsyncBitmapLoader = new VideoAsyncBitmapLoader(context);
+//        mAudioAsyncBitmapLoader.setBitmapLoadListener(new VideoAsyncBitmapLoader.BitmapLoadListener() {
+//            @Override
+//            public Bitmap getBitmap(int position) {
+//                File file = (File) getItem(position);
+//
+//                final Cursor cursor = mContext.getContentResolver().query(
+//                        MediaStore.Files.getContentUri("external"),
+//                        null,
+//                        "_data = ?",
+//                        new String[]{file.getAbsolutePath()},
+//                        "_display_name ASC");
+//                cursor.moveToFirst();
+//                int index = cursor.getColumnIndex("_id");
+//                long id = cursor.getLong(index);
+//
+//                BitmapFactory.Options options = new BitmapFactory.Options();
+//                options.inSampleSize = 1;   // 1 = no sample, 2^n = smaller
+//
+//                Uri audioUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+//                MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+//                retriever.setDataSource(mContext, audioUri);
+//                byte data[] = retriever.getEmbeddedPicture();
+//                Bitmap thumbnail = BitmapFactory.decodeByteArray(data, 0, data.length);
+//                return thumbnail;
+//            }
+//        });
+//
+//        mImageAsyncBitmapLoader = new VideoAsyncBitmapLoader(context);
+//        mImageAsyncBitmapLoader.setBitmapLoadListener(new VideoAsyncBitmapLoader.BitmapLoadListener() {
+//            @Override
+//            public Bitmap getBitmap(int position) {
+//                File file = (File)getItem(position);
+//
+//                final Cursor cursor = mContext.getContentResolver().query(
+//                        MediaStore.Files.getContentUri("external"),
+//                        null,
+//                        "_data = ?",
+//                        new String[] { file.getAbsolutePath() },
+//                        "_display_name ASC");
+//                cursor.moveToFirst();
+//                int index = cursor.getColumnIndex("_id");
+//                long id = cursor.getLong(index);
+//
+//                BitmapFactory.Options options = new BitmapFactory.Options();
+//                options.inSampleSize = 1;   // 1 = no sample, 2^n = smaller
+//
+//                Bitmap thumbnail = MediaStore.Images.Thumbnails.getThumbnail(
+//                        mContext.getContentResolver(), id,
+//                        MediaStore.Images.Thumbnails.MINI_KIND, options);
+//
+//                if (thumbnail == null) {
+//                    options.inSampleSize = 8;
+//                    thumbnail = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+//                }
+//                return thumbnail;
+//            }
+//        });
+//
+//        mVideoAsyncBitmapLoader = new VideoAsyncBitmapLoader(context);
+//        mVideoAsyncBitmapLoader.setBitmapLoadListener(new VideoAsyncBitmapLoader.BitmapLoadListener() {
+//            @Override
+//            public Bitmap getBitmap(int position) {
+//                File file = (File)getItem(position);
+//
+//                final Cursor cursor = mContext.getContentResolver().query(
+//                        MediaStore.Files.getContentUri("external"),
+//                        null,
+//                        "_data = ?",
+//                        new String[] { file.getAbsolutePath() },
+//                        "_display_name ASC");
+//                cursor.moveToFirst();
+//                int index = cursor.getColumnIndex("_id");
+//                long id = cursor.getLong(index);
+//
+//                BitmapFactory.Options options = new BitmapFactory.Options();
+//                options.inSampleSize = 1;   // 1 = no sample, 2^n = smaller
+//
+//                Bitmap thumbnail = MediaStore.Video.Thumbnails.getThumbnail(
+//                        mContext.getContentResolver(), id,
+//                        MediaStore.Video.Thumbnails.MINI_KIND, options);
+//
+//                if (thumbnail == null) {
+//                    options.inSampleSize = 8;
+//                    thumbnail = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+//                }
+//                return thumbnail;
+//            }
+//        });
     }
 
     @Override
@@ -228,14 +228,13 @@ public class FileListAdapter extends BaseAdapter {
 
         // get current position and data
         File file = (File) getItem(position);
-        String currentFilename = file.getName();
-        holder.fileName.setText(currentFilename);
+        holder.fileName.setText(file.getName());
 
         if (file.isDirectory()) {
             holder.fileIcon.setImageResource(R.drawable.file_folder);
         } else {
-            if (!seeIfKnownType(currentFilename, position, holder.fileIcon)) {
-                holder.fileIcon.setImageResource(determineMimeType(currentFilename));
+            if (!seeIfKnownType(file, holder.fileIcon)) {
+                holder.fileIcon.setImageResource(determineMimeType(file.getName()));
             }
         }
 
@@ -270,33 +269,116 @@ public class FileListAdapter extends BaseAdapter {
         return convertView;
     }
 
-    private boolean seeIfKnownType(String file, int pos, ImageView v) {
+    private boolean seeIfKnownType(File file, ImageView v) {
 
-        int result = file.lastIndexOf('.');
-        if (result == -1) {
+        int result = file.getName().lastIndexOf('.');
+        if ((result == -1) || (result == 0)) {
             return false;
         }
 
-        int length = file.length();
-        String ext = file.substring(result + 1, length).toLowerCase();
+        int length = file.getName().length();
+        String ext = file.getName().substring(result + 1, length).toLowerCase();
 
-        for (int i = 0; i < audio.length; i++) {
+        for (int i = 0; i < 1; i++) {
             if (ext.equals(audio[i])) {
-                mAudioAsyncBitmapLoader.loadBitmap(pos, v);
+//                mAudioAsyncBitmapLoader.loadBitmap(pos, v);
+                final Cursor cursor = mContext.getContentResolver().query(
+                        MediaStore.Files.getContentUri("external"),
+                        null,
+                        "_data = ?",
+                        new String[]{file.getAbsolutePath()},
+                        "_display_name ASC");
+
+                if (cursor.getCount() == 0) {
+                    return false;
+                }
+
+                cursor.moveToFirst();
+                int index = cursor.getColumnIndex("_id");
+                long id = cursor.getLong(index);
+
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inSampleSize = 1;   // 1 = no sample, 2^n = smaller
+
+                Uri audioUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+                MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+                retriever.setDataSource(mContext, audioUri);
+                byte data[] = retriever.getEmbeddedPicture();
+
+                if (data == null) {
+                    return false;
+                }
+
+                Bitmap thumbnail = BitmapFactory.decodeByteArray(data, 0, data.length);
+                v.setImageBitmap(thumbnail);
                 return true;
             }
         }
 
-        for (int i = 0; i < image.length; i++) {
+        for (int i = 0; i < 4; i++) {
             if (ext.equals(image[i])) {
-                mImageAsyncBitmapLoader.loadBitmap(pos, v);
+//                mImageAsyncBitmapLoader.loadBitmap(pos, v);
+                final Cursor cursor = mContext.getContentResolver().query(
+                        MediaStore.Files.getContentUri("external"),
+                        null,
+                        "_data = ?",
+                        new String[] { file.getAbsolutePath() },
+                        "_display_name ASC");
+
+                if (cursor.getCount() == 0) {
+                    return false;
+                }
+
+                cursor.moveToFirst();
+                int index = cursor.getColumnIndex("_id");
+                long id = cursor.getLong(index);        ////////////////////////////////////////////DEAD
+
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inSampleSize = 1;   // 1 = no sample, 2^n = smaller
+
+                Bitmap thumbnail = MediaStore.Images.Thumbnails.getThumbnail(
+                        mContext.getContentResolver(), id,
+                        MediaStore.Images.Thumbnails.MINI_KIND, options);
+
+                if (thumbnail == null) {
+                    options.inSampleSize = 8;
+                    thumbnail = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+                }
+                v.setImageBitmap(thumbnail);
                 return true;
             }
         }
 
-        for (int i = 0; i < video.length; i++) {
+        for (int i = 0; i < 5; i++) {
             if (ext.equals(video[i])) {
-                mVideoAsyncBitmapLoader.loadBitmap(pos, v);
+//                mVideoAsyncBitmapLoader.loadBitmap(pos, v);
+                final Cursor cursor = mContext.getContentResolver().query(
+                        MediaStore.Files.getContentUri("external"),
+                        null,
+                        "_data = ?",
+                        new String[] { file.getAbsolutePath() },
+                        "_display_name ASC");
+
+                if (cursor.getCount() == 0) {
+                    return false;
+                }
+
+                cursor.moveToFirst();
+                int index = cursor.getColumnIndex("_id");
+                long id = cursor.getLong(index);
+
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inSampleSize = 1;   // 1 = no sample, 2^n = smaller
+
+                Bitmap thumbnail = MediaStore.Video.Thumbnails.getThumbnail(
+                        mContext.getContentResolver(), id,
+                        MediaStore.Video.Thumbnails.MINI_KIND, options);
+
+                if (thumbnail == null) {
+                    options.inSampleSize = 8;
+                    thumbnail = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+                }
+                v.setImageBitmap(thumbnail);
                 return true;
             }
         }
