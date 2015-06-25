@@ -77,7 +77,7 @@ public class FileManagerActivity extends AppCompatActivity implements
     public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
 
     private boolean fAllowded = false;      // true if delete is allowded
-    FileListAdapter fileListAdapter;
+    FileAdapter fileListAdapter;
 
     private ArrayList<FileInfo> fileList;
     private final int MODEall = 0;
@@ -334,7 +334,7 @@ public class FileManagerActivity extends AppCompatActivity implements
         }
 
         fileList = new FileLists().getFileList(path, MODEall);
-        fileListAdapter = new FileListAdapter(getApplicationContext(), fileList);
+        fileListAdapter = new FileAdapter(getApplicationContext(), fileList);
         mListView.setAdapter(fileListAdapter);
         fAllowded = true;       // we can delete file or directory
     }

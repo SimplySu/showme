@@ -13,8 +13,8 @@ import android.widget.Toast;
 
 import com.suwonsmartapp.hello.R;
 import com.suwonsmartapp.hello.showme.audio.AudioFileListActivity;
+import com.suwonsmartapp.hello.showme.file.FileAdapter;
 import com.suwonsmartapp.hello.showme.file.FileInfo;
-import com.suwonsmartapp.hello.showme.file.FileListAdapter;
 import com.suwonsmartapp.hello.showme.file.FileLists;
 
 import java.io.File;
@@ -41,7 +41,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
 
     private static int mCurrentPosition = -1;               // -1 means we didn't specify file
 
-    private FileListAdapter mAdapter;
+    private FileAdapter mAdapter;
 
     private ListView mMovieListView;
 
@@ -72,7 +72,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
         prepareTitleToPlay();               // setup titles for playing
 
         mMovieListView = (ListView) findViewById(R.id.lv_movies);
-        mAdapter = new FileListAdapter(getApplicationContext(), movieList);
+        mAdapter = new FileAdapter(getApplicationContext(), movieList);
         mMovieListView.setAdapter(mAdapter);
         mMovieListView.setOnItemClickListener(this);
 

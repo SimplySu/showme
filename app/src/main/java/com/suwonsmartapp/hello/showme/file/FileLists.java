@@ -26,9 +26,9 @@ public class FileLists {
             for (int i = 0; i < files.length; i++) {
                 File file = files[i];
                 if (modeMatch(file, mMode)) {
-                    if (matchFolder(file)) {                             // select matched directory only
+                    if (matchFolder(file)) {                            // select matched directory only
                         FileInfo fileInfo = new FileInfo();
-                        fileInfo.setFile(file);                          // file id
+                        fileInfo.setFile(file);                         // file information
                         fileInfo.setTitle(file.getAbsolutePath());      // full pathname
                         fileInfo.setSize(file.length());                // file size
                         fileInfo.setModified(file.lastModified());      // file date

@@ -24,7 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-public class FileListAdapter extends BaseAdapter {
+public class FileAdapter extends BaseAdapter {
 
     private List<FileInfo> mData;
     private Context mContext;
@@ -84,7 +84,7 @@ public class FileListAdapter extends BaseAdapter {
             R.drawable.file_document_thm, R.drawable.file_document_wps, R.drawable.file_document_xla,
             R.drawable.file_document_xlt, R.drawable.file_document_xps, R.drawable.file_document_gul};
 
-    public FileListAdapter(Context context, List<FileInfo> data) {
+    public FileAdapter(Context context, List<FileInfo> data) {
         mContext = context;
         mData = data;
     }
@@ -199,7 +199,7 @@ public class FileListAdapter extends BaseAdapter {
 
         for (int i = 0; i < 1; i++) {
             if (ext.equals(audio[i])) {
-                Bitmap bm = getAudioThumbnail(mContext, file);
+                Bitmap bm = getAudioThumbnail(mContext, file.getAbsolutePath());
                 if (bm == null) {
                     return false;
                 } else {
@@ -211,7 +211,7 @@ public class FileListAdapter extends BaseAdapter {
 
         for (int i = 0; i < 4; i++) {
             if (ext.equals(image[i])) {
-                Bitmap bm = getImageThumbnail(mContext, file);
+                Bitmap bm = getImageThumbnail(mContext, file.getAbsolutePath());
                 if (bm == null) {
                     return false;
                 } else {
@@ -224,7 +224,7 @@ public class FileListAdapter extends BaseAdapter {
         for (int i = 0; i < 5; i++) {
             if (ext.equals(video[i])) {
 
-                Bitmap bm = getVideoThumbnail(mContext, file);
+                Bitmap bm = getVideoThumbnail(mContext, file.getAbsolutePath());
                 if (bm == null) {
                     return false;
                 } else {
@@ -303,12 +303,12 @@ public class FileListAdapter extends BaseAdapter {
         return R.drawable.file_other_;
     }
 
-    public static Bitmap getAudioThumbnail(Context context, File file) {
+    public static Bitmap getAudioThumbnail(Context context, String file) {
         final Cursor cursor = context.getContentResolver().query(
                 MediaStore.Files.getContentUri("external"),
                 null,
                 "_data = ?",
-                new String[]{file.getAbsolutePath()},
+                new String[]{ file },
                 "_display_name ASC");
 
         if (cursor.getCount() == 0) {
@@ -344,12 +344,12 @@ public class FileListAdapter extends BaseAdapter {
         return thumbnail;
     }
 
-    public static Bitmap getImageThumbnail(Context context, File file) {
+    public static Bitmap getImageThumbnail(Context context, String file) {
         final Cursor cursor = context.getContentResolver().query(
                 MediaStore.Files.getContentUri("external"),
                 null,
                 "_data = ?",
-                new String[] { file.getAbsolutePath() },
+                new String[] { file },
                 "_display_name ASC");
 
         Bitmap thumbnail = null;
@@ -369,17 +369,17 @@ public class FileListAdapter extends BaseAdapter {
 
         if (thumbnail == null) {
             options.inSampleSize = 8;
-            thumbnail = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+            thumbnail = BitmapFactory.decodeFile(file, options);
         }
         return thumbnail;
     }
 
-    public static Bitmap getVideoThumbnail(Context context, File file) {
+    public static Bitmap getVideoThumbnail(Context context, String file) {
         final Cursor cursor = context.getContentResolver().query(
                 MediaStore.Files.getContentUri("external"),
                 null,
                 "_data = ?",
-                new String[] { file.getAbsolutePath() },
+                new String[] { file },
                 "_display_name ASC");
 
         if (cursor.getCount() == 0) {
@@ -399,7 +399,7 @@ public class FileListAdapter extends BaseAdapter {
 
         if (thumbnail == null) {
             options.inSampleSize = 8;
-            thumbnail = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+            thumbnail = BitmapFactory.decodeFile(file, options);
         }
         return thumbnail;
     }

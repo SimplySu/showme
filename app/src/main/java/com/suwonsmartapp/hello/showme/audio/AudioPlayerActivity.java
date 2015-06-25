@@ -24,9 +24,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.suwonsmartapp.hello.R;
+import com.suwonsmartapp.hello.showme.file.FileAdapter;
 import com.suwonsmartapp.hello.showme.file.FileInfo;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -152,7 +152,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     @Override
     protected void onStart() {
         super.onStart();
-//        showLog("onStart");
 
         // setup index of current song on the list and audio file list
         Intent serviceIPC = new Intent(getApplicationContext(), AudioMessengerService.class);
@@ -170,7 +169,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     @Override
     protected void onResume() {
         super.onResume();
-//        showLog("onResume");
 
 //        For volume control...
 //        AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
@@ -180,7 +178,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     @Override
     protected void onDestroy() {
         super.onDestroy();
-//        showLog("onDestroy");
 
         if (mBoundMessenger) {
             unbindService(mConnectionMessenger);
@@ -215,14 +212,15 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     };
 
     private void setMusicUI() {
+        FileInfo playSong = musicList.get(mCurrentPosition);
         mTvAudioPlayerTitle.setText(playSong.getTitle());
+        Bitmap bm = FileAdapter.getAudioThumbnail(getApplicationContext(), playSong.getTitle());
 
-        File f = playSong.getFile();
-        if (getAlbumArt(f) != null) {
+        if (bm != null) {
             if (playSong.getTitle().toLowerCase().lastIndexOf(".mp3") == -1) {
                 mIvAudioPlayerPicture.setImageResource(R.drawable.audio_music_large);
             } else {
-                mIvAudioPlayerPicture.setImageBitmap(getAlbumArt(f));
+                mIvAudioPlayerPicture.setImageBitmap(bm);
             }
         } else {
             mIvAudioPlayerPicture.setImageResource(R.drawable.audio_music_large);
@@ -232,11 +230,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
             mMusicThread = getmMusicThread();
             mMusicHandler.postDelayed(mMusicThread, 100);
         }
-    }
-
-    private Bitmap getAlbumArt(File file) {
-        return null;
-//        return FileListAdapter.getAudioThumbnail(getApplicationContext(), file);
     }
 
     private final MusicHandler mMusicHandler = new MusicHandler();
@@ -328,29 +321,21 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void restartOrPause() {
-//        showLog("restartOrPause");
-
         Intent songListActivity = new Intent(HOME + "AudioMessengerService.Play");
         sendBroadcast(songListActivity);
     }
 
     private void previous() {
-//        showLog("previous");
-
         Intent songListActivity = new Intent(HOME + "AudioMessengerService.Previous");
         sendBroadcast(songListActivity);
     }
 
     private void next() {
-//        showLog("next");
-
         Intent songListActivity = new Intent(HOME + "AudioMessengerService.Next");
         sendBroadcast(songListActivity);
     }
 
     private void backToList() {
-//        showLog("backToList");
-
         Intent intent = new Intent();
         setResult(RESULT_OK, intent);
         finish();
@@ -359,8 +344,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     private BroadcastReceiver mBRPlayer = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-//            showLog("Broadcast Receiver : " + intent.getAction());
-
             String action = intent.getAction();
             if ((HOME + "AudioPlayerActivity.STOP").equals(action)) {
                 if (mBoundMessenger) {
@@ -377,8 +360,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     };
 
     private void registerCallReceiver() {
-//        showLog("registerCallReceiver");
-
         if(!mIsReceiverRegistered){
             IntentFilter filter = new IntentFilter();
             filter.addAction(HOME + "AudioPlayerActivity.STOP");
@@ -390,8 +371,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void unregisterCallReceiver() {
-//        showLog("unregisterCallReceiver");
-
         if(mIsReceiverRegistered){
             unregisterReceiver(mBRPlayer);
             mIsReceiverRegistered = false;

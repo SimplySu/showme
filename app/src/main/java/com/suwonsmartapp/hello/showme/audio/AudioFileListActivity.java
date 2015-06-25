@@ -29,8 +29,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.suwonsmartapp.hello.R;
+import com.suwonsmartapp.hello.showme.file.FileAdapter;
 import com.suwonsmartapp.hello.showme.file.FileInfo;
-import com.suwonsmartapp.hello.showme.file.FileListAdapter;
 import com.suwonsmartapp.hello.showme.file.FileLists;
 
 import java.io.File;
@@ -54,7 +54,7 @@ public class AudioFileListActivity extends AppCompatActivity
     private boolean mIsReceiverRegistered;
 
     private ListView mLvMusicList;                          // music list view
-    private FileListAdapter mAudioListAdapter;             // audio list adapter
+    private FileAdapter mFileAdapter;                       // audio list adapter
 
     private static int mCurrentPosition = -1;               // -1 means we didn't specify title
     private static MediaPlayer mMediaPlayer;                // media player member variable
@@ -100,9 +100,9 @@ public class AudioFileListActivity extends AppCompatActivity
         prepareTitleToPlay();               // setup titles for playing
         setupViews();                       // setup view
 
-        mAudioListAdapter = new FileListAdapter(getApplicationContext(), musicList);
+        mFileAdapter = new FileAdapter(getApplicationContext(), musicList);
         mLvMusicList = (ListView) findViewById(R.id.lv_music_list);
-        mLvMusicList.setAdapter(mAudioListAdapter);
+        mLvMusicList.setAdapter(mFileAdapter);
         mLvMusicList.setOnItemClickListener(this);      // handle if user selected title directly
 
         // connect event handler on the seekbar
@@ -184,8 +184,6 @@ public class AudioFileListActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-//        showLog("onResume - isAudioPlayerServiceRunning : " + String.valueOf(isAudioPlayerServiceRunning()));
-
         if (isAudioPlayerServiceRunning()) {
             setMiniPlayer();
         }
@@ -194,7 +192,6 @@ public class AudioFileListActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-//        showLog("onDestroy  - mBoundMessenger : " + String.valueOf(mBoundMessenger));
 
         if (mBoundMessenger) {
             unbindService(mServiceConnection);
@@ -209,7 +206,6 @@ public class AudioFileListActivity extends AppCompatActivity
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//        showLog("onItemClick");
         mCurrentPosition = position;        // save position when user clicked current view
         updateTitleListView();
 
@@ -221,7 +217,6 @@ public class AudioFileListActivity extends AppCompatActivity
 
     @Override
     public void onClick(View v) {
-//        showLog("onClick");
         switch (v.getId()) {
             case R.id.btn_previous_song:
                 previous();                 // play the previous title
@@ -239,18 +234,15 @@ public class AudioFileListActivity extends AppCompatActivity
 
     private void prepareTitleToPlay() {
         musicList = new FileLists().getFileList(requestedPathname, MODEaudio);
-
         if (musicList == null) {
-            showToast(getString(R.string.msg_no_music));          // no image found
+            showToast(getString(R.string.msg_no_music));          // no music found
         }
     }
 
     private void setMiniPlayer() {
-//        showLog("setMiniPlayer");
         Intent service = new Intent(getApplicationContext(), AudioMessengerService.class);
-        service.putExtra("activity", AudioFileListActivity.class.getSimpleName());
+        service.putExtra("activity", TAG);
         bindService(service, mServiceConnection, Context.BIND_ADJUST_WITH_ACTIVITY);
-
         mMusicHandler.postDelayed(mMusicThread, 100);
     }
 
@@ -260,11 +252,10 @@ public class AudioFileListActivity extends AppCompatActivity
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-//            showLog("onServiceConnected");
             mMsgOfListAndService = new Messenger(service);
             mBoundMessenger = true;
 
-            // get audio player media_player_icon_information
+            // get audio player icon information
             Message msg = Message.obtain(null, AudioMessengerService.MSG_GET_MP_IN_LIST, 0, 0);
             try {
                 mMsgOfListAndService.send(msg);
@@ -275,7 +266,6 @@ public class AudioFileListActivity extends AppCompatActivity
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-//            showLog("onServiceDisconnected");
             mMsgOfListAndService = null;
             mBoundMessenger = false;
         }
@@ -342,11 +332,9 @@ public class AudioFileListActivity extends AppCompatActivity
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if (AudioMessengerService.class.getName().equals(service.service.getClassName())) {
-//                showLog("isAudioPlayerServiceRunning : true");
                 return true;
             }
         }
-//        showLog("isAudioPlayerServiceRunning : false");
         return false;
     }
 
@@ -364,9 +352,7 @@ public class AudioFileListActivity extends AppCompatActivity
 
     private void changeMiniPlayerUI() {
         FileInfo playSong = musicList.get(mCurrentPosition);
-
-        // get album icon bitmap image from the media store
-        Bitmap albumArt = FileListAdapter.getAudioThumbnail(getApplicationContext(), playSong.getFile());
+        Bitmap albumArt = FileAdapter.getAudioThumbnail(getApplicationContext(), playSong.getTitle());
 
         if (albumArt != null) {
             if (playSong.getTitle().toLowerCase().lastIndexOf(".mp3") == -1) {
@@ -387,25 +373,21 @@ public class AudioFileListActivity extends AppCompatActivity
     }
 
     private void updateTitleListView() {
-//        showLog("updateTitleListView");
-        mAudioListAdapter.setmCurrentPosition(mCurrentPosition);
-        mAudioListAdapter.notifyDataSetChanged();
+        mFileAdapter.setmCurrentPosition(mCurrentPosition);
+        mFileAdapter.notifyDataSetChanged();
     }
 
     private void restartOrPause() {
-//        showLog("restartOrPause");
         Intent songListActivity = new Intent(HOME + "AudioMessengerService.Play");
         sendBroadcast(songListActivity);
     }
 
     private void previous() {
-//        showLog("previous");
         Intent songListActivity = new Intent(HOME + "AudioMessengerService.Previous");
         sendBroadcast(songListActivity);
     }
 
     private void next() {
-//        showLog("next");
         Intent songListActivity = new Intent(HOME + "AudioMessengerService.Next");
         sendBroadcast(songListActivity);
     }
@@ -413,7 +395,6 @@ public class AudioFileListActivity extends AppCompatActivity
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-//            showLog("onReceive : BroadcastReceiver");
             String action = intent.getAction();
             if ((HOME + "AudioFileListActivity.STOP").equals(action)) {
                 if (mBoundMessenger) {
@@ -424,14 +405,13 @@ public class AudioFileListActivity extends AppCompatActivity
             } else if ((HOME + "AudioPlayerActivity.songChanged").equals(action)) {
                 mCurrentPosition = intent.getIntExtra("currentPosition", -1);
                 setupMiniPlayer();
-                mAudioListAdapter.setmCurrentPosition(mCurrentPosition);
-                mAudioListAdapter.notifyDataSetChanged();
+                mFileAdapter.setmCurrentPosition(mCurrentPosition);
+                mFileAdapter.notifyDataSetChanged();
             }
         }
     };
 
     private void registerCallReceiver(){
-//        showLog("registerCallReceiver");
         if(!mIsReceiverRegistered){
             IntentFilter filter = new IntentFilter();
             filter.addAction(HOME + "AudioFileListActivity.STOP");
@@ -442,7 +422,6 @@ public class AudioFileListActivity extends AppCompatActivity
     }
 
     private void unregisterCallReceiver(){
-//        showLog("unregisterCallReceiver");
         if(mIsReceiverRegistered){
             unregisterReceiver(mBroadcastReceiver);
             mIsReceiverRegistered = false;
