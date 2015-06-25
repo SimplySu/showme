@@ -17,7 +17,6 @@ import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,11 +47,8 @@ public class FileManagerActivity extends AppCompatActivity implements
     public static final String sPathDocument = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath();
 
     private ListView mListView;
-    private FileManagerAdapter mFileManagerAdapter;
-
-    // we will use default simple adapter
+    private FileManagerAdapter mRootAdapter;
     private ArrayList<FileManagerInfo> mRootList;
-    private SimpleAdapter mAdapter;
 
     // history management : push current path (mCurrentPath) before going to the next screen
     // mCurrentPath = next screen path
@@ -60,7 +56,6 @@ public class FileManagerActivity extends AppCompatActivity implements
 
     // current full path
     private String mCurrentPath = "";
-
     private TextView mTvCurrentPath;
 
     private String externalSdCard = null;
@@ -77,7 +72,7 @@ public class FileManagerActivity extends AppCompatActivity implements
     public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
 
     private boolean fAllowded = false;      // true if delete is allowded
-    FileAdapter fileListAdapter;
+    private FileAdapter fileAdapter;
 
     private ArrayList<FileInfo> fileList;
     private final int MODEall = 0;
@@ -168,8 +163,8 @@ public class FileManagerActivity extends AppCompatActivity implements
         mRootList.add(download);
         mRootList.add(document);
 
-        mFileManagerAdapter = new FileManagerAdapter(getApplicationContext(), mRootList);
-        mListView.setAdapter(mFileManagerAdapter);
+        mRootAdapter = new FileManagerAdapter(getApplicationContext(), mRootList);
+        mListView.setAdapter(mRootAdapter);
     }
 
     private void findExtSd() {
@@ -234,7 +229,6 @@ public class FileManagerActivity extends AppCompatActivity implements
                 // insert path on the history
                 mFileStack.push(mCurrentPath);
                 setCurrentPath(fileData.getFile().getAbsolutePath());
-
                 showFileList(fileData.getFile().getAbsolutePath());
             } else {
                 switch (getMimeType(fileData.getFile())) {
@@ -282,7 +276,7 @@ public class FileManagerActivity extends AppCompatActivity implements
     }
 
     private String getMimeType(File file) {
-        String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "xmf", "rtx", "ota", "imy", "ts", "wma"};
+        String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "wma"};
         String[] video = {"avi", "mkv", "mp4", "wmv", "asf", "mov", "mpg", "flv", "tp", "3gp", "m4v", "rmvb", "webm"};
         String[] image = {"jpg", "gif", "png", "bmp", "tif", "tiff", "jpeg", "webp"};
         String[] title = {"smi", "srt", "sub", "idx", "ass", "ssa"};
@@ -334,8 +328,8 @@ public class FileManagerActivity extends AppCompatActivity implements
         }
 
         fileList = new FileLists().getFileList(path, MODEall);
-        fileListAdapter = new FileAdapter(getApplicationContext(), fileList);
-        mListView.setAdapter(fileListAdapter);
+        fileAdapter = new FileAdapter(getApplicationContext(), fileList);
+        mListView.setAdapter(fileAdapter);
         fAllowded = true;       // we can delete file or directory
     }
 
@@ -420,7 +414,7 @@ public class FileManagerActivity extends AppCompatActivity implements
                                 // delete directory as well as it's files
                                 boolean wellDeleted = deleteDir(absPath);
                                 fileList.remove(position);
-                                fileListAdapter.notifyDataSetChanged();
+                                fileAdapter.notifyDataSetChanged();
 
                                 if (wellDeleted) {
                                     showToast(getString(R.string.msg_del_dir));
@@ -434,7 +428,7 @@ public class FileManagerActivity extends AppCompatActivity implements
 
                                 if (deleted) {
                                     fileList.remove(position);
-                                    fileListAdapter.notifyDataSetChanged();
+                                    fileAdapter.notifyDataSetChanged();
                                     showToast(getString(R.string.msg_del_file));
                                 } else {
                                     showToast(getString(R.string.msg_cant_del_file));

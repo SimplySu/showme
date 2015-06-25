@@ -41,6 +41,7 @@ public class FileAdapter extends BaseAdapter {
             R.drawable.file_music_imy, R.drawable.file_music_ts, R.drawable.file_music_cue,
             R.drawable.file_music_wma, R.drawable.file_music_ape};
 
+    // we should append .ass and .ssa
     private String[] video = {"avi", "mkv", "mp4", "wmv", "asf", "mov", "mpg", "flv", "tp", "3gp",
                                 "m4v", "rmvb", "webm", "smi", "srt", "sub", "idx"};
     private int[] videoR = {R.drawable.file_movie_avi, R.drawable.file_movie_mkv, R.drawable.file_movie_mp4,
@@ -311,7 +312,14 @@ public class FileAdapter extends BaseAdapter {
                 new String[]{ file },
                 "_display_name ASC");
 
-        if (cursor.getCount() == 0) {
+        int gc;     // sometimes getCount returns error.
+        try {
+            gc = cursor.getCount();
+        } catch (NullPointerException e) {
+            return null;
+        }
+
+        if (gc == 0) {
             return null;
         }
 
@@ -355,7 +363,14 @@ public class FileAdapter extends BaseAdapter {
         Bitmap thumbnail = null;
         BitmapFactory.Options options = new BitmapFactory.Options();
 
-        if (cursor.getCount() != 0) {
+        int gc;     // sometimes getCount returns error.
+        try {
+            gc = cursor.getCount();
+        } catch (NullPointerException e) {
+            return null;
+        }
+
+        if (gc != 0) {
             cursor.moveToFirst();
             int index = cursor.getColumnIndex("_id");
             long id = cursor.getLong(index);
@@ -382,7 +397,14 @@ public class FileAdapter extends BaseAdapter {
                 new String[] { file },
                 "_display_name ASC");
 
-        if (cursor.getCount() == 0) {
+        int gc;     // sometimes getCount returns error.
+        try {
+            gc = cursor.getCount();
+        } catch (NullPointerException e) {
+            return null;
+        }
+
+        if (gc == 0) {
             return null;
         }
 

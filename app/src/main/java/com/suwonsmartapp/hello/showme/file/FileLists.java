@@ -72,9 +72,10 @@ public class FileLists {
 
     private boolean modeMatch(File file, int mode) {
 
-        String[] audio = {"mp3"};
-        String[] image = {"jpg", "jpeg", "gif", "png", "bmp"};
-        String[] video = {"avi", "mkv", "mp4", "wmv"};
+        String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "wma"};
+        String[] video = {"avi", "mkv", "mp4", "wmv", "asf", "mov", "mpg", "flv", "tp", "3gp",
+                "m4v", "rmvb", "webm", "smi", "srt", "sub", "idx", "ass", "ssa"};
+        String[] image = {"jpg", "jpeg", "gif", "png", "bmp", "tif", "tiff", "webp"};
 
         if (mode == MODEall) {
             return true;
