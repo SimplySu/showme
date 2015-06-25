@@ -8,7 +8,7 @@ android:padding="5dp">
 
     <ImageView
         android:id="@+id/file_list_icon"
-        android:layout_width="34dp"
+        android:layout_width="42dp"
         android:layout_height="34dp"
         android:gravity="center"
         android:layout_gravity="center"

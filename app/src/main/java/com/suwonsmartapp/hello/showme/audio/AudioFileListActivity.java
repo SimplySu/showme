@@ -3,23 +3,19 @@ package com.suwonsmartapp.hello.showme.audio;
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -33,7 +29,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.suwonsmartapp.hello.R;
+import com.suwonsmartapp.hello.showme.file.FileInfo;
+import com.suwonsmartapp.hello.showme.file.FileListAdapter;
+import com.suwonsmartapp.hello.showme.file.FileLists;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -45,13 +45,16 @@ public class AudioFileListActivity extends AppCompatActivity
     private void showToast(String toast_msg) { Toast.makeText(this, toast_msg, Toast.LENGTH_LONG).show(); }
     private static final String HOME = "com.suwonsmartapp.hello.showme.";
 
-    private AudioFileInfo audioFileInfo;                    // audio file info getting by cursor
+    private ArrayList<FileInfo> musicList;
+    private final int MODEall = 0;
+    private final int MODEaudio = 1;
+    private final int MODEimage = 2;
+    private final int MODEvideo = 3;
+
     private boolean mIsReceiverRegistered;
 
-    private ArrayList<AudioFileInfo> mAudioFileInfoList;    // audio file media_player_icon_information list
     private ListView mLvMusicList;                          // music list view
-    private AudioListAdapter mAudioListAdapter;             // audio list adapter
-    private Cursor mCursor;                                 // cursor for media store searching
+    private FileListAdapter mAudioListAdapter;             // audio list adapter
 
     private static int mCurrentPosition = -1;               // -1 means we didn't specify title
     private static MediaPlayer mMediaPlayer;                // media player member variable
@@ -88,17 +91,16 @@ public class AudioFileListActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.audio_list_and_mini_player);
-//        showLog("onCreate");
 
         // fix the screen for portrait
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         readIntent();                       // get pathname and filename
 
-        setupViews();                       // setup view
         prepareTitleToPlay();               // setup titles for playing
+        setupViews();                       // setup view
 
-        mAudioListAdapter = new AudioListAdapter(getApplicationContext(), mAudioFileInfoList, mCurrentPosition);
+        mAudioListAdapter = new FileListAdapter(getApplicationContext(), musicList);
         mLvMusicList = (ListView) findViewById(R.id.lv_music_list);
         mLvMusicList.setAdapter(mAudioListAdapter);
         mLvMusicList.setOnItemClickListener(this);      // handle if user selected title directly
@@ -129,7 +131,7 @@ public class AudioFileListActivity extends AppCompatActivity
 
         Intent initialIntent = new Intent(getApplicationContext(), AudioPlayerActivity.class);
         initialIntent.putExtra("currentPosition", mCurrentPosition);       // current title position
-        initialIntent.putParcelableArrayListExtra("songInfoList", mAudioFileInfoList);
+        initialIntent.putParcelableArrayListExtra("songInfoList", musicList);
         startActivity(initialIntent);
     }
 
@@ -149,9 +151,6 @@ public class AudioFileListActivity extends AppCompatActivity
     }
 
     private void setupViews() {
-//        showLog("setupViews");
-        mAudioFileInfoList = new ArrayList<>();         // create audio file lists
-
         mLlMiniMiniPlayer = (LinearLayout) findViewById(R.id.mini_audio_player);
         mIvAlbum = (ImageView) findViewById(R.id.mini_audio_player_icon);
         mTvSongTitle = (TextView) findViewById(R.id.mini_audio_player_title);
@@ -172,13 +171,14 @@ public class AudioFileListActivity extends AppCompatActivity
 
     // search matched title with specified by user
     private int searchTitleIndex() {
-        for (int i = 0; i < mAudioFileInfoList.size(); i++) {
-            AudioFileInfo audioFileInfo = mAudioFileInfoList.get(i);    // read audio file
-            if (requestedFilename.equals(audioFileInfo.getDisplayName())) {
+        for (int i = 0; i < musicList.size(); i++) {
+            FileInfo fileInfo = musicList.get(i);    // read image file
+            File f = fileInfo.getFile();
+            if (requestedFilename.equals(f.getName())) {
                 return i;          // return matched index
             }
         }
-        return 0;                  // default is the first title
+        return 0;                  // default is the first picture
     }
 
     @Override
@@ -215,7 +215,7 @@ public class AudioFileListActivity extends AppCompatActivity
 
         Intent intent = new Intent(getApplicationContext(), AudioPlayerActivity.class);
         intent.putExtra("currentPosition", mCurrentPosition);       // current title position
-        intent.putParcelableArrayListExtra("songInfoList", mAudioFileInfoList);
+        intent.putParcelableArrayListExtra("songInfoList", musicList);
         startActivity(intent);
     }
 
@@ -238,82 +238,11 @@ public class AudioFileListActivity extends AppCompatActivity
     }
 
     private void prepareTitleToPlay() {
-//        showLog("prepareTitleToPlay");
+        musicList = new FileLists().getFileList(requestedPathname, MODEaudio);
 
-        // query : syncronized processing (can be slow)
-        // loader : asyncronized processing
-
-        String[] projection = {
-                MediaStore.Audio.Media._ID,                 // album ID
-                MediaStore.Audio.Media.ARTIST,              // artist
-                MediaStore.Audio.Media.TITLE,               // title
-                MediaStore.Audio.Media.DATA,                // full pathname
-                MediaStore.Audio.Media.DISPLAY_NAME,        // filename
-                MediaStore.Audio.Media.DURATION,            // play time
-                MediaStore.Audio.Media.ALBUM_ID,            // album ID
-                MediaStore.MediaColumns.DATA
-        };
-
-        String selection = MediaStore.Audio.Media.DATA + " like ?";
-        String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
-
-        mCursor = getContentResolver()
-                .query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,    // The content URI of the words table
-                        projection,                 // The columns to return for each row
-                        selection,                  //  selection criteria
-                        new String[] {requestedPathname + "/%"},        // Selection criteria
-                        sortOrder);                 // The sort order for the returned rows
-
-//        showLog("query result : " + String.valueOf(mCursor));
-
-        mAudioFileInfoList = new ArrayList<>();     // initialize info list
-
-        if (mCursor != null) {
-            mCursor.moveToFirst();              // from the start of data base
-
-//            showLog("searched file count : " + String.valueOf(mCursor.getCount()));
-
-            for (int i = 0; i < mCursor.getCount(); i++) {
-                mCursor.moveToPosition(i);      // get next row of data base
-
-                if (isDirectoryMatch()) {      // select matched directory only
-                    audioFileInfo = new AudioFileInfo();
-                    audioFileInfo.setId(mCursor.getLong(0));                // music ID
-                    audioFileInfo.setArtist(mCursor.getString(1));          // artist
-                    audioFileInfo.setTitle(mCursor.getString(2));           // title
-                    audioFileInfo.setMediaData(mCursor.getString(3));       // full path of the music
-                    audioFileInfo.setDisplayName(mCursor.getString(4));     // brief music name to show
-                    audioFileInfo.setDuration(mCursor.getLong(5));          // playing time
-                    audioFileInfo.setAlbumId(mCursor.getInt(6));            // album ID
-                    audioFileInfo.setColumnsData(mCursor.getString(7));
-
-                    Uri contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, audioFileInfo.getId());
-                    audioFileInfo.setSongUri(contentUri);                   // get music media_player_icon_android
-
-                    mAudioFileInfoList.add(audioFileInfo);                  // register music on the play list
-                }
-            }
-        } else {
-            showToast(getString(R.string.msg_no_music));          // no music found
+        if (musicList == null) {
+            showToast(getString(R.string.msg_no_music));          // no image found
         }
-    }
-
-    // return true if current file's directory is matching with user selection,
-    // return false if it is not.
-    // we will include subdirectories also.
-    private boolean isDirectoryMatch() {
-        String fullPath = mCursor.getString(3);         // get full path name
-        String pathname = fullPath.substring(0, fullPath.lastIndexOf('/'));     // get pathname only
-        String filename = fullPath.substring(fullPath.lastIndexOf('/') + 1, fullPath.length()); // get filename only
-
-//        showLog(filename);
-
-        if (pathname.length() < requestedPathname.length()) { // if current pathname is shorter than requested
-            return false;                               // we don't need to compare it
-        }
-
-        String s = pathname.substring(0, requestedPathname.length()); // compare just we requested for subdirectory
-        return s.equals(requestedPathname);             // see if this directory is matching ?
     }
 
     private void setMiniPlayer() {
@@ -422,22 +351,22 @@ public class AudioFileListActivity extends AppCompatActivity
     }
 
     private void setupMiniPlayer() {
-        if (mCurrentPosition >=0 && mCurrentPosition < mAudioFileInfoList.size()) {
+        if (mCurrentPosition >=0 && mCurrentPosition < musicList.size()) {
             changeMiniPlayerUI();
         } else if (mCurrentPosition < 0) {
             mCurrentPosition = 0;
             changeMiniPlayerUI();
-        } else if (mCurrentPosition >= mAudioFileInfoList.size()) {
-            mCurrentPosition = mAudioFileInfoList.size() - 1;
+        } else if (mCurrentPosition >= musicList.size()) {
+            mCurrentPosition = musicList.size() - 1;
             changeMiniPlayerUI();
         }
     }
 
     private void changeMiniPlayerUI() {
-        AudioFileInfo playSong = mAudioFileInfoList.get(mCurrentPosition);
+        FileInfo playSong = musicList.get(mCurrentPosition);
 
-        // get album media_player_icon_android bitmap image from the media store
-        Bitmap albumArt = AudioPlayerAlbumImage.getArtworkQuick(getApplicationContext(), playSong.getAlbumId(), 150, 150);
+        // get album icon bitmap image from the media store
+        Bitmap albumArt = FileListAdapter.getAudioThumbnail(getApplicationContext(), playSong.getFile());
 
         if (albumArt != null) {
             if (playSong.getTitle().toLowerCase().lastIndexOf(".mp3") == -1) {

@@ -24,7 +24,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.suwonsmartapp.hello.R;
+import com.suwonsmartapp.hello.showme.file.FileInfo;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -55,8 +57,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     private double TimeRight = 0;
 
     private int mCurrentPosition = 0;
-    private ArrayList<AudioFileInfo> mAudioFileInfoList;
-    private AudioFileInfo mPlayAudioFileInfo;
+    private ArrayList<FileInfo> musicList;
+    private FileInfo playSong;
 
     private boolean mIsReceiverRegistered;
 
@@ -81,9 +83,9 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
         setupViews();
 
         Intent intent = getIntent();
-        mAudioFileInfoList = intent.getParcelableArrayListExtra("songInfoList");
+        musicList = intent.getParcelableArrayListExtra("songInfoList");
         mCurrentPosition = intent.getIntExtra("currentPosition", -1);
-        mPlayAudioFileInfo = mAudioFileInfoList.get(mCurrentPosition);
+        playSong = musicList.get(mCurrentPosition);
 
 //        SeekBar seekVolumn = (SeekBar) findViewById(R.id.SeekBar_Volumn);
 //        final AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
@@ -155,7 +157,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
         // setup index of current song on the list and audio file list
         Intent serviceIPC = new Intent(getApplicationContext(), AudioMessengerService.class);
         serviceIPC.putExtra("currentPosition", mCurrentPosition);
-        serviceIPC.putParcelableArrayListExtra("songInfoList", mAudioFileInfoList);
+        serviceIPC.putParcelableArrayListExtra("songInfoList", musicList);
         startService(serviceIPC);
 
         bindService(serviceIPC, mConnectionMessenger, Context.BIND_ADJUST_WITH_ACTIVITY);
@@ -213,16 +215,14 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     };
 
     private void setMusicUI() {
-//        showLog("setMusicUI");
+        mTvAudioPlayerTitle.setText(playSong.getTitle());
 
-        mTvAudioPlayerTitle.setText(mPlayAudioFileInfo.getTitle() + " - " + mPlayAudioFileInfo.getArtist());
-        mPlayAudioFileInfo.setAlbumArt(getAlbumArt(mPlayAudioFileInfo.getAlbumId()));
-
-        if (mPlayAudioFileInfo.getAlbumArt() != null) {
-            if (mPlayAudioFileInfo.getTitle().toLowerCase().lastIndexOf(".mp3") == -1) {
+        File f = playSong.getFile();
+        if (getAlbumArt(f) != null) {
+            if (playSong.getTitle().toLowerCase().lastIndexOf(".mp3") == -1) {
                 mIvAudioPlayerPicture.setImageResource(R.drawable.audio_music_large);
             } else {
-                mIvAudioPlayerPicture.setImageBitmap(mPlayAudioFileInfo.getAlbumArt());
+                mIvAudioPlayerPicture.setImageBitmap(getAlbumArt(f));
             }
         } else {
             mIvAudioPlayerPicture.setImageResource(R.drawable.audio_music_large);
@@ -234,10 +234,9 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
         }
     }
 
-    private Bitmap getAlbumArt(int albumId) {
-//        showLog("getAlbumArt");
-
-        return AudioPlayerAlbumImage.getArtworkQuick(getApplicationContext(), albumId, 300, 300);
+    private Bitmap getAlbumArt(File file) {
+        return null;
+//        return FileListAdapter.getAudioThumbnail(getApplicationContext(), file);
     }
 
     private final MusicHandler mMusicHandler = new MusicHandler();
@@ -371,7 +370,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
                 finish();
             } else if ((HOME + "AudioPlayerActivity.songChanged").equals(action)) {
                 mCurrentPosition = intent.getIntExtra("currentPosition", -1);
-                mPlayAudioFileInfo = mAudioFileInfoList.get(mCurrentPosition);
+                playSong = musicList.get(mCurrentPosition);
                 setMusicUI();
             }
         }

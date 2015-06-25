@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,6 +22,7 @@ import android.widget.VideoView;
 
 import com.suwonsmartapp.hello.R;
 import com.suwonsmartapp.hello.showme.detect.character.CodeDetector;
+import com.suwonsmartapp.hello.showme.file.FileInfo;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -48,7 +48,7 @@ public class VideoPlayerActivity extends Activity implements
     private final int sleepTime = 300;              // 1000 means 1 second
 
     private int mCurrentPosition;                   // current playing pointer
-    private ArrayList<VideoFileInfo> mVideoFileInfoList;    // video file media_player_icon_information list
+    private ArrayList<FileInfo> mVideoFileInfoList;    // video file media_player_icon_information list
 
     private VideoView mVV_show;                     // video screen
     private TextView mTV_subtitle;                  // text view subtitle
@@ -96,20 +96,13 @@ public class VideoPlayerActivity extends Activity implements
         mVV_show.setMediaController(mController);
         mVV_show.setOnPreparedListener(this);                       // ready listener
         mVV_show.setOnCompletionListener(this);                     // complete listener for next
-
-        AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
-        int volume_Max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        int volume_Current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-//        mSB_volume.setMax(volume_Max);
-//        mSB_volume.setProgress(volume_Current);
-//        mSB_volume.setOnSeekBarChangeListener(this);
     }
 
     private String fullPathname = "";              // full path + filename
 
     private void setupVideoScreen() {
-        VideoFileInfo videoFileInfo = mVideoFileInfoList.get(mCurrentPosition);
-        fullPathname = videoFileInfo.getMediaData();
+        FileInfo videoFileInfo = mVideoFileInfoList.get(mCurrentPosition);
+        fullPathname = videoFileInfo.getTitle();
         String requestedPathname = fullPathname.substring(0, fullPathname.lastIndexOf('/'));
         String requestedFilename = fullPathname.substring(fullPathname.lastIndexOf('/') + 1, fullPathname.length());
 

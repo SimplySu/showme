@@ -29,9 +29,6 @@ import com.suwonsmartapp.hello.showme.video.VideoFileListActivity;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Stack;
 
 public class FileManagerActivity extends AppCompatActivity implements
@@ -54,7 +51,7 @@ public class FileManagerActivity extends AppCompatActivity implements
     private FileManagerAdapter mFileManagerAdapter;
 
     // we will use default simple adapter
-    private ArrayList<FileManagerInfo> mTitleList;
+    private ArrayList<FileManagerInfo> mRootList;
     private SimpleAdapter mAdapter;
 
     // history management : push current path (mCurrentPath) before going to the next screen
@@ -80,14 +77,18 @@ public class FileManagerActivity extends AppCompatActivity implements
     public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
 
     private boolean fAllowded = false;      // true if delete is allowded
-    List<File> fileList;
     FileListAdapter fileListAdapter;
+
+    private ArrayList<FileInfo> fileList;
+    private final int MODEall = 0;
+    private final int MODEaudio = 1;
+    private final int MODEimage = 2;
+    private final int MODEvideo = 3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.file_manager_main);
-//        showLog("onCreate");
 
         // fix the screen for portrait
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -99,8 +100,8 @@ public class FileManagerActivity extends AppCompatActivity implements
 
         setupHome();    // display categorized initial screen
 
-        mListView.setOnItemClickListener(this);      // handle if user selected title directly
-        mListView.setOnItemLongClickListener(this);
+        mListView.setOnItemClickListener(this);         // show selected file
+        mListView.setOnItemLongClickListener(this);     // handle file/folder delete
     }
 
     private void setupHome() {
@@ -154,20 +155,20 @@ public class FileManagerActivity extends AppCompatActivity implements
         document.setFolderName(getString(R.string.document));
         document.setFolderPath(sPathDocument);
 
-        mTitleList = new ArrayList<>();
-        mTitleList.add(root);
-        mTitleList.add(sdcard);
+        mRootList = new ArrayList<>();
+        mRootList.add(root);
+        mRootList.add(sdcard);
         if (externalSdCard != null) {
-            mTitleList.add(extsdcard);
+            mRootList.add(extsdcard);
         }
-        mTitleList.add(music);
-        mTitleList.add(movie);
-        mTitleList.add(dcim);
-        mTitleList.add(picture);
-        mTitleList.add(download);
-        mTitleList.add(document);
+        mRootList.add(music);
+        mRootList.add(movie);
+        mRootList.add(dcim);
+        mRootList.add(picture);
+        mRootList.add(download);
+        mRootList.add(document);
 
-        mFileManagerAdapter = new FileManagerAdapter(getApplicationContext(), mTitleList);
+        mFileManagerAdapter = new FileManagerAdapter(getApplicationContext(), mRootList);
         mListView.setAdapter(mFileManagerAdapter);
     }
 
@@ -225,48 +226,48 @@ public class FileManagerActivity extends AppCompatActivity implements
             setCurrentPath(path);
 
             showFileList(path);
-        } else if (item instanceof File) {
+        } else if (item instanceof FileInfo) {
             // whenever click directory, go to the directory inside
-            File fileData = (File) item;
-            if (fileData.isDirectory()) {
+            FileInfo fileData = (FileInfo) item;
+            if (fileData.getFile().isDirectory()) {
 
                 // insert path on the history
                 mFileStack.push(mCurrentPath);
-                setCurrentPath(fileData.getAbsolutePath());
+                setCurrentPath(fileData.getFile().getAbsolutePath());
 
-                showFileList(fileData.getAbsolutePath());
+                showFileList(fileData.getFile().getAbsolutePath());
             } else {
-                switch (getMimeType(fileData)) {
+                switch (getMimeType(fileData.getFile())) {
                     case "audio":
                         Intent iAudio = new Intent(getApplicationContext(), AudioFileListActivity.class);
-                        iAudio.putExtra("FilePath", fileData.toString());
+                        iAudio.putExtra("FilePath", fileData.getTitle());
                         startActivityForResult(iAudio, REQUEST_CODE_AUDIO);
                         break;
 
                     case "video":
                         Intent iVideo = new Intent(getApplicationContext(), VideoFileListActivity.class);
-                        iVideo.putExtra("FilePath", fileData.toString());
+                        iVideo.putExtra("FilePath", fileData.getTitle());
                         startActivityForResult(iVideo, REQUEST_CODE_VIDEO);
                         break;
 
                     case "title":
                         Intent iTitle = new Intent(getApplicationContext(), VideoFileListActivity.class);
-                        iTitle.putExtra("FilePath", fileData.toString());
+                        iTitle.putExtra("FilePath", fileData.getTitle());
                         startActivityForResult(iTitle, REQUEST_CODE_VIDEO);
                         break;
 
                     case "image":
                         Intent iImage = new Intent(getApplicationContext(), ImageFileListActivity.class);
-                        iImage.putExtra("FilePath", fileData.toString());
+                        iImage.putExtra("FilePath", fileData.getTitle());
                         startActivityForResult(iImage, REQUEST_CODE_IMAGE);
                         break;
 
                     default:
                         try {
-                            if (mimeType(fileData.getAbsolutePath()) != null) {
+                            if (mimeType(fileData.getFile().getAbsolutePath()) != null) {
                                 // if the extension is not audio, video, or image, use chooser for user selection
                                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                                intent.setDataAndType(Uri.fromFile(fileData), mimeType(fileData.getAbsolutePath()));
+                                intent.setDataAndType(Uri.fromFile(fileData.getFile()), mimeType(fileData.getFile().getAbsolutePath()));
                                 startActivity(Intent.createChooser(intent, "Select file..."));
                             } else {
                                 showLog(getString(R.string.msg_cant_execute));
@@ -280,15 +281,15 @@ public class FileManagerActivity extends AppCompatActivity implements
         }
     }
 
-    private String getMimeType(File fileData) {
+    private String getMimeType(File file) {
         String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "xmf", "rtx", "ota", "imy", "ts", "wma"};
         String[] video = {"avi", "mkv", "mp4", "wmv", "asf", "mov", "mpg", "flv", "tp", "3gp", "m4v", "rmvb", "webm"};
         String[] image = {"jpg", "gif", "png", "bmp", "tif", "tiff", "jpeg", "webp"};
-        String[] title = {"smi", "srt", "sub", "ass", "ssa"};
+        String[] title = {"smi", "srt", "sub", "idx", "ass", "ssa"};
 
-        int i = fileData.getAbsolutePath().lastIndexOf('.');
-        int j = fileData.getAbsolutePath().length();
-        String extension = fileData.getAbsolutePath().substring(i + 1, j);
+        int i = file.getAbsolutePath().lastIndexOf('.');
+        int j = file.getAbsolutePath().length();
+        String extension = file.getAbsolutePath().substring(i + 1, j);
         String mimeType = extension.toLowerCase();
 
         for (String anAudio : audio) {
@@ -332,51 +333,11 @@ public class FileManagerActivity extends AppCompatActivity implements
             return;
         }
 
-        fileList = new ArrayList<>();
-
-        // for (int i = 0; i < files.length; i++) {
-        // File f = files[i];
-        // }
-        for (File f : files) {
-            if (f != null) {
-                fileList.add(f);
-            }
-        }
-
-        Collections.sort(fileList);
-        Collections.sort(fileList, mFolderAscComparator);
-
+        fileList = new FileLists().getFileList(path, MODEall);
         fileListAdapter = new FileListAdapter(getApplicationContext(), fileList);
         mListView.setAdapter(fileListAdapter);
         fAllowded = true;       // we can delete file or directory
     }
-
-    Comparator<File> mDescComparator = new Comparator<File>() {
-        @Override
-        public int compare(File lhs, File rhs) {
-            String left = lhs.getName();
-            String right = rhs.getName();
-            return right.compareTo(left);
-        }
-    };
-
-    // left, right
-    // file, file = return 0 : not change
-    // file, directory = return 1 : change
-    // directory, file = return -1 : change
-    // directory, directory = return 0 : not change
-
-    Comparator<File> mFolderAscComparator = new Comparator<File>() {
-        @Override
-        public int compare(File lhs, File rhs) {
-            if (!lhs.isDirectory() && rhs.isDirectory()) {
-                return 1;
-            } else if (lhs.isDirectory() && !rhs.isDirectory()) {
-                return -1;
-            }
-            return 0;
-        }
-    };
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
