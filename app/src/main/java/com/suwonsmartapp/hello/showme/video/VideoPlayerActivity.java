@@ -66,15 +66,16 @@ public class VideoPlayerActivity extends Activity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // delete title bar and use full screen
+        // 타이틀바를 지우고 전체 스크린을 사용함.
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.video_player_activity);
-        // fix the screen for portrait
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-//        showLog("onCreate");
 
+        // 화면을 가로모드로 고정함.
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+
+        // 인텐트를 통해 경로명과 파일명을 읽음.
         Intent intent = getIntent();
         if (intent != null) {
             mCurrentPosition = intent.getIntExtra("currentPosition", -1);
@@ -84,21 +85,21 @@ public class VideoPlayerActivity extends Activity implements
             finish();
         }
 
-        setupVideoScreen();     // see if subtitle exists ?
-        setupASS();             // prepare ASS/SSA if it exists
-        setupSUB();             // prepare SUB if it exists
-        setupSRT();             // prepare SRT if it exists
-        setupSMI();             // prepare SMI if it exists
-        addOneMoreLine();                   // add dummy subtitle for the safety
+        setupVideoScreen();     // 자막 파일이 존재하는지 검사함
+        setupASS();             // ASS/SSA 자막이 존재하면 이를 준비함
+        setupSUB();             // SUB 자막이 존재하면 이를 준비함
+        setupSRT();             // SRT 자막이 존재하면 이를 준비함
+        setupSMI();             // SMI 자막이 존재하면 이를 준비함
+        addOneMoreLine();       // 에러 방지를 위해 자막 1 라인을 추가함.
 
         MediaController mController = new MediaController(this);
         mController.setAnchorView(mVV_show);
         mVV_show.setMediaController(mController);
-        mVV_show.setOnPreparedListener(this);                       // ready listener
-        mVV_show.setOnCompletionListener(this);                     // complete listener for next
+        mVV_show.setOnPreparedListener(this);
+        mVV_show.setOnCompletionListener(this);
     }
 
-    private String fullPathname = "";              // full path + filename
+    private String fullPathname = "";
 
     private void setupVideoScreen() {
         FileInfo videoFileInfo = mVideoFileInfoList.get(mCurrentPosition);
@@ -111,29 +112,27 @@ public class VideoPlayerActivity extends Activity implements
         mIV_subtitle = (ImageView)findViewById(R.id.iv_subtitle);
         mTV_subtitle.setText("");
 
-        detectSubtitle();               // see if there exist .smi .srt .ass .ssa file
+        detectSubtitle();               // .smi .srt .ass .ssa 자막이 존재하는지 검사함.
 
-        mVV_show.setVideoPath(fullPathname);                        // setting video path
-        mVV_show.requestFocus();                                    // set focus
+        mVV_show.setVideoPath(fullPathname);
+        mVV_show.requestFocus();
     }
 
     private ArrayList<VideoPlayerTextSubtitle> parsedTextSubtitle;
     private ArrayList<VideoPlayerGraphicSubtitle> parsedGraphicSubtitle;
 
-    private File subFile;                           // sub file
+    private File subFile;                           // sub 파일
+    private String subFilename = "";                // sub 파일명
+    private File idxFile;                           // idx 파일
+    private byte [] subtitleFile;                   // .sub 파일을 모두 읽을 버퍼
 
-    private String subFilename = "";                // sub filename string
-    private File idxFile;                           // idx file
+    private boolean useSmi = false;                 // smi 파일을 사용할 경우 true
+    private boolean useSrt = false;                 // srt 파일을 사용할 경우 true
+    private boolean useAss = false;                 // ass 파일을 사용할 경우 true
+    private boolean useSsa = false;                 // ssa 파일을 사용할 경우 true
+    private boolean useSub = false;                 // sub/idx 파일을 사용할 경우 true
 
-    private byte [] subtitleFile;                     // buffer for reading all of .sub file
-
-    private boolean useSmi = false;                 // true if we will use smi file
-    private boolean useSrt = false;                 // true if we will use srt file
-    private boolean useAss = false;                 // true if we will use ass file
-    private boolean useSsa = false;                 // true if we will use ssa file
-    private boolean useSub = false;                 // true if we will use idx/sub file
-
-    // see if .smi, .srt, .ass, .ssa, .idx, and .sub file exists.
+    // .smi, .srt, .ass, .ssa, .idx, 및 .sub 파일이 존재하는지 검사함.
     private void detectSubtitle() {
         String subPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".smi";
         subFile = new File(subPathname);
@@ -164,11 +163,12 @@ public class VideoPlayerActivity extends Activity implements
 
             if (useSub) {
                 subPathname = fullPathname.substring(0, fullPathname.lastIndexOf(".")) + ".sub";
-                subFilename = fullPathname.substring(fullPathname.lastIndexOf("/") + 1, fullPathname.lastIndexOf(".")) + ".sub";
-                        subFile = new File(subPathname);
+                subFilename = fullPathname.substring(fullPathname.lastIndexOf("/") + 1,
+                        fullPathname.lastIndexOf(".")) + ".sub";
+                subFile = new File(subPathname);
                 useSub = subFile.isFile() && subFile.canRead();
             } else {
-                useSub = false;     // because we have .idx only without .sub
+                useSub = false;     // .sub는 없고 .idx만 있을 경우 자막을 무시함.
             }
         }
 
@@ -199,7 +199,7 @@ public class VideoPlayerActivity extends Activity implements
                 int fPtr = 0;
                 while(mb.remaining() > 0) {
                     mb.get(subtitleFile, fPtr, Math.min(mb.remaining(), 0x0800));
-                    fPtr = fPtr + 0x0800;           // every frame have 0x0800 bytes, so we cannot change this value
+                    fPtr = fPtr + 0x0800;           // 모든 프레임은 0x0800 바이트임.
                 }
             }
         }
@@ -210,19 +210,10 @@ public class VideoPlayerActivity extends Activity implements
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
 
-//        if (useSub) {
-//            int[] timearray = new int[]{66633, 71304, 73139, 77177, 77944, 79679, 81414, 83016, 84517, 86219, 87153, 88521, 89789, 90623};
-//            // create bitmap testing code
-//            for (int i : timearray) {
-//                countSub = getSubSyncIndexGraphic(i);
-//                int pos = parsedGraphicSubtitle.get(countSub).getFilepos();
-//                mIV_subtitle.setImageBitmap(getBitmapSubtitle(pos));
-//            }
-//        }
-
         mVV_show.seekTo(0);
-        mVV_show.start();                   // auto start
+        mVV_show.start();       // 준비가 되면 자동 시작.
 
+        // 텍스트 기반의 자막일 경우.
         if (useSmi || useSrt || useAss || useSsa) {
             new Thread(new Runnable() {
                 public void run() {
@@ -237,6 +228,7 @@ public class VideoPlayerActivity extends Activity implements
             }).start();
         }
 
+        // 그래픽 기반의 자막일 경우.
         if (useSub) {
             new Thread(new Runnable() {
                 public void run() {
@@ -254,21 +246,22 @@ public class VideoPlayerActivity extends Activity implements
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
-        mCurrentPosition++;                 // next movie
+        mCurrentPosition++;                 // 다음 영화
         if (mCurrentPosition == mVideoFileInfoList.size()) {
-            mCurrentPosition = 0;               // wrap around
+            mCurrentPosition = 0;           // 끝나면 처음부터 다시 시작함.
         }
 
-        setupVideoScreen();                 // prepare next movie screen
-        setupASS();                         // prepare ASS/SSA if it exists
-        setupSUB();                         // prepare SUB if it exists
-        setupSRT();                         // prepare SRT if it exists
-        setupSMI();                         // prepare SMI if it exists
-        addOneMoreLine();                   // add dummy subtitle for the safety
+        setupVideoScreen();     // 자막 파일이 존재하는지 검사함
+        setupASS();             // ASS/SSA 자막이 존재하면 이를 준비함
+        setupSUB();             // SUB 자막이 존재하면 이를 준비함
+        setupSRT();             // SRT 자막이 존재하면 이를 준비함
+        setupSMI();             // SMI 자막이 존재하면 이를 준비함
+        addOneMoreLine();       // 에러 방지를 위해 자막 1 라인을 추가함.
 
         mVV_show.seekTo(0);
-        mVV_show.start();                   // auto start
+        mVV_show.start();       // 준비가 되면 자동 시작.
 
+        // 텍스트 기반의 자막일 경우.
         if (useSmi || useSrt || useAss || useSsa) {
             new Thread(new Runnable() {
                 public void run() {
@@ -283,6 +276,7 @@ public class VideoPlayerActivity extends Activity implements
             }).start();
         }
 
+        // 그래픽 기반의 자막일 경우.
         if (useSub) {
             new Thread(new Runnable() {
                 public void run() {
@@ -300,7 +294,6 @@ public class VideoPlayerActivity extends Activity implements
 
     @Override
     protected void onDestroy() {
-
         Bundle extraVideoPlayerService = new Bundle();
         Intent intentVideoPlayerService = new Intent();
         extraVideoPlayerService.putInt("CurrentPosition", mCurrentPosition);
@@ -311,7 +304,7 @@ public class VideoPlayerActivity extends Activity implements
     }
 
 /*
-    .smi file example
+    .smi 자막 파일의 예
 
     <SAMI>
     <HEAD>
@@ -357,11 +350,11 @@ public class VideoPlayerActivity extends Activity implements
     </SAMI>
 */
 
-    // SMI file structure:
+    // SMI 파일 구조:
     //
     // <SYNC Start=370000>
-    // Message line 1
-    // Message line 2
+    // 메시지(자막) 라인 1
+    // 메시지(자막) 라인 2
 
     private BufferedReader in;
     private String s;
@@ -371,7 +364,8 @@ public class VideoPlayerActivity extends Activity implements
 
     private void setupSMI() {
         if (useSmi) {
-            try { in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(subFile.toString())), detectEncoding(subFile.toString()))); }
+            try { in = new BufferedReader(new InputStreamReader(new FileInputStream(
+                    new File(subFile.toString())), detectEncoding(subFile.toString()))); }
             catch (UnsupportedEncodingException | FileNotFoundException e) { e.printStackTrace(); }
 
             try {
@@ -381,8 +375,10 @@ public class VideoPlayerActivity extends Activity implements
                         if (timeSUB != -1) {
                             parsedTextSubtitle.add(new VideoPlayerTextSubtitle(timeSUB, text));
                         }
-                        timeSUB = Integer.parseInt(s.substring(s.indexOf("=") + 1, s.indexOf(">")).trim());
-                        text = s.substring(s.indexOf(">") + 1, s.length());     // get rid of <SYNC...
+                        timeSUB = Integer.parseInt(s.substring(s.indexOf("=") + 1,
+                                s.indexOf(">")).trim());
+                        // <SYNC... 를 제거함.
+                        text = s.substring(s.indexOf(">") + 1, s.length());
                         text = text.substring(text.indexOf(">") + 1, text.length());
 
                     } else {
@@ -391,21 +387,23 @@ public class VideoPlayerActivity extends Activity implements
                                 if (text.equals("")) {
                                     text = text + s.substring(0, s.indexOf("<"));
                                     if (s.substring(s.indexOf(">"), s.length()).length() > 1) {
-                                        text = text + "<br />" + s.substring(s.lastIndexOf(">") + 1, s.length());
+                                        text = text + "<br />" + s.substring(s.lastIndexOf(">") + 1,
+                                                s.length());
                                     }
                                 } else {
                                     text = text + "<br />" + s.substring(0, s.indexOf("<"));
                                     if (s.substring(s.indexOf(">"), s.length()).length() > 1) {
-                                        text = text + "<br />" + s.substring(s.lastIndexOf(">") + 1, s.length());
+                                        text = text + "<br />" + s.substring(s.lastIndexOf(">") + 1,
+                                                s.length());
                                     }
                                 }
                             } else {
                                 if (text.equals("")) {
                                     text = text + s;
-                                    subStart = false;       // we allow just maximum two lines
+                                    subStart = false;       // 최대 2라인까지
                                 } else {
                                     text = text + "<br />" + s;
-                                    subStart = false;       // we allow just maximum two lines
+                                    subStart = false;       // 최대 2라인까지
                                 }
                             }
                         }
@@ -417,13 +415,13 @@ public class VideoPlayerActivity extends Activity implements
             catch (IOException e) { e.printStackTrace(); }
 
         if (parsedTextSubtitle.size() <= 1) {
-            useSmi = false;     // if we have just one line, ignore this subtitle
+            useSmi = false;     // 한줄자리 자막은 무시함. (구간을 구할 수 없어서)
             }
         }
     }
 
 /*
-    .srt file example
+    .srt 자막 파일의 예
 
     1
     00:00:00,025 --> 00:00:03,070
@@ -450,12 +448,12 @@ public class VideoPlayerActivity extends Activity implements
     >> Sure.
 */
 
-    // SRT file structure:
+    // SRT 파일 구조:
     //
     // 123
     // 00:00:00.000 --> 00:00:00.000
-    // <i> Message line 1 </i>
-    // <i> Message line 2 </i>
+    // <i> 메시지(자막) 라인 1 </i>
+    // <i> 메시지(자막) 라인 2 </i>
 
     private String t1, t2;
 
@@ -467,7 +465,8 @@ public class VideoPlayerActivity extends Activity implements
 
     private void setupSRT() {
         if (useSrt) {
-            try { in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(subFile.toString())), detectEncoding(subFile.toString()))); }
+            try { in = new BufferedReader(new InputStreamReader(new FileInputStream(
+                    new File(subFile.toString())), detectEncoding(subFile.toString()))); }
             catch (UnsupportedEncodingException | FileNotFoundException e) { e.printStackTrace(); }
 
             try {
@@ -479,22 +478,28 @@ public class VideoPlayerActivity extends Activity implements
                         }
                         t1 = s.substring(0, s.lastIndexOf(" --> "));
                         timeStartHour = Integer.parseInt(t1.substring(0, t1.indexOf(':')).trim());
-                        timeStartMinute = Integer.parseInt(t1.substring(t1.indexOf(':') + 1, t1.lastIndexOf(':')).trim());
-                        timeStartSecond = Integer.parseInt(t1.substring(t1.lastIndexOf(':') + 1, t1.indexOf(',')).trim());
-                        timeStartMillisecond = Integer.parseInt(t1.substring(t1.lastIndexOf(',') + 1, t1.length()).trim());
-                        timeSUBstart = ((timeStartHour * 60 + timeStartMinute) * 60 + timeStartSecond) * 1000 + timeStartMillisecond;
+                        timeStartMinute = Integer.parseInt(t1.substring(t1.indexOf(':') + 1,
+                                t1.lastIndexOf(':')).trim());
+                        timeStartSecond = Integer.parseInt(t1.substring(t1.lastIndexOf(':') + 1,
+                                t1.indexOf(',')).trim());
+                        timeStartMillisecond = Integer.parseInt(t1.substring(t1.lastIndexOf(',') + 1,
+                                t1.length()).trim());
+                        timeSUBstart = ((timeStartHour * 60 + timeStartMinute) * 60
+                                + timeStartSecond) * 1000 + timeStartMillisecond;
 
                         t2 = s.substring(s.lastIndexOf(" --> ") + 5, s.length());
                         long timeEndHour = Integer.parseInt(t2.substring(0, t2.indexOf(':')).trim());
-                        long timeEndMinute = Integer.parseInt(t2.substring(t2.indexOf(':') + 1, t2.lastIndexOf(':')).trim());
-                        long timeEndSecond = Integer.parseInt(t2.substring(t2.lastIndexOf(':') + 1, t2.indexOf(',')).trim());
-                        long timeEndMillisecond = Integer.parseInt(t2.substring(t2.lastIndexOf(',') + 1, t2.length()).trim());
-                        long timeSUBend = ((timeEndHour * 60 + timeEndMinute) * 60 + timeEndSecond) * 1000 + timeEndMillisecond;
+                        long timeEndMinute = Integer.parseInt(t2.substring(t2.indexOf(':') + 1,
+                                t2.lastIndexOf(':')).trim());
+                        long timeEndSecond = Integer.parseInt(t2.substring(t2.lastIndexOf(':') + 1,
+                                t2.indexOf(',')).trim());
+                        long timeEndMillisecond = Integer.parseInt(t2.substring(t2.lastIndexOf(',') + 1,
+                                t2.length()).trim());
+                        long timeSUBend = ((timeEndHour * 60 + timeEndMinute) * 60
+                                + timeEndSecond) * 1000 + timeEndMillisecond;
 
-//                        showLog(timeStartHour + ":" + timeStartMinute + ":" + timeStartSecond + "," + timeStartMillisecond + " -> " +
-//                                timeEndHour + ":" + timeEndMinute + ":" + timeEndSecond + "," + timeEndMillisecond);
+                        text = "";      // 새로운 텍스트를 받기 위해 초기화.
 
-                        text = "";      // clear text line for getting new text
                     } else if (subStart) {
                         if (s.equals("")) {
                             subStart = false;
@@ -517,13 +522,13 @@ public class VideoPlayerActivity extends Activity implements
             catch (IOException e) { e.printStackTrace(); }
 
         if (parsedTextSubtitle.size() <= 1) {
-            useSrt = false;     // if we have just one line, ignore this subtitle
+            useSrt = false;     // 한줄자리 자막은 무시함. (구간을 구할 수 없어서)
             }
         }
     }
 
 /*
-    .ass file example
+    .ass 자막 파일의 예
 
     [Script Info]
     ; Script generated by Aegisub 3.2.2
@@ -561,7 +566,7 @@ public class VideoPlayerActivity extends Activity implements
     Dialogue: 0,0:00:28.71,0:00:32.47,Default,,0,0,0,,잘 부탁드려요
 */
 
-    // ASS/SSA file structure:
+    // ASS/SSA 파일 구조:
     //
     // Dialog: Layer, Start, End, Style, Name, MarginalL, MarginalR, MarginalV, Effect, Text
     // Dialog: 0,0:00:15.76, ,0:00:16.21, ... ..Text     or
@@ -570,12 +575,14 @@ public class VideoPlayerActivity extends Activity implements
     private void setupASS() {
         if (useAss || useSsa) {
             if (useAss) {
-                try { in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(subFile.toString())), detectEncoding(subFile.toString()))); }
+                try { in = new BufferedReader(new InputStreamReader(new FileInputStream(
+                        new File(subFile.toString())), detectEncoding(subFile.toString()))); }
                 catch (UnsupportedEncodingException | FileNotFoundException e) { e.printStackTrace(); }
             }
 
             if (useSsa) {
-                try { in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(subFile.toString())), detectEncoding(subFile.toString()))); }
+                try { in = new BufferedReader(new InputStreamReader(new FileInputStream(
+                        new File(subFile.toString())), detectEncoding(subFile.toString()))); }
                 catch (UnsupportedEncodingException | FileNotFoundException e) { e.printStackTrace(); }
 
                 useAss = true;      // treat SSA same as ASS
@@ -593,19 +600,24 @@ public class VideoPlayerActivity extends Activity implements
                         t2 = s.substring(s.indexOf(',') + 1, s.length());
                         t1 = t2.substring(0, t2.indexOf(','));
                         timeStartHour = Integer.parseInt(t1.substring(0, t1.indexOf(':')).trim());
-                        timeStartMinute = Integer.parseInt(t1.substring(t1.indexOf(':') + 1, t1.lastIndexOf(':')).trim());
-                        timeStartSecond = Integer.parseInt(t1.substring(t1.lastIndexOf(':') + 1, t1.indexOf('.')).trim());
-                        timeStartMillisecond = Integer.parseInt(t1.substring(t1.lastIndexOf('.') + 1, t1.length()).trim()) * 10;
-                        timeSUBstart = ((timeStartHour * 60 + timeStartMinute) * 60 + timeStartSecond) * 1000 + timeStartMillisecond;
+                        timeStartMinute = Integer.parseInt(t1.substring(t1.indexOf(':') + 1,
+                                t1.lastIndexOf(':')).trim());
+                        timeStartSecond = Integer.parseInt(t1.substring(t1.lastIndexOf(':') + 1,
+                                t1.indexOf('.')).trim());
+                        timeStartMillisecond = Integer.parseInt(t1.substring(t1.lastIndexOf('.') + 1,
+                                t1.length()).trim()) * 10;
+                        timeSUBstart = ((timeStartHour * 60 + timeStartMinute) * 60
+                                + timeStartSecond) * 1000 + timeStartMillisecond;
 
                         t1 = t2.substring(t2.lastIndexOf(",,") + 2, t2.length());
                         if (t1.equals("")) {
                             text = " ";     // if text is empty, just put one space
                         } else {
                             if (t1.substring(0, 1).equals("{")) {
-                                t1 = t2.substring(t2.lastIndexOf("}") + 1, t2.length());    // ignore { ... }
+                                // { ... } 내용은 무시함.
+                                t1 = t2.substring(t2.lastIndexOf("}") + 1, t2.length());
                             }
-                            text = t1;      // we've got the text
+                            text = t1;      // 텍스트를 얻었음.
                         }
                     } else if (subStart) {
                         text = text + s.substring(0, s.length());
@@ -618,14 +630,14 @@ public class VideoPlayerActivity extends Activity implements
             catch (IOException e) { e.printStackTrace(); }
 
         if (parsedTextSubtitle.size() <= 1) {
-            useAss = false;     // if we have just one line, ignore this subtitle
-            useSsa = false;     // if we have just one line, ignore this subtitle
+            useAss = false;     // 한줄자리 자막은 무시함. (구간을 구할 수 없어서)
+            useSsa = false;
             }
         }
     }
 
 /*
-    .idx file example
+    .idx 인텍스 파일의 예
 
     # VobSub index file, v7 (do not modify this line!)
     #
@@ -677,7 +689,8 @@ public class VideoPlayerActivity extends Activity implements
     forced subs: OFF
 
     # The original palette of the DVD
-    palette: e83f07, e19120, f3c71b, f8ff18, 9bd22a, 54a530, 12eb12, 15bef6, 0300e3, 4c0353, c12262, ffffff, b3b3b3, 808080, 4e4e4e, 000000
+    palette: e83f07, e19120, f3c71b, f8ff18, 9bd22a, 54a530, 12eb12, 15bef6, 0300e3, 4c0353,
+                                                     c12262, ffffff, b3b3b3, 808080, 4e4e4e, 000000
 
     # Custom colors (transp idxs and the four colors)
     custom colors: OFF, tridx: 1000, colors: ffffff, ffffff, 808080, 000000
@@ -744,42 +757,48 @@ public class VideoPlayerActivity extends Activity implements
     private long savedTimeSub = -1;
     private int sizeCx = 0;
     private int sizeCy = 0;
-    private int[] palette = new int[16];            // save palette information on .idx file
+    private int[] palette = new int[16];            // .idx 파일에 있는 파렛트 정보 저장
     private boolean customColors;
     private int tridx;
     private int [] color = new int [4];
-    private int langIdx;                            // language index number
-    private int index = 0;                          // current index number, we will show langIdx == index
-    private boolean fLanguageMatch = false;         // if langIdx == index, this flag will be set to true
+    private int langIdx;                            // 언어 정보(language index)
+    private int index = 0;                          // 현재 인덱스 (langIdx == index) 인 경우만 사용
+    private boolean fLanguageMatch = false;         // langIdx == index 인 경우 true
 
     private void setupSUB() {
         if (useSub) {
-            try { in = new BufferedReader(new InputStreamReader(new FileInputStream(new File(idxFile.toString())), detectEncoding(idxFile.toString()))); }
+            try { in = new BufferedReader(new InputStreamReader(new FileInputStream(
+                    new File(idxFile.toString())), detectEncoding(idxFile.toString()))); }
             catch (UnsupportedEncodingException | FileNotFoundException e) { e.printStackTrace(); }
 
             try {
                 while (((s = in.readLine()) != null) && (!stopFlag)) {
                     if (s.contains("# Vob/Cell ID: ")) {
-                        vob_ID = Integer.parseInt(s.substring(s.indexOf(":") + 1, s.indexOf(",")).trim());
+                        vob_ID = Integer.parseInt(s.substring(s.indexOf(":") + 1,
+                                s.indexOf(",")).trim());
 
-                        s = s.substring(s.indexOf(",") + 1, s.length());    // git rid of vob_ID portion
+                        s = s.substring(s.indexOf(",") + 1, s.length());    // vob_ID 무시.
                         cell_ID = Integer.parseInt(s.substring(0, s.indexOf("(")).trim());
 
-                        pts = Integer.parseInt(s.substring(s.indexOf("PTS:") + 4, s.lastIndexOf(")")).trim());
+                        pts = Integer.parseInt(s.substring(s.indexOf("PTS:") + 4,
+                                s.lastIndexOf(")")).trim());
 
                     } else if (s.toLowerCase().contains("timestamp:")) {
                         if (fLanguageMatch) {
-                            t1 = s.substring(s.toLowerCase().indexOf("timestamp:") + 10, s.indexOf(",")).trim();
-                            t2 = s.substring(s.toLowerCase().indexOf("filepos:") + 8, s.length()).trim();
+                            t1 = s.substring(s.toLowerCase().indexOf("timestamp:") + 10,
+                                    s.indexOf(",")).trim();
+                            t2 = s.substring(s.toLowerCase().indexOf("filepos:") + 8,
+                                    s.length()).trim();
 
                             timeStartHour = Integer.parseInt(t1.substring(0, t1.indexOf(':')).trim());
-                            t1 = t1.substring(t1.indexOf(":") + 1, t1.length()).trim();     // get rid of hour
+                            t1 = t1.substring(t1.indexOf(":") + 1, t1.length()).trim(); // 시
                             timeStartMinute = Integer.parseInt(t1.substring(0, t1.indexOf(':')).trim());
-                            t1 = t1.substring(t1.indexOf(":") + 1, t1.length()).trim();     // get rid of minute
+                            t1 = t1.substring(t1.indexOf(":") + 1, t1.length()).trim(); // 분
                             timeStartSecond = Integer.parseInt(t1.substring(0, t1.indexOf(':')).trim());
-                            t1 = t1.substring(t1.indexOf(":") + 1, t1.length()).trim();     // get rid of second
+                            t1 = t1.substring(t1.indexOf(":") + 1, t1.length()).trim(); // 초
                             timeStartMillisecond = Integer.parseInt(t1.substring(0, t1.length()).trim());
-                            timeSUB = ((timeStartHour * 60 + timeStartMinute) * 60 + timeStartSecond) * 1000 + timeStartMillisecond;
+                            timeSUB = ((timeStartHour * 60 + timeStartMinute) * 60
+                                    + timeStartSecond) * 1000 + timeStartMillisecond;
 
                             filePOS = Integer.parseInt(t2.trim(), 16);
 
@@ -796,13 +815,16 @@ public class VideoPlayerActivity extends Activity implements
                         }
 
                     } else if (s.toLowerCase().contains("size:")) {
-                        sizeCx = Integer.parseInt(s.substring(s.indexOf(":") + 1, s.toLowerCase().indexOf("x")).trim());
-                        sizeCy = Integer.parseInt(s.substring(s.toLowerCase().indexOf("x") + 1, s.length()).trim());
+                        sizeCx = Integer.parseInt(s.substring(s.indexOf(":") + 1,
+                                s.toLowerCase().indexOf("x")).trim());
+                        sizeCy = Integer.parseInt(s.substring(s.toLowerCase().indexOf("x") + 1,
+                                s.length()).trim());
 
-                        pixels = new int [ sizeCx * sizeCy];        // allocate pixel buffer
+                        pixels = new int [ sizeCx * sizeCy];        // 픽셀 버퍼를 준비함.
 
                     } else if (s.toLowerCase().contains("index:")) {
-                        index = Integer.parseInt(s.substring(s.toLowerCase().lastIndexOf(":") + 1, s.length()).trim());
+                        index = Integer.parseInt(s.substring(s.toLowerCase().lastIndexOf(":") + 1,
+                                s.length()).trim());
                         fLanguageMatch = langIdx == index;
 
                     } else if (s.toLowerCase().contains("palette:")) {
@@ -814,11 +836,13 @@ public class VideoPlayerActivity extends Activity implements
                         }
 
                     } else if (s.toLowerCase().contains("custom colors:")) {
-                        String cColors = s.substring(s.indexOf("custom colors:") + 17, s.indexOf("custom colors:") + 18).toLowerCase().trim();
+                        String cColors = s.substring(s.indexOf("custom colors:") + 17,
+                                s.indexOf("custom colors:") + 18).toLowerCase().trim();
                         customColors = !cColors.equals("f");        // ON : true, OFF : false
-                        tridx = Integer.parseInt(s.substring(s.indexOf("tridx:") + 6, s.indexOf(", colors:")).trim(), 16);
+                        tridx = Integer.parseInt(s.substring(s.indexOf("tridx:") + 6,
+                                s.indexOf(", colors:")).trim(), 16);
                         s = s.substring(s.indexOf(", colors:") + 9, s.length());
-                        s = s + ","; // for the consistency
+                        s = s + ","; // 일관성 유지를 위하여
                         for (int i = 0; i < 4; i++) {
                             color[i] = (Integer.parseInt(s.substring(0, s.indexOf(",")).trim(), 16)) & 0x00ffffff;
                             s = s.substring(s.indexOf(",") + 1, s.length());
@@ -833,153 +857,165 @@ public class VideoPlayerActivity extends Activity implements
             catch (IOException e) { e.printStackTrace(); }
 
             if (parsedGraphicSubtitle.size() <= 1) {
-                useSub = false;     // if we have just one line, ignore this subtitle
+                useSub = false;     // 한줄자리 자막은 무시함. (구간을 구할 수 없어서)
             }
         }
     }
 
 /*
-    packet header rule (.sub file) :
+    패킷 헤더 규칙(.sub 파일) :
 
     +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    | 00 | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0a | 0b | 0c | 0d | 0e | 0f | address
+    | 00 | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0a | 0b | 0c | 0d | 0e | 0f | 주소
     +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    | 00 | 00 | 01 | ba |    |    |    |    |    |    |    |    |    |    | 00 | 00 | data
-    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-
-    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 1a | 1b | 1c | 1d | 1e | 1f | address
-    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    | 01 | bd |    |    |    |(*1)| pq |(*2)|    |    |    |    |    | wx | yz | WX | data
+    | 00 | 00 | 01 | ba |    |    |    |    |    |    |    |    |    |    | 00 | 00 | 데이터
     +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
 
     +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 2a | 2b | 2c | 2d | 2e | 2f | address
+    | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 1a | 1b | 1c | 1d | 1e | 1f | 주소
     +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-    | YZ |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    | data
+    | 01 | bd |    |    |    |(*1)| pq |(*2)|    |    |    |    |    | wx | yz | WX | 데이터
     +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
 
-    buf[0x00] should be 00 00 01 ba (fixed value)
-    buf[0x0e] should be 00 00 01 bd (fixed value)
-    (*1) buf[0x15] & 0x80 should be true
-    (*2) (buf[0x17] & 0xf0) should be 0x20
-    (buf[buf[0x16] + 0x17] & 0xe0) should be 0x20
-    (buf[buf[0x16] + 0x17] & 0x1f) should be supported number of Language
+    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 2a | 2b | 2c | 2d | 2e | 2f | 주소
+    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    | YZ |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    | 데이터
+    +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
 
-    buf[16] = [pq] = normally 0x05 (very first block can contains 0x08, it means there are optional information 3 bytes)
-    packet size = (buf[buf[0x16] + 0x18] << 8) + buf[buf[0x16] + 0x19] = normally wxyz(hexa)
-    data size = (buf[buf[0x16] + 0x1a] << 8) + buf[buf[0x16] + 0x1b] = normally WXYZ(hexa)
+    buf[0x00] 는 반드시 00 00 01 ba (고정값) 이어야 함.
+    buf[0x0e] 는 반드시 00 00 01 bd (고정값) 이어야 함.
+    (*1) buf[0x15] & 0x80 는 반드시 true 이어야 함.
+    (*2) (buf[0x17] & 0xf0) 는 반드시 0x20 이어야 함.
+    (buf[buf[0x16] + 0x17] & 0xe0) 는 반드시 0x20 이어야 함.
+    (buf[buf[0x16] + 0x17] & 0x1f) 는 지원하는 언어값이 들어 있어야 함.
 
-    for example,
+    buf[16] = [pq] = 통상 0x05 (최초 블럭은  0x08 가능, 이 경우 옵션 정보가 3 바이트 더 있음)
+    packet size = (buf[buf[0x16] + 0x18] << 8) + buf[buf[0x16] + 0x19] = 통상 wxyz(16진수값)
+    data size = (buf[buf[0x16] + 0x1a] << 8) + buf[buf[0x16] + 0x1b] = 통상 WXYZ(16진수값)
+
+    예를 들어,
     buf[0x16] = 05(pq), buf[0x1d] = 07(wx), buf[0x1e] = 9a(yz), buf[0x1f] = 07(WX), buf[0x20] = 7b(YZ)
-    then, packet size = 0x079a bytes, data size = 0x077b bytes
-    thus, information length = packet size - data size = 0x079a - 0x077b = 0x1f bytes
+    라고 하면, 패킷 크기 = 0x079a 바이트, 데이터 크기 = 0x077b 바이트.
+    따라서, 정보 길이 = 패킷 크기 - 데이터 크기 = 0x079a - 0x077b = 0x1f 바이트.
 
-    for example,
+    또 다른 예를 들면,
     buf[0x16] = 08(pq), buf[0x20] = 0b(wx), buf[0x21] = 70(yz), buf[0x22] = 0b(WX), buf[0x23] = 51(YZ)
-    then, packet size = 0x0b70 bytes, data size = 0x0b51 bytes
-    thus, information length = packet size - data size = 0x0b70 - 0x0b51 = 0x1f bytes
+    라고 하면, 패킷 크기 = 0x0b70 바이트, 데이터 크기 = 0x0b51 바이트
+    따라서, 정보 길이 = 패킷 크기 - 데이터 크기 = 0x0b70 - 0x0b51 = 0x1f 바이트.
 */
 
     private int subIDXpointer;
-    private byte [] buf = new byte[0x0800];             // one unit
-    private byte [] pData = new byte[BUF_LENGTH];     // real data buffer
+    private byte [] buf = new byte[0x0800];           // 1 패킷 유닛
+    private byte [] pData = new byte[BUF_LENGTH];     // 데이터 버퍼
 
-    private int packetSize = 0;         // packet Size > dataSize (we should keep it)
+    private int packetSize = 0;         // 패킷 크기 > 데이터 크기 (반드시 유지해야 함)
     private int dataSize = 0;
     private int savedSize = 0;
 
-    final int IDmarkA = 0x00;           // indicator A = 00 00 01 ba
-    final int IDmarkB = 0x0e;           // indicator B = 00 00 01 bd
-    final int PESmark = 0x15;           // bit 7
-    final int OPTIONS = 0x16;           // option byte length
-    final int ID_LANG = 0x17;           // ID and language code
-    final int PACKET_SIZE = 0x18;       // packet size
-    final int DATA_SIZE = 0x1a;         // data size
+    final int IDmarkA = 0x00;           // 구분자 A = 00 00 01 ba
+    final int IDmarkB = 0x0e;           // 구분자 B = 00 00 01 bd
+    final int PESmark = 0x15;           // 7 번째 비트
+    final int OPTIONS = 0x16;           // 옵션 바이트 길이
+    final int ID_LANG = 0x17;           // ID 및 언어 코드
+    final int PACKET_SIZE = 0x18;       // 패킷 크기
+    final int DATA_SIZE = 0x1a;         // 데이터 크기
 
+    // SUB 자막의 비트맵을 생성하여 돌려줌.
     private Bitmap getBitmapSubtitle(int filePos) {
         Bitmap graphic;
-        subIDXpointer = filePos;     // save file position
+        subIDXpointer = filePos;     // 파일 위치 저장
 
-        // .sub data contains on subtitleFile[0] to subtitleFile[subtitleFile.length]
+        // .sub 데이터는 subtitleFile[0] 에서 subtitleFile[subtitleFile.length] 에 담겨 있음.
         System.arraycopy(subtitleFile, subIDXpointer, buf, 0, buf.length);
         subIDXpointer = subIDXpointer + buf.length;
 
-        // check .sub file rule:
-        if ((unsigned(buf[IDmarkA]) != 0x00) || (unsigned(buf[IDmarkA + 1]) != 0x00) || (unsigned(buf[IDmarkA + 2]) != 0x01) || (unsigned(buf[IDmarkA + 3]) != 0xba)) { return null; }
-        if ((unsigned(buf[IDmarkB]) != 0x00) || (unsigned(buf[IDmarkB + 1]) != 0x00) || (unsigned(buf[IDmarkB + 2]) != 0x01) || (unsigned(buf[IDmarkB + 3]) != 0xbd)) { return null; }
+        // .sub 파일 규칙 검사:
+        if ((unsigned(buf[IDmarkA]) != 0x00) || (unsigned(buf[IDmarkA + 1]) != 0x00) ||
+                (unsigned(buf[IDmarkA + 2]) != 0x01) || (unsigned(buf[IDmarkA + 3]) != 0xba)) {
+            return null; }
+        if ((unsigned(buf[IDmarkB]) != 0x00) || (unsigned(buf[IDmarkB + 1]) != 0x00) ||
+                (unsigned(buf[IDmarkB + 2]) != 0x01) || (unsigned(buf[IDmarkB + 3]) != 0xbd)) {
+            return null; }
         if ((unsigned(buf[PESmark]) & 0x80) == 0x00) { return null; }
         if ((unsigned(buf[ID_LANG]) & 0xf0) != 0x20) { return null; }
-        if (((unsigned(buf[unsigned(buf[OPTIONS]) + ID_LANG])) & 0xe0) != 0x20) { return null; }        // upper 3 bits = index (0x20 => 0x01)
-        if ((unsigned(buf[unsigned(buf[OPTIONS]) + ID_LANG]) & 0x1f) != langIdx) { return null; }     // lower 5 bits = language
+        // 상위 3 비트 = 인덱스 (0x20 => 0x01)
+        if (((unsigned(buf[unsigned(buf[OPTIONS]) + ID_LANG])) & 0xe0) != 0x20) { return null; }
+        // 하위 5 비트 = 언어
+        if ((unsigned(buf[unsigned(buf[OPTIONS]) + ID_LANG]) & 0x1f) != langIdx) { return null; }
 
-        // read packet header information
-//        showLog("data 1d~20 = " + buf[buf[0x16] + 0x18] + ", " + buf[buf[0x16] + 0x19] + ", " + buf[buf[0x16] + 0x1a] + ", " + buf[buf[0x16] + 0x1b]);
-        packetSize = ((unsigned(buf[unsigned(buf[OPTIONS]) + PACKET_SIZE])) << 8) + unsigned(buf[unsigned(buf[OPTIONS]) + PACKET_SIZE + 1]);
-        dataSize = ((unsigned(buf[unsigned(buf[OPTIONS]) + DATA_SIZE])) << 8) + unsigned(buf[unsigned(buf[OPTIONS]) + DATA_SIZE + 1]);
+        // 패킷 헤더 정보를 읽음.
+        packetSize = ((unsigned(buf[unsigned(buf[OPTIONS]) + PACKET_SIZE])) << 8) +
+                unsigned(buf[unsigned(buf[OPTIONS]) + PACKET_SIZE + 1]);
+        dataSize = ((unsigned(buf[unsigned(buf[OPTIONS]) + DATA_SIZE])) << 8) +
+                unsigned(buf[unsigned(buf[OPTIONS]) + DATA_SIZE + 1]);
 
         if (packetSize > BUF_LENGTH) { return null; }
 
+        // 버퍼 내용에서 불필요한 부분을 지우고 축약함.
         condenseBuffer();
 
         if (packetSize > savedSize) {
-            savedSize = packetSize;         // we want to see how much data comming
-//            showLog("file pos and packet size = " + filePos + ", " + packetSize);
+            savedSize = packetSize;         // 얼마나 많은 데이터가 오는지 확인하기 위한 코드.
         }
 
-        // copy BYTE array into INT array
+        // BYTE 어레이를 INT 어레이로 복사하는 메소드.
 //        IntBuffer intBuf = ByteBuffer.wrap(nbuf).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
 //        int [] ibuf = new int [intBuf.remaining()];
 //        intBuf.get(ibuf);
 
-        getPacketInfo();        // collect rendering information
+        getPacketInfo();        // 패킷 정보를 얻음.
 
-        getBitmapData();        // collect bitmap data from subtitle packet
+        getBitmapData();        // 자막의 비트맵 데이터를 생성함.
 
+        // 비트맵을 2배로 확대하여 출력함.
         graphic = Bitmap.createBitmap(pixels, 0, sizeCx, sizeCx, sizeCy, Bitmap.Config.ARGB_8888);
         return Bitmap.createScaledBitmap(graphic, sizeCx * 2, sizeCy * 2, true);
     }
 
 /*
-    we have four blocks of buffer, one buffer contains 0x0800 bytes.
-    each buffer have packet header (length is vary)
-    if we treat two more blocks of data, we should get rid of this packet header from the second block.
-    packet header length of the second block to fourth block is 0x18 bytes.
-    if the packet exceeds four blocks (0x0800 * 4 bytes), we just ignore it because we can't display it by time limitation.
+    버퍼를 축약하는 방법:
+
+    버퍼는 4 블럭이 준비되어 있고 한 버퍼는 0x0800 (2,048) 바이트이다.
+    각 버퍼는 패킷 헤더를 가지고 있고 그 길이는 가변이다.
+    만약 데이터가 2 블럭 이상 오면 최소한 두 번째 블럭의 헤더는 제거해야 한다.
+    두 번째 블럭의 패킷 헤더 정보는 통상 0x18 바이트이다.
+    만약 데이터가 4 블럭(0x0800 * 4 바이트)을 초과한다면, 표시 시간의 제약으로 인해
+    그 자막은 무시하는 것이 바람직하다.
 
     buf[0]
     +-----------------------+       +-----------------------+
-    |   packet header 1     |       | pkt size  & data size | <-- 4 bytes
+    |   첫번째 패킷 헤더    |       | 패킷크기 및 데이터크기| <-- 4 바이트
     +-----------------------+       +-----------------------+
     |                       |       |                       |
-    |   data block 1        |       |   data block 1        | <-- 0x0800 - hsize bytes
+    |   첫번째 데이터블럭   |       |   첫번재 데이터블럭   | <-- 0x0800 - hsize 바이트
     |                       |       |                       |
     +-----------------------+       +-----------------------+
-    |   packet header 2     |       |                       |
-    +-----------------------+       |   data block 2        | <-- 0x0800 - (hsize=0x18 + buf[0x16]) bytes
+    |   두번째 패킷 헤더    |       |                       |
+    +-----------------------+       |   두번째 데이터블럭   | <-- 0x0800 - (hsize=0x18 + buf[0x16]) 바이트
     |                       |  ==>  |                       |
-    |   data block 2        |       +-----------------------+
+    |   두번째 데이터블럭   |       +-----------------------+
     |                       |       +-----------------------+
     +-----------------------+       |                       |
-    +-----------------------+       |   data block n        |
-    |   packet header n     |       |                       |
+    +-----------------------+       |   N번째 데이터블럭    |
+    |   N번째 패킷 헤더     |       |                       |
     +-----------------------+       +-----------------------+
     |                       |
-    |   data block n        |
+    |   N번째 데이터 블럭   |
     |                       |
     +-----------------------+
 
 
-For example : data length = 0x0b26
+예를 들면 : 데이터 길이 = 0x0b26 라고 하면
     +-----------------------+       +-----------------------+
-    |    header 0x1d byte   |       |    header 0x18 byte   |
+    |    헤더 0x1d 바이트   |       |    헤더 0x18 바이트   |
     +-----------------------+       +-----------------------+
     |                       |       |                       |
-    |    data block 1       |   +   |    data block n       |
-    |    0x07e3 bytes       |       |         x bytes       |  x = 0x0b26 - 0x0800 + 0x1d + 0x18
-    |                       |       |                       |    = 0x035b bytes
+    |    첫번째 데이터블럭  |   +   |    두번째 데이터블럭  |
+    |    0x07e3 바이트      |       |         X 바이트      |  X = 0x0b26 - 0x0800 + 0x1d + 0x18
+    |                       |       |                       |    = 0x035b 바이트
     +-----------------------+       +-----------------------+
-           1st packet                      nth packet
+           첫번째 패킷                      두번째 패킷
                                   (buf[0x16]+0x17 == lang | 0x20)
 */
 
@@ -1019,109 +1055,6 @@ For example : data length = 0x0b26
         }
     }
 
-/*
-    Sub-Pictures
-    The typical arrangement of data in the 53220 byte buffer for sub-pictures is
-            +------+-------+-------+----------+
-            | (1)  |      (2)      |    (3)   |
-            | SPUH | PXDtf | PXDbf | SP_DCSQT |
-            +------+-------+-------+----------+
-    However, the only requirement is that the header (SPUH) be first, all other areas are reached by pointers.
-
-
-    (1) SPUH (Sub-Picture Unit Header)
-    2 words (small endian - least significant byte last)
-            offset	name	    contents
-                0	SPDSZ	    the size of the total sub-picture data (which may span packets)
-                2	SP_DCSQTA	offset within the Sub-Picture Unit to the SP_DCSQT
-
-
-    (2) PXDtf and PXDbf
-
-    PiXel Data
-    These are the rle compressed pixel data for the top field (lines 1, 3, 5, etc) and
-    the bottom field (lines 2, 4, 6, etc) respectively
-    Individual pixels may have one of four values, commonly referred to as background (0), pattern (1), emphasis 1 (2),
-    and emphasis 2 (3).
-    Each coded value indicates the number of pixels having the same code value, and can be in one of four forms,
-    depending on the number of identical pixels
-            range	bits	format
-            1-3	    4	    n n c c
-            4-15	8	    0 0 n n n n c c
-            16-63	12	    0 0 0 0 n n n n n n c c
-            64-255	16	    0 0 0 0 0 0 n n n n n n n n c c
-    One special case, encoding a count of zero using the 16-bit format indicates the same pixel value until the end of the line.
-    If, at the end of a line, the bit count is not a multiple of 8, four fill bits of 0 are added.
-
-
-    (3) SP_DCSQT (Sub-Picture Display Control SeQuence Table)
-    This area contains blocks (SP_DCSQ) of commands to the decoder. Each SP_DCSQ begins with a 2 word header
-            offset	name	        contents
-                0	SP_DCSQ_STM	    delay to wait before executing these commands.
-                                    The units are 90KHz clock (same as PTM) divided by 1024 - see conversion aids
-                2	SP_NXT_DCSQ_SA	offset within the Sub-Picture Unit to the next SP_DCSQ.
-                                    If this is the last SP_DCSQ, it points to itself.
-
-    (4) Commands
-
-    There are eight commands available for Sub-Pictures.
-    The first SP_DCSQ should contain, as a minimum, SET_COLOR, SET_CONTR, SET_DAREA, and SET_DSPXA.
-
-    FF - CMD_END - ends one SP_DCSQ
-
-    00 - FSTA_DSP - Forced Start Display, no arguments
-
-    01 - STA_DSP - Start Display, no arguments
-
-    02 - STP_DSP - Stop Display, no arguments
-
-    03 - SET_COLOR - provides four indices into the CLUT for the current PGC to associate with the four pixel values.
-                     One nibble per pixel value for a total of 2 bytes.
-        e2 e1   p b
-
-    04 - SET_CONTR - directly provides the four contrast (alpha blend) values to associate with the four pixel values.
-                     One nibble per pixel value for a total of 2 bytes. 0x0 = transparent, 0xF = opaque
-        e2 e1   p b
-
-    05 - SET_DAREA - defines the display area, each pair (X and Y) of values is 3 bytes wide,
-                     for a total of 6 bytes, and has the form
-        sx sx   sx ex   ex ex   sy sy   sy ey   ey ey
-            sx = starting X coordinate
-            ex = ending X coordinate
-            sy = starting Y coordinate
-            ey = ending Y coordinate
-
-    06 - SET_DSPXA - defines the pixel data addresses.
-                     First a 2-byte offset to the top field data, followed by a 2-byte offset to the bottom field data,
-                     for a total of 4 bytes.
-
-    07 - CHG_COLCON - allows for changing the COLor and CONtrast within one or more areas of the display.
-                  This command contains a series of parameters, arranged in a hierarchy.
-                  Following the command byte is a 2-byte value for the total size of the parameter area, including the size word.
-                  The parameter sequence begins with a LN_CTLI, which defines a vertically bounded area of the display.
-                  The LN_CTLI may include from one to fifteen PX_CTLI parameters, which define a starting horizontal position
-                  and new color and contrast value to apply from that column on towards the right to the next PX_CTLI or
-                  the right side of the display.
-
-         LN_CTLI, 4 bytes, special value of 0f ff ff ff signifies the end of the parameter area
-                  (this termination code MUST be present as the last parameter)
-                    0 s   s s   n t   t t
-                        sss = csln, the starting (top-most) line number for this area
-                        n = number of PX_CTLI to follow
-                        ttt = ctln, the terminating (bottom-most) line number for this area
-
-         PX_CTLI, 6 bytes, defines a starting column and new color and contrast values
-                    bytes 0 and 1 - starting column number
-                    bytes 2 and 3 - new color values, as per SET_COLOR
-                    bytes 4 and 5 - new contrast values, as per SET_CONTR
-
-
-    Converting frames and time to SP_DCSQ_STM values
-
-    The direct method of converting time to delay values is to multiply time in seconds by 90000/1024 and truncate the value.
-    Rounding up will cause the display to occur one frame late.
-*/
-
     private boolean fForced = true;
     private int t;
     private int pal;
@@ -1129,25 +1062,26 @@ For example : data length = 0x0b26
     private int delay;
     private Rect rect = new Rect(0,0,0,0);      // rect = (left, top, right, bottom)
 
-    private int [] nOffset = new int [2];       // nOffset[0] = nPlane 0, interlace mode even line, nOffset[1] = odd line
-    private int [] palPal = new int [4];        // new palette, ignore it
+    private int [] nOffset = new int [2];       // nOffset[0] = nPlane 0, 인터레이스 모드 짝수라인,
+                                                // nOffset[1] = nPlane 0, 인터레이스 모드 홀수라인.
+    private int [] palPal = new int [4];        // 새로운 파렛트, 무시함.
     private int [] palTr = new int [4];
 
     private int dataIndex;
-    private int nextCtrlBlk;                    // next control block start address, ignore it
+    private int nextCtrlBlk;                    // 다음 컨트롤 블럭 시작 주소, 무시함.
     private boolean fBreak;
 
-    final int FORCED_START_DISPLAY = 0;         // forced start displaying
-    final int START_DISPLAY = 1;                // start displaying (at last, we will have this command)
-    final int STOP_DISPLAY = 2;                 // stop displaying
-    final int GET_PALETTE = 3;                  // next 2 bytes palette data
-    final int GET_TRIDX = 4;                    // next 2 bytes IDX
-    final int GET_RECTANGLE = 5;                // next 6 bytes (x1, y1, x2, y2) = (left, top, right, bottom)
-    final int GET_PLANE_OFFSET = 6;             // next 4 bytes (plane 0 : 2 bytes, plane 1 : 2 bytes) - interace mode
-    final int END_OF_CONTROL_BLOCK = 255;       // end of control block, other codes will be ignored, stop analyzing
+    final int FORCED_START_DISPLAY = 0; // 강제 표시 시작
+    final int START_DISPLAY = 1;        // 표시 시작 (맨 끝에 이 명령어가 온다)
+    final int STOP_DISPLAY = 2;         // 표시 종료
+    final int GET_PALETTE = 3;          // 다음 2 바이트가 파렛트 데이터
+    final int GET_TRIDX = 4;            // 다음 2 바이트가 IDX
+    final int GET_RECTANGLE = 5;        // 다음 6 바이트가 (x1, y1, x2, y2) = (left, top, right, bottom)
+    final int GET_PLANE_OFFSET = 6;     // 다음 4 바이트가 (plane 0 : 2 바이트, plane 1 : 2 바이트) - 인터레이스 모드
+    final int END_OF_CONTROL_BLOCK = 255;// 컨트롤 블럭의 끝, 다른 코드는 무시함.
 
     private void getPacketInfo() {
-        dataIndex = dataSize;       // before packet start, we will have 4 bytes of t(2 bytes) and next control block(2 bytes)
+        dataIndex = dataSize;       // 패킷이 시작될 때 t(2 바이트) 와 다음 콘트롤 블럭(2 바이트)이 옴.
 
         t = ((unsigned(pData[dataIndex]) << 8) + unsigned(pData[dataIndex + 1]));
         dataIndex = dataIndex + 2;
@@ -1155,33 +1089,33 @@ For example : data length = 0x0b26
         nextCtrlBlk = ((unsigned(pData[dataIndex]) << 8) + unsigned(pData[dataIndex + 1]));
         dataIndex = dataIndex + 2;
 
-        // we should note that : dataSize < nextCtrlBlk < packetSize
+        // 반드시 dataSize < nextCtrlBlk < packetSize 이어야 함.
         fBreak = false;
 
         do {
             switch (unsigned(pData[dataIndex])) {
-                case FORCED_START_DISPLAY:      // forced start displaying
+                case FORCED_START_DISPLAY:      // 강제 표시 시작
                     dataIndex++;
                     fForced = true;
                     break;
 
-                case START_DISPLAY:             // start displaying
+                case START_DISPLAY:             // 표시 시작
                     dataIndex++;
                     fForced = false;
                     break;
 
-                case STOP_DISPLAY:              // stop displaying
+                case STOP_DISPLAY:              // 표시 종료
                     dataIndex++;
                     delay = 1024 * t / 90;
                     break;
 
-                case GET_PALETTE:               // get palette
+                case GET_PALETTE:               // 파렛트 데이터
                     dataIndex++;
                     pal = ((unsigned(pData[dataIndex]) << 8) + unsigned(pData[dataIndex + 1]));
                     dataIndex = dataIndex + 2;
                     break;
 
-                case GET_TRIDX:                 // get tridx data
+                case GET_TRIDX:                 // tridx 데이터
                     dataIndex++;
                     if ((unsigned(pData[dataIndex]) << 8) + unsigned(pData[dataIndex + 1]) != 0) {
                         tr = (unsigned(pData[dataIndex]) << 8) + unsigned(pData[dataIndex + 1]);
@@ -1189,17 +1123,20 @@ For example : data length = 0x0b26
                     dataIndex = dataIndex + 2;
                     break;
 
-                case GET_RECTANGLE:             // get rectangle
+                case GET_RECTANGLE:             // rectangle (표시할 4각형 영역) 데이터
                     dataIndex++;
-                    int left = (unsigned(pData[dataIndex]) << 4) + (unsigned(pData[dataIndex + 1]) >> 4);
-                    int top = (unsigned(pData[dataIndex + 3]) << 4) + (unsigned(pData[dataIndex + 4]) >> 4);
-                    int right = ((unsigned(pData[dataIndex + 1]) & 0x0f) << 8) + (unsigned(pData[dataIndex + 2]) + 1);
-                    int bottom = ((unsigned(pData[dataIndex + 4]) & 0x0f) << 8) + (unsigned(pData[dataIndex + 5]) + 1);
+                    int left = (unsigned(pData[dataIndex]) << 4) +
+                            (unsigned(pData[dataIndex + 1]) >> 4);
+                    int top = (unsigned(pData[dataIndex + 3]) << 4) +
+                            (unsigned(pData[dataIndex + 4]) >> 4);
+                    int right = ((unsigned(pData[dataIndex + 1]) & 0x0f) << 8) +
+                            (unsigned(pData[dataIndex + 2]) + 1);
+                    int bottom = ((unsigned(pData[dataIndex + 4]) & 0x0f) << 8) +
+                            (unsigned(pData[dataIndex + 5]) + 1);
                     rect = new Rect(left, top, right, bottom);
-//                    showLog("rect(" + left + ", " + top + " ~ " + right + ", " + bottom + ")");
                     dataIndex = dataIndex + 6;
 
-                case GET_PLANE_OFFSET:      // get offset of top line (plane 0) and bottom line (plane 1)
+                case GET_PLANE_OFFSET:      // (plane 0) 와 (plane 1) 의 시작 위치
                     dataIndex++;
                     nOffset[0] = (unsigned(pData[dataIndex]) << 8) + unsigned(pData[dataIndex + 1]);
                     dataIndex = dataIndex + 2;
@@ -1208,12 +1145,12 @@ For example : data length = 0x0b26
                     dataIndex = dataIndex + 2;
                     break;
 
-                case END_OF_CONTROL_BLOCK:      // end of control block
+                case END_OF_CONTROL_BLOCK:      // 컨트롤 블럭의 끝
                     dataIndex++;
                     fBreak = true;
                     continue;
 
-                default:                        // skip this control block
+                default:                        // 다른 명령어는 무시함.
                     dataIndex++;
                     fBreak = true;
                     break;
@@ -1228,16 +1165,16 @@ For example : data length = 0x0b26
 
     // buf[0]
     // +-----------------------+
-    // |   packet header       | (packet header length = hsize)
+    // |       패킷 헤더       | (패킷 헤더 길이 = hsize)
     // +-----------------------+ <-----+ <-----+ buf[hsize]
     // |                       |       |       |
     // |                       |       |       |
-    // |   subtitle data       |       | data  |
-    // |                       |       | size  | packet
-    // |                       |       |       | size
+    // |      자막 데이터      |       | 데이터|
+    // |                       |       | 크기  | 패킷
+    // |                       |       |       | 크기
     // |                       |       |       |
     // +-----------------------+ <-----+       |
-    // |   information         |               |   (information length = packet size - data size)
+    // |         정보          |               |   (정보 길이 = 패킷 크기 - 데이터 크기)
     // +-----------------------+         <-----+
 
     private int x;
@@ -1246,8 +1183,8 @@ For example : data length = 0x0b26
 
     private int dataPointer;
 
-    private int nPlane;             // from the first line
-    private int fAligned = 1;       // from the high nibble
+    private int nPlane;             // 첫 라인부터(인터레이스 모드의 상위 라인)
+    private int fAligned = 1;       // 상위 4 비트 부터
 
     private int end0;
     private int end1;
@@ -1255,8 +1192,8 @@ For example : data length = 0x0b26
     private void getBitmapData() {
         dataPointer = dataSize;
 
-        nPlane = 0;         // from the first line
-        fAligned = 1;       // from the high nibble
+        nPlane = 0;         // 첫 라인부터
+        fAligned = 1;       // 상위 4비트 부터
 
         end0 = nOffset[1];
         end1 = dataPointer;
@@ -1282,43 +1219,44 @@ For example : data length = 0x0b26
 
             drawPixels(rect.right - x, code & 3);
 
-            if (fAligned == 0) { getNibble(); }        // align to byte
+            if (fAligned == 0) { getNibble(); }        // 바이트로 맞추기 위해서
 
-            x = rect.left;              // initialize x pointer
+            x = rect.left;              // x 좌표 초기화
             y++;
-            nPlane = 1 - nPlane;        // go to the second line
+            nPlane = 1 - nPlane;        // 두번째 라인으로
         }
 
         rect.bottom = Math.min(y, rect.bottom);
-//        trimSubImage();               // get rid of meaningless stuffs
+//        trimSubImage();               // 자막 비트맵 다듬기
     }
 
-    // if alpha == 0xff, it is not transparent (white)
+    // alpha == 0xff 라면, 불투명을 의미함(흰색)
     //
-    // for the reference,
-    // transparent white(0x00ffffff) = grey(0x00808080) = black(0x00000000)
-    // non-transparent white = 0xffffffff, grey = 0xff808080, black = 0xff000000
+    // 참고로,
+    // 투명 흰색(0x00ffffff) = 투명 회색(0x00808080) = 투명 검정색(0x00000000)
+    // 불투명 흰색 = 0xffffffff, 불투명 회색 = 0xff808080, 불투명 검정색 = 0xff000000
     //
-    // if we change grey to 0x00808080, grey will be gone ! (i.e., black/white only)
-    // if we change grey to 0xffffffff, grey will be shown by white ! (i.e., black/white also)
+    // 회색을 0x00808080 로 한다면, 회색은 더 이상 표시되지 않는다 ! (즉, 흑/백 전용)
+    // 회색을 0xffffffff 로 한다면, 회색은 흰색으로 표시된다 ! (즉, 역시 흑/백)
 
-    private int tBLACK = 0x00000000 & 0xffffffff;       // transparent black
-    private int nBLACK = 0xff000000 & 0xffffffff;       // black
-    private int tGREY = 0x00808080 & 0xffffffff;        // transparent grey
-    private int nGREY = 0xff808080 & 0xffffffff;        // grey
-    private int tWHITE = 0x00ffffff & 0xffffffff;       // transparent white
-    private int nWHITE = 0xffffffff & 0xffffffff;       // white
+    private int tBLACK = 0x00000000 & 0xffffffff;       // 투명 검정색
+    private int nBLACK = 0xff000000 & 0xffffffff;       // 불투명 검정색
+    private int tGREY = 0x00808080 & 0xffffffff;        // 투명 회색
+    private int nGREY = 0xff808080 & 0xffffffff;        // 불투명 회색
+    private int tWHITE = 0x00ffffff & 0xffffffff;       // 투명 흰색
+    private int nWHITE = 0xffffffff & 0xffffffff;       // 불투명 흰색
 
-    // int [] myColor = {tWHITE, nWHITE, nGREY, nBLACK};         // original color
-    // int [] myColor = {tBLACK, nWHITE, nBLACK, nBLACK};        // my modified color
-    // int [] myColor = {tBLACK, tWHITE, nWHITE, nWHITE};        // reverse color
-    private int [] myColor = {tBLACK, nWHITE, nBLACK, nBLACK};      // modified color palette for android phone
+    // int [] myColor = {tWHITE, nWHITE, nGREY, nBLACK};         // 원래 색상
+    // int [] myColor = {tBLACK, nWHITE, nBLACK, nBLACK};        // 변경한 색상
+    // int [] myColor = {tBLACK, tWHITE, nWHITE, nWHITE};        // 반전된 색상
+    private int [] myColor = {tBLACK, nWHITE, nBLACK, nBLACK};   // 안드로이드 폰을 위해 변경
 
-    private int rgbReserved;        // will be used for trim image
+    private int rgbReserved;        // 비트맵 다듬기에서 사용됨.
     private int ptr = 0;
 
     private void drawPixels(int length, int colorid) {
-        if ((length <= 0) || (x + length < rect.left) || (x >= rect.right) || (y < rect.top) || (y >= rect.bottom)) {
+        if ((length <= 0) || (x + length < rect.left) ||
+                (x >= rect.right) || (y < rect.top) || (y >= rect.bottom)) {
             return;
         }
 
@@ -1333,7 +1271,7 @@ For example : data length = 0x0b26
         ptr = rect.width() * (y - rect.top) + (x - rect.left);
 
         int c;
-        // original code : support 16 colors, but it does not work for android
+        // 원래 코드는 16 컬러를 지원하지만 안드로이드에서는 동작하지 않음.
 //        if (!customColors) {
 //            c = palette[palPal[colorid]];
 //            rgbReserved = (palTr[colorid] << 4) | palTr[colorid];
@@ -1344,11 +1282,12 @@ For example : data length = 0x0b26
         c = myColor[colorid & 0x03];
 
         while (length-- > 0) {
-            pixels[ptr] = c;            // put palette data
-            ptr++;                      // by length
+            pixels[ptr] = c;            // 파렛트 데이터를 넣음
+            ptr++;                      // 길이만큼
         }
     }
 
+    // 비트맵 데이터를 다듬는 메소드.
     private void trimSubImage() {
         rect.left = rect.width();
         rect.top = rect.height();
@@ -1393,7 +1332,7 @@ For example : data length = 0x0b26
 
     private int offset;
 
-    // offset moves 0.5 bytes (4 bits) because of fAligned value.
+    // 오프셋(offset)은 0.5 바이트(4비트) 단위로 움직임.
     private int getNibble() {
         offset = nOffset[nPlane];
         int result = (unsigned(pData[offset]) >> (fAligned << 2)) & 0x0f;
@@ -1419,7 +1358,7 @@ For example : data length = 0x0b26
         }
     };
 
-    // if get(index) <= playTime < get(index+1), then return index
+    // get(index) <= playTime < get(index+1) 이면, 인덱스를 리턴함
     //
     //                      <=    playTime    <
     //    +-----------------+-----------------+--------------------+
@@ -1432,7 +1371,8 @@ For example : data length = 0x0b26
 
         while(lowLimitT <= highLimitT) {
             indexPointerT = (lowLimitT + highLimitT) / 2;
-            if((parsedTextSubtitle.get(indexPointerT).getTime() <= playTime) && (playTime < parsedTextSubtitle.get(indexPointerT + 1).getTime())) {
+            if((parsedTextSubtitle.get(indexPointerT).getTime() <= playTime) &&
+                    (playTime < parsedTextSubtitle.get(indexPointerT + 1).getTime())) {
                 return indexPointerT;
             }
             if(playTime >= parsedTextSubtitle.get(indexPointerT + 1).getTime()) {
@@ -1452,7 +1392,8 @@ For example : data length = 0x0b26
                 countSub = getSubSyncIndexGraphic(mVV_show.getCurrentPosition());
                 if (countSub != savedCountSub) {
                     savedCountSub = countSub;
-                    mIV_subtitle.setImageBitmap(getBitmapSubtitle(parsedGraphicSubtitle.get(countSub).getFilepos()));
+                    mIV_subtitle.setImageBitmap(getBitmapSubtitle(
+                            parsedGraphicSubtitle.get(countSub).getFilepos()));
                 }
             }
         }
@@ -1465,7 +1406,8 @@ For example : data length = 0x0b26
 
         while(lowLimitG <= highLimitG) {
             indexPointerG = (lowLimitG + highLimitG) / 2;
-            if((parsedGraphicSubtitle.get(indexPointerG).getTime() <= playTime) && (playTime < parsedGraphicSubtitle.get(indexPointerG + 1).getTime())) {
+            if((parsedGraphicSubtitle.get(indexPointerG).getTime() <= playTime) &&
+                    (playTime < parsedGraphicSubtitle.get(indexPointerG + 1).getTime())) {
                 return indexPointerG;
             }
             if(playTime >= parsedGraphicSubtitle.get(indexPointerG + 1).getTime()) {
@@ -1477,6 +1419,7 @@ For example : data length = 0x0b26
         return 0;
     }
 
+    // 자막 데이터 끝에 한 라인을 추가함. (안정성을 위해)
     private void addOneMoreLine() {
         if (useSmi || useSrt || useAss || useSsa) {
             int h = parsedTextSubtitle.size() - 1;
@@ -1489,6 +1432,7 @@ For example : data length = 0x0b26
         }
     }
 
+    // 자막 데이터에 사용된 유니코드를 분석하여 리턴함. (대부분의 언어 지원)
     private String detectEncoding(String filename) {
         int numberOfRead;
         FileInputStream fis = null;
@@ -1510,15 +1454,16 @@ For example : data length = 0x0b26
 
         String encoding = detector.getDetectedCharset();
         if (encoding == null) {
-            encoding = ENCODING;        // set default encoding method
+            encoding = ENCODING;        // 분석 불가, 기본 언어 세팅
         }
 
         detector.reset();
         return encoding;
     }
 
-    // if we convert byte data to integer, java recognize it into signed integer.
-    // thus, we need to cut off unused bits by (& 0xff) operation.
+    // 바이트 데이터를 정수로 변환할 경우 java가 부호붙은 정수로 인식하기 때문에
+    // 이를 부호없는 정수로 바꾸어 주어야 한다.
+    // 이를 위해 (& 0xff) 를 행한다.
     //
     // (byte [])  0000 0000 0000 0000 0000 0000 1111 1111 (255)
     //    int     1111 1111 1111 1111 1111 1111 1111 1111 (-1)
@@ -1530,7 +1475,7 @@ For example : data length = 0x0b26
 
 
 
-//    // FFmpeg wrapper
+//    // 추후 FFmpeg 을 지원하기 위한 wrapper 예제.
 //    private static native void openFile();
 //    private static native void drawFrame(Bitmap bitmap);
 //    private static native void drawFrameAt(Bitmap bitmap, int secs);

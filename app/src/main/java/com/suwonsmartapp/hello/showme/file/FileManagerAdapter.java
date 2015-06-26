@@ -42,7 +42,7 @@ public class FileManagerAdapter extends BaseAdapter {
         ViewHolder holder;
 
         if (convertView == null) {
-            // when we load the View or Data at the very first time
+            // 처음으로 뷰와 데이터를 로드할 경우
             LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.file_manager_adapter, null);
             ImageView icon = (ImageView) convertView.findViewById(R.id.file_manager_icon);
@@ -60,19 +60,23 @@ public class FileManagerAdapter extends BaseAdapter {
             holder = (ViewHolder) convertView.getTag();
         }
 
+        // 아이콘 표시
         FileManagerInfo icon = (FileManagerInfo) getItem(position);
         holder.vhIcon.setImageResource(icon.getIconName());
 
+        // 이름 표시
         FileManagerInfo name = (FileManagerInfo) getItem(position);
         holder.vhName.setText(name.getFolderName());
 
+        // 경로명 표시
         FileManagerInfo path = (FileManagerInfo) getItem(position);
         holder.vhPath.setText(path.getFolderPath());
 
+        // 완성된 뷰를 리턴함.
         return convertView;
     }
 
-    // ViewHolder pattern
+    // ViewHolder 데이터 패턴
     static class ViewHolder {
         ImageView vhIcon;
         TextView vhName;

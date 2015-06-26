@@ -1,7 +1,6 @@
 package com.suwonsmartapp.hello.showme.image;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
@@ -40,15 +39,18 @@ public class ImageFileListActivity extends AppCompatActivity {
     private final int MODEimage = 2;
     private final int MODEvideo = 3;
 
-    private String requestedPathname = "";          // specified pathname by user from intent
-    private String requestedFilename = "";          // specified filename by user from intent
+    // 인텐트를 통해 받은 경로명과 파일명.
+    private String requestedPathname = "";
+    private String requestedFilename = "";
 
-    private static int mCurrentPosition = -1;               // -1 means we didn't specify file
+    // -1은 파일이 특정되지 않았음을 나타냄. (초기값)
+    private static int mCurrentPosition = -1;
 
     private ViewPager mViewPager;
     private MyAdapter mMyAdapter;
 
-    private String value;                                   // filename passed by file manager
+    // 파일 매니저를 통해 건네받은 파일명.
+    private String value;
 
     public static final int RESULT_OK = 0x0fff;
     public static final int REQUEST_CODE_AUDIO = 0x0001;
@@ -62,31 +64,35 @@ public class ImageFileListActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // delete title bar and use full screen
+        // 타이틀바를 지우고 전체 스크린을 사용함.
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        super.onCreate(savedInstanceState);     // for AppCompatActivity
+        super.onCreate(savedInstanceState);     // AppCompatActivity의 경우 순서가 중요함.
 
         setContentView(R.layout.image_file_list);
-//        showLog("onCreate");
 
-        // fix the screen for portrait
-//        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        // 인텐트를 통해 경로명과 파일명을 읽음.
+        readIntent();
 
-        readIntent();                       // get pathname and filename
-
-        prepareFileToShow();               // setup files for showing
+        // 표시할 그림 파일만을 추출함.
+        prepareFileToShow();
 
         mViewPager = (ViewPager)findViewById(R.id.viewPager);
         mViewPager.setOffscreenPageLimit(1);
-        mCurrentPosition = searchPictureIndex();      // search picture index which was specified by user
 
+        // 특정 파일을 지정한 경우 여기부터 표시함.
+        mCurrentPosition = searchPictureIndex();
+
+        // 표시할 파일 리스트를 작성하여 어댑터에 전달함.
         mMyAdapter = new MyAdapter(getSupportFragmentManager(), imageList);
         mViewPager.setAdapter(mMyAdapter);
-        mViewPager.setCurrentItem(mCurrentPosition);        // setup position after adapter established
+
+        // 지정한 위치를 세팅함.
+        mViewPager.setCurrentItem(mCurrentPosition);
     }
 
+    // 인텐트를 통해 경로명과 파일명을 읽음.
     private void readIntent() {
         Intent intent = getIntent();
         if (intent != null) {
@@ -101,25 +107,24 @@ public class ImageFileListActivity extends AppCompatActivity {
         }
     }
 
+    // 표시 가능한 그림 파일만 리스트로 만듬.
     private void prepareFileToShow() {
-
         imageList = new FileLists().getFileList(requestedPathname, MODEimage);
-
         if (imageList == null) {
-            showToast(getString(R.string.msg_no_image));          // no image found
+            showToast(getString(R.string.msg_no_image));          // 표시할 파일이 없음.
         }
     }
 
-    // search matched title with specified by user
+    // 지정한 파일이 표시 가능한지 검사함.
     private int searchPictureIndex() {
         for (int i = 0; i < imageList.size(); i++) {
-            FileInfo fileInfo = imageList.get(i);    // read image file
+            FileInfo fileInfo = imageList.get(i);
             File f = fileInfo.getFile();
             if (requestedFilename.equals(f.getName())) {
-                return i;          // return matched index
+                return i;          // 일치하는 인덱스를 리턴함.
             }
         }
-        return 0;                  // default is the first picture
+        return 0;                  // 일치하는 파일이 없으면 처음부터 표시함.
     }
 
     @Override
@@ -133,9 +138,9 @@ public class ImageFileListActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    // custom adapter for displaying image file using fragment method
+    // 플래그먼트를 사용하여 그림 파일을 표시하는 어댑터
     public class MyAdapter extends FragmentPagerAdapter {
-        private ArrayList<FileInfo> mData;    // image file media_player_icon_information list
+        private ArrayList<FileInfo> mData;
         public MyAdapter(FragmentManager fm, ArrayList<FileInfo> data) {
             super(fm);
             mData = data;
@@ -157,7 +162,8 @@ public class ImageFileListActivity extends AppCompatActivity {
         @Override
         public void destroyItem(ViewGroup container, int position, Object object) {
             super.destroyItem(container, position, object);
-            ((Fragment) object).getFragmentManager().beginTransaction().remove((Fragment)object).commit();
+            ((Fragment) object).getFragmentManager()
+                    .beginTransaction().remove((Fragment)object).commit();
         }
     }
 
@@ -165,7 +171,7 @@ public class ImageFileListActivity extends AppCompatActivity {
         PhotoViewAttacher mAttacher;
         private ImageView mImageView;
 
-        // Singleton Pattern : make just one instance, and can be accessed at everywhere
+        // 싱글톤(Singleton) 패턴 : 하나의 인스턴스를 생성하여 어디서든 엑세스하게 함.
         public static Fragment getInstance(FileInfo fileInfo) {
             ImageFragment fragment = new ImageFragment();
             Bundle args = new Bundle();
@@ -180,13 +186,13 @@ public class ImageFileListActivity extends AppCompatActivity {
             View rootView = inflater.inflate(R.layout.image_fragment, container, false);
             mImageView = (ImageView)rootView.findViewById(R.id.iv_image);
 
+            // 핀치 줌, 탭을 사용하게 하기 위해 Attacher에 한 번 건네줌. (photoview)
             mAttacher = new PhotoViewAttacher(mImageView);
-            mAttacher.setScaleType(ImageView.ScaleType.FIT_CENTER); // if we change it to MATRIX, system will die.
+            mAttacher.setScaleType(ImageView.ScaleType.FIT_CENTER);
             mAttacher.update();
 
             FileInfo imageinfo = getArguments().getParcelable("imageinfo");
-            Bitmap bitmap = BitmapFactory.decodeFile(imageinfo.getTitle());
-            mImageView.setImageBitmap(bitmap);
+            mImageView.setImageBitmap(BitmapFactory.decodeFile(imageinfo.getTitle()));
             return rootView;
         }
 

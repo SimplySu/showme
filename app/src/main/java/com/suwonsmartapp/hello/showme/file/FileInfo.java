@@ -7,8 +7,8 @@ import java.io.File;
 
 public class FileInfo implements Parcelable {
 
-    private File file;
-    private String title;
+    private File file;          // FileManagerActivity에서만 사용할 수 있음.
+    private String title;       // Parcelable을 상속받았기 때문에 Serializable이 아니면 전송이 안됨.
     private Long size;
     private Long modified;
 
@@ -36,8 +36,8 @@ public class FileInfo implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(title);
-        dest.writeLong(size);
+        dest.writeString(title);        // Parcel은 File 데이터를 전달할 수 없음.
+        dest.writeLong(size);           // 때문에 File 데이터는 제외하고 전달함.
         dest.writeLong(modified);
     }
 

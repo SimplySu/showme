@@ -50,11 +50,11 @@ public class FileManagerActivity extends AppCompatActivity implements
     private FileManagerAdapter mRootAdapter;
     private ArrayList<FileManagerInfo> mRootList;
 
-    // history management : push current path (mCurrentPath) before going to the next screen
-    // mCurrentPath = next screen path
+    // 히스토리 관리 : 디렉토리 안으로 들어가기 전에 현재 경로를 PUSH함.
+    // mCurrentPath = 다음 표시할 경로 화면.
     private Stack<String> mFileStack;
 
-    // current full path
+    // 현재 경로명.
     private String mCurrentPath = "";
     private TextView mTvCurrentPath;
 
@@ -71,7 +71,8 @@ public class FileManagerActivity extends AppCompatActivity implements
     public static final int REQUEST_CODE_IMAGE = 0x0100;
     public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
 
-    private boolean fAllowded = false;      // true if delete is allowded
+    // 루트에서는 파일/폴더 지우기가 안되므로 초기치를 false로 함.
+    private boolean fAllowded = false;
     private FileAdapter fileAdapter;
 
     private ArrayList<FileInfo> fileList;
@@ -85,23 +86,28 @@ public class FileManagerActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.file_manager_main);
 
-        // fix the screen for portrait
+        // 화면을 세로모드로 고정함.
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         mListView = (ListView) findViewById(R.id.lv_filetree);
         mTvCurrentPath = (TextView) findViewById(R.id.tv_currentPath);
 
+        // 경로명을 저장할 스택을 초기화함.
         mFileStack = new Stack<>();
 
-        setupHome();    // display categorized initial screen
+        // 루트 화면을 표시함.
+        setupHome();
 
-        mListView.setOnItemClickListener(this);         // show selected file
-        mListView.setOnItemLongClickListener(this);     // handle file/folder delete
+        // 짧게 클릭하면 해당 폴더로 들어가거나, 파일인 경우 실행함.
+        mListView.setOnItemClickListener(this);
+        // 길게 클릭하면 해당 파일/폴더를 삭제함.
+        mListView.setOnItemLongClickListener(this);
     }
 
+    // 초기 화면을 표시함.
     private void setupHome() {
-        fAllowded = false;      // root can not be deleted
-        findExtSd();    // setup path name on externalSdCard if secondary SD card exists
+        fAllowded = false;      // 초기화면에서는 삭제가 안됨.
+        findExtSd();    // 확장 SD 카드가 존재하면 그 경로을 파악해야 함.
 
         FileManagerInfo root = new FileManagerInfo();
         root.setIconName(R.drawable.icon_root);
@@ -153,8 +159,8 @@ public class FileManagerActivity extends AppCompatActivity implements
         mRootList = new ArrayList<>();
         mRootList.add(root);
         mRootList.add(sdcard);
-        if (externalSdCard != null) {
-            mRootList.add(extsdcard);
+        if (externalSdCard != null) {       // 확장 SD 카드가 존재하는 경우에만
+            mRootList.add(extsdcard);       // 이 메뉴가 표시되도록 함.
         }
         mRootList.add(music);
         mRootList.add(movie);
@@ -163,21 +169,27 @@ public class FileManagerActivity extends AppCompatActivity implements
         mRootList.add(download);
         mRootList.add(document);
 
+        // 초기화면을 표시할 어댑터에 리스트를 전달함.
         mRootAdapter = new FileManagerAdapter(getApplicationContext(), mRootList);
         mListView.setAdapter(mRootAdapter);
     }
 
+    // 확장 SD 카드 판별 : 지정된 디렉토리가 존재하면 확장 SD 카드가 존재할 가능성이 있고,
+    // 그 파일이 디렉토리면서 쓰기 가능하면 확장 SD 카드임.
     private void findExtSd() {
-        for( String sPathCur : Arrays.asList("external_SD", "sdcard1", "ext_card", "external_sd", "ext_sd", "external", "extSdCard", "externalSdCard")) {
-            fileCur = new File( "/storage/", sPathCur);
+        for( String sPathCur : Arrays.asList("external_SD", "sdcard1", "ext_card", "external_sd",
+                "ext_sd", "external", "extSdCard", "externalSdCard")) {
+            fileCur = new File("/storage/", sPathCur);
             if( fileCur.isDirectory() && fileCur.canWrite()) {
                 externalSdCard = fileCur.getAbsolutePath();
                 break;
             }
         }
 
+        // mnt인 경우 리눅스에서는 액세스 가능하지만 안드로이드에서는 엑세스 불가능함.
         if (externalSdCard == null) {
-            for( String sPathCur : Arrays.asList("ext_card", "external_sd", "ext_sd", "external", "extSdCard", "externalSdCard", "external_SD", "sdcard1")) {
+            for( String sPathCur : Arrays.asList("ext_card", "external_sd", "ext_sd", "external",
+                    "extSdCard", "externalSdCard", "external_SD", "sdcard1")) {
                 fileCur = new File( "/mnt/", sPathCur);
                 if( fileCur.isDirectory() && fileCur.canWrite()) {
                     externalSdCard = fileCur.getAbsolutePath();
@@ -189,23 +201,18 @@ public class FileManagerActivity extends AppCompatActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+        // 옵션 메뉴를 정의할 수 있으나 지금은 지원하지 않음.
         getMenuInflater().inflate(R.menu.menu_file_manager, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+        // 액션바 아이템을 다룰 수 있지만 현재는 지원하지 않음.
         int id = item.getItemId();
-
-        // noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -213,23 +220,25 @@ public class FileManagerActivity extends AppCompatActivity implements
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Object item = mListView.getAdapter().getItem(position);
 
+        // 초기화면인 경우
         if (item instanceof FileManagerInfo) {
             FileManagerInfo foldername = (FileManagerInfo) item;
             String path = foldername.getFolderPath();
 
             mFileStack.push("");
             setCurrentPath(path);
-
             showFileList(path);
-        } else if (item instanceof FileInfo) {
-            // whenever click directory, go to the directory inside
-            FileInfo fileData = (FileInfo) item;
-            if (fileData.getFile().isDirectory()) {
 
-                // insert path on the history
+        } else if (item instanceof FileInfo) {
+            FileInfo fileData = (FileInfo) item;
+
+            // 디렉토리인 경우 해당 디렉토리로 들어감.
+            if (fileData.getFile().isDirectory()) {
                 mFileStack.push(mCurrentPath);
                 setCurrentPath(fileData.getFile().getAbsolutePath());
                 showFileList(fileData.getFile().getAbsolutePath());
+
+            // 파일인 경우, 오디오, 그림, 비디오 파일이면 이를 실행함.
             } else {
                 switch (getMimeType(fileData.getFile())) {
                     case "audio":
@@ -256,6 +265,7 @@ public class FileManagerActivity extends AppCompatActivity implements
                         startActivityForResult(iImage, REQUEST_CODE_IMAGE);
                         break;
 
+                    // 오디오, 그림, 비디오가 아닌 경우 설치된 APP을 통해 실행함.
                     default:
                         try {
                             if (mimeType(fileData.getFile().getAbsolutePath()) != null) {
@@ -275,6 +285,7 @@ public class FileManagerActivity extends AppCompatActivity implements
         }
     }
 
+    // 파일의 확장자를 보고 실행할 수 있는 파일인지 구분함.
     private String getMimeType(File file) {
         String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "wma"};
         String[] video = {"avi", "mkv", "mp4", "wmv", "asf", "mov", "mpg", "flv", "tp", "3gp", "m4v", "rmvb", "webm"};
@@ -286,9 +297,10 @@ public class FileManagerActivity extends AppCompatActivity implements
         String extension = file.getAbsolutePath().substring(i + 1, j);
         String mimeType = extension.toLowerCase();
 
+        // 오디오의 경우 .cue, .ape 파일은 실행할 수 없음.
         for (String anAudio : audio) {
             if (mimeType.equals(anAudio)) {
-                return "audio";                     // currently .cue and .ape are not supported
+                return "audio";
             }
         }
 
@@ -298,24 +310,30 @@ public class FileManagerActivity extends AppCompatActivity implements
             }
         }
 
+        // 자막을 클릭한 경우 이에 해당하는 비디오를 찾아 실행함.
         for (String aTitle : title) {
             if (mimeType.equals(aTitle)) {
-                return "title";     // if user designate subtitle, we should find the corresponding movie file.
+                return "title";
             }
         }
 
+        // 현재 tiff 파일은 표시할 수 없음.
         for (String anImage : image) {
             if (mimeType.equals(anImage)) {
                 return "image";
             }
         }
+
+        // 모르는 파일인 경우 null을 리턴함.
         return "";
     }
 
+    // 지정된 디렉토리에 있는 파일들을 화면에 표시해 줌.
     private void showFileList(String path) {
         File dir = new File(path);
         File[] files = dir.listFiles();
 
+        // 만일 표시할 파일이 없거나 읽지 못하는 폴더인 경우 에러메시지를 표시함.
         if (files == null) {
             AlertDialog.Builder builder = new AlertDialog.Builder(FileManagerActivity.this);
             builder.setTitle(getString(R.string.msg_error))
@@ -327,19 +345,22 @@ public class FileManagerActivity extends AppCompatActivity implements
             return;
         }
 
+        // 현재 경로의 모든 파일을 읽어 어댑터에 전달함.
         fileList = new FileLists().getFileList(path, MODEall);
         fileAdapter = new FileAdapter(getApplicationContext(), fileList);
         mListView.setAdapter(fileAdapter);
-        fAllowded = true;       // we can delete file or directory
+
+        // 지금부터 파일/폴더를 삭제할 수 있음.
+        fAllowded = true;
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
 
-            // if the stack is empty (no more backward), kill this process
+            // BACK 키를 눌러 돌아가는 경우 스택이 비었으면 프로세스를 종료함.
             if (!mFileStack.empty()) {
-                // if something is in the stack, go back
+                // 스택에 무언가 있으면 이를 표시함.
                 String prevPath = mFileStack.pop();
                 setCurrentPath(prevPath);
                 if (prevPath.equals("")) {
@@ -353,11 +374,13 @@ public class FileManagerActivity extends AppCompatActivity implements
         return super.onKeyDown(keyCode, event);
     }
 
+    // 현재 경로명을 저장하고 텍스트 뷰에 표시함.
     private void setCurrentPath(String path) {
         mCurrentPath = path;
         mTvCurrentPath.setText(mCurrentPath);
     }
 
+    // 안드로이드에서 제공하는 마임타입 구별법.
     public static String mimeType(String url) {
         String type = null;
         String ext = url.substring(url.lastIndexOf('.'));
@@ -370,6 +393,7 @@ public class FileManagerActivity extends AppCompatActivity implements
         return type;
     }
 
+    // 오디오, 그림, 비디오 실행이 끝나고 다음 실행을 위해 현재의 위치를 되돌려줌.
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -395,6 +419,8 @@ public class FileManagerActivity extends AppCompatActivity implements
         }
     }
 
+    // 롱클릭에 의해 파일/폴더 삭제 기능을 수행함.
+    // 파일/폴더 생성 및 변경 기능은 현재 지원하지 않음.
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -404,28 +430,30 @@ public class FileManagerActivity extends AppCompatActivity implements
 
         builder.setPositiveButton(getString(R.string.msg_yes), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                if (fAllowded) {                        // can we delete file or directory ?
+                if (fAllowded) {            // 현재 삭제 기능을 수행할 수 있는지?
                     Object item = mListView.getAdapter().getItem(position);
                     if (item instanceof File) {
                         File fileData = (File) item;
 
                             String absPath = fileData.getAbsolutePath();
                             if (fileData.isDirectory()) {
-                                // delete directory as well as it's files
+                                // 디렉토리 안의 모든 파일을 지우고 폴더도 지움.
                                 boolean wellDeleted = deleteDir(absPath);
                                 fileList.remove(position);
                                 fileAdapter.notifyDataSetChanged();
 
+                                // 잘 지워졌으면 메시지를 표시해 줌.
                                 if (wellDeleted) {
                                     showToast(getString(R.string.msg_del_dir));
                                 } else {
                                     showToast(getString(R.string.msg_cant_del_dir));
                                 }
                             } else {
-                                // delete single file
+                                // 파일만 지움.
                                 File file = new File(absPath);
                                 boolean deleted = file.delete();
 
+                                // 잘 지워졌으면 메시지를 표시해 줌.
                                 if (deleted) {
                                     fileList.remove(position);
                                     fileAdapter.notifyDataSetChanged();
@@ -447,16 +475,19 @@ public class FileManagerActivity extends AppCompatActivity implements
             }
         });
 
-        AlertDialog alert = builder.create();       // if yes, we will show yes/no alert
+        AlertDialog alert = builder.create();
         alert.show();
         return true;
     }
 
+    // 재귀호출을 통해 폴더내 모든 파일을 지움.
     public boolean deleteDir(String aPath) {
         File file = new File(aPath);
         if (file.exists()) {
             File[] childFileList = file.listFiles();
             for (File childFile : childFileList) {
+
+                // 폴더 안에 폴더가 있을 경우 자신을 재귀호출함.
                 if (childFile.isDirectory()) {
                     deleteDir(childFile.getAbsolutePath());
                 }

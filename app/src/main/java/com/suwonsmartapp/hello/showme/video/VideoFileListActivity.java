@@ -33,19 +33,24 @@ public class VideoFileListActivity extends AppCompatActivity implements
     private final int MODEimage = 2;
     private final int MODEvideo = 3;
 
-    private String requestedPathname = "";          // specified pathname by user from intent
-    private String requestedFilename = "";          // specified filename by user from intent
-    private String requestedExternsion = "";        // specified extension by user from intent
-    private boolean flagSubTitle = false;           // default is filename is not subtitle
-    private String filenameWithoutExt = "";         // filename without extension for subtitle
+    // 인텐트를 통해 받은 경로명과 파일명.
+    private String requestedPathname = "";
+    private String requestedFilename = "";
 
-    private static int mCurrentPosition = -1;               // -1 means we didn't specify file
+    // 비디오가 아닌 자막파일을 클릭했을 경우 처리를 위해.
+    private String requestedExternsion = "";
+
+    private boolean flagSubTitle = false;
+    private String filenameWithoutExt = "";
+
+    // -1은 파일이 특정되지 않았음을 나타냄. (초기값)
+    private static int mCurrentPosition = -1;
 
     private FileAdapter mAdapter;
-
     private ListView mMovieListView;
 
-    private String value;                                   // filename passed by file manager
+    // 파일 매니저를 통해 건네받은 파일명.
+    private String value;
 
     public static final int RESULT_OK = 0x0fff;
     public static final int REQUEST_CODE_AUDIO = 0x0001;
@@ -62,29 +67,39 @@ public class VideoFileListActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.video_player_filelist);
 
-        // fix the screen for portrait
+        // 화면을 세로모드로 고정함.
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        readIntent();                       // get pathname and filename
+        // 인텐트를 통해 경로명과 파일명을 읽음.
+        readIntent();
 
-        flagSubTitle = (requestedExternsion.equals("smi")) || (requestedExternsion.equals("srt")) || (requestedExternsion.equals("sub"));
+        // 자막 파일을 지정한 경우 해당하는 영화 파일을 찾아서 실행함.
+        flagSubTitle = (requestedExternsion.equals("smi")) || (requestedExternsion.equals("idx")) ||
+                (requestedExternsion.equals("srt")) || (requestedExternsion.equals("sub")) ||
+                (requestedExternsion.equals("ass")) || (requestedExternsion.equals("ssa"));
 
-        prepareTitleToPlay();               // setup titles for playing
+        // 실행할 영화 파일만을 추출함.
+        prepareTitleToPlay();
 
         mMovieListView = (ListView) findViewById(R.id.lv_movies);
         mAdapter = new FileAdapter(getApplicationContext(), movieList);
         mMovieListView.setAdapter(mAdapter);
         mMovieListView.setOnItemClickListener(this);
 
-        mCurrentPosition = searchTitleIndex();      // search title index which was specified by user
+        // 특정 파일을 지정한 경우 여기부터 실행함.
+        mCurrentPosition = searchTitleIndex();
         mMovieListView.smoothScrollToPosition(mCurrentPosition);
 
+        // 지정한 위치를 세팅함.
+        mMovieListView.setSelection(mCurrentPosition);
+
         Intent initialIntent = new Intent(getApplicationContext(), VideoPlayerActivity.class);
-        initialIntent.putExtra("currentPosition", mCurrentPosition);       // current title position
+        initialIntent.putExtra("currentPosition", mCurrentPosition);
         initialIntent.putParcelableArrayListExtra("videoInfoList", movieList);
         startActivityForResult(initialIntent, REQUEST_CODE_VIDEO_PLAYER);
     }
 
+    // 인텐트를 통해 경로명과 파일명을 읽음.
     private void readIntent() {
         Intent intent = getIntent();
         if (intent != null) {
@@ -97,41 +112,46 @@ public class VideoFileListActivity extends AppCompatActivity implements
             }
             requestedPathname = value.substring(0, value.lastIndexOf('/'));
             requestedFilename = value.substring(value.lastIndexOf('/') + 1, value.length());
-            requestedExternsion = requestedFilename.substring(requestedFilename.lastIndexOf('.') + 1, requestedFilename.length()).toLowerCase();
+            requestedExternsion = requestedFilename.substring(requestedFilename.lastIndexOf('.') + 1,
+                                    requestedFilename.length()).toLowerCase();
             filenameWithoutExt = requestedFilename.substring(0, requestedFilename.lastIndexOf('.'));
         }
     }
 
+    // 실행 가능한 영화 파일만 리스트로 만듬.
     private void prepareTitleToPlay() {
-
         movieList = new FileLists().getFileList(requestedPathname, MODEvideo);
-
         if (movieList == null) {
-            showToast(getString(R.string.msg_no_movie));          // no image found
+            showToast(getString(R.string.msg_no_movie));          // 재생할 파일이 없음.
         }
     }
 
-    // search matched title with specified by user
+    // 지정한 파일이 재생 가능한지 검사함.
     private int searchTitleIndex() {
+        // 자막 파일을 클릭한 경우
         if (flagSubTitle) {
             for (int i = 0; i < movieList.size(); i++) {
-                FileInfo fileInfo = movieList.get(i);    // read image file
+                FileInfo fileInfo = movieList.get(i);
                 File f = fileInfo.getFile();
                 String temp = f.getName();
+                // 확장자를 제외한 파일명을 검사함.
                 if (filenameWithoutExt.equals(temp.substring(0, temp.lastIndexOf('.')))) {
-                    return i;          // return matched index
+                    return i;          // 일치하는 인덱스를 리턴함.
                 }
             }
-            return 0;                  // default is the first picture
+            return 0;                  // 일치하는 파일이 없으면 처음부터 재생함.
+
+        // 영화 파일을 클릭한 경우
         } else {
             for (int i = 0; i < movieList.size(); i++) {
-                FileInfo fileInfo = movieList.get(i);    // read image file
+                FileInfo fileInfo = movieList.get(i);
                 File f = fileInfo.getFile();
+                // 확장자를 포함한 모든 파일명을 검사함.
                 if (requestedFilename.equals(f.getName())) {
-                    return i;          // return matched index
+                    return i;          // 일치하는 인덱스를 리턴함.
                 }
             }
-            return 0;                  // default is the first picture
+            return 0;                  // 일치하는 파일이 없으면 처음부터 재생함.
         }
     }
 
@@ -139,14 +159,13 @@ public class VideoFileListActivity extends AppCompatActivity implements
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         mCurrentPosition = position;
         Intent initialIntent = new Intent(getApplicationContext(), VideoPlayerActivity.class);
-        initialIntent.putExtra("currentPosition", mCurrentPosition);       // current title position
+        initialIntent.putExtra("currentPosition", mCurrentPosition);
         initialIntent.putParcelableArrayListExtra("videoInfoList", movieList);
         startActivityForResult(initialIntent, REQUEST_CODE_VIDEO_PLAYER);
     }
 
     @Override
     protected void onDestroy() {
-
         extraVideoService = new Bundle();
         intentVideoService = new Intent();
         extraVideoService.putInt("CurrentPosition", mCurrentPosition);

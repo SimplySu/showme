@@ -75,9 +75,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
         super.onCreate(savedInstanceState);
         setContentView(R.layout.audio_main_player);
 
-//        showLog("onCreate");
-
-        // fix the screen for portrait
+        // 화면을 세로모드로 고정함.
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         setupViews();
@@ -106,7 +104,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
 //            }
 //        });
 
-        // connect event handler on the seekbar
+        // 이벤트 핸들러를 씨크바에 연결함.
         mSbAudioPlayerSeekbar = (SeekBar) findViewById(R.id.audio_player_seekbar);
         mSbAudioPlayerSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -127,8 +125,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void setupViews() {
-//        showLog("setupViews");
-
         mIvAudioPlayerPicture = (ImageView) findViewById(R.id.audio_player_picture);
         mTvAudioPlayerTitle = (TextView) findViewById(R.id.audio_player_title);
         mTvAudioPlayerTimeLeft = (TextView) findViewById(R.id.auido_player_time_left);
@@ -153,7 +149,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     protected void onStart() {
         super.onStart();
 
-        // setup index of current song on the list and audio file list
         Intent serviceIPC = new Intent(getApplicationContext(), AudioMessengerService.class);
         serviceIPC.putExtra("currentPosition", mCurrentPosition);
         serviceIPC.putParcelableArrayListExtra("songInfoList", musicList);
@@ -172,7 +167,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
 
 //        For volume control...
 //        AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-//        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
+//        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
+//                      audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
     }
 
     @Override
@@ -190,15 +186,14 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
         unregisterCallReceiver();
     }
 
-    // Messenger for communicating with the service
+    // 서비스와 통신을 하기 위한 메신저
     private static Messenger mServiceMessenger;
-    // Flag indicating whether we have called bind on the service
+    // 서비스에 연결(bind)을 요청받았는지 알려주는 플래그
     private boolean mBoundMessenger;
 
     private ServiceConnection mConnectionMessenger = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-
             mServiceMessenger = new Messenger(service);
             mBoundMessenger = true;
             setMusicUI();
@@ -236,19 +231,18 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
 
     public static class MusicHandler extends Handler {
 
-        public MusicHandler() {
-        }
+        public MusicHandler() { }
 
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_GET_MP:
-                    // get media player info from the service
+                    // 서비스로부터 음악 플레이어의 정보를 가져옴.
                     mMediaPlayer = (MediaPlayer) msg.obj;
                     break;
 
                 case MSG_NEXT_MP:
-                    // play next song when we finish current playing
+                    // 현재 곡 재생이 끝나면 자동으로 다음 곡을 재생함.
                     break;
                 default:
                     super.handleMessage(msg);
@@ -275,7 +269,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
                         mTvAudioPlayerTimeLeft.setText(String.format("%02d : %02d",
                                         TimeUnit.MILLISECONDS.toMinutes((long) TimeLeft),
                                         TimeUnit.MILLISECONDS.toSeconds((long) TimeLeft) -
-                                                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes((long) TimeLeft)))
+                                                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS
+                                                        .toMinutes((long) TimeLeft)))
                         );
 
                         TimeRight = mMediaPlayer.getDuration();
@@ -283,15 +278,14 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
                         mTvAudioPlayerTimeRight.setText(String.format("%02d : %02d",
                                         TimeUnit.MILLISECONDS.toMinutes((long) TimeRight),
                                         TimeUnit.MILLISECONDS.toSeconds((long) TimeRight) -
-                                                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes((long) TimeRight)))
+                                                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS
+                                                        .toMinutes((long) TimeRight)))
                         );
 
                         mSbAudioPlayerSeekbar.setProgress((int) TimeLeft);
                         mMusicHandler.postDelayed(mMusicThread, 100);
 
                     } catch (IllegalStateException e) {
-                        // Thrown when an action is attempted at a time when the VM is not in the correct state
-                        showLog("IllegalStateException");
                     }
                 }
             }

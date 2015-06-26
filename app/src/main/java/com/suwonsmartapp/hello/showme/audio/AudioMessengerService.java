@@ -38,7 +38,7 @@ public class AudioMessengerService extends Service
     private void showToast(String toast_msg) { Toast.makeText(this, toast_msg, Toast.LENGTH_LONG).show(); }
     private static final String HOME = "com.suwonsmartapp.hello.showme.";
 
-    // Command to the service to display a message
+    // 서비스가 메시지를 표시하기 위한 명령어
     public static final int MSG_GET_MP = 1;
     public static final int MSG_NEXT_MP = 2;
     public static final int MSG_GET_MP_IN_LIST = 3;
@@ -50,7 +50,6 @@ public class AudioMessengerService extends Service
     private MediaPlayer mMediaPlayer;
     private NotificationManagerCompat mNotiManager;
 
-    // Target we publish for clients to send messages to IncomingHandler
     final Messenger mMessenger = new Messenger(new IncomingHandler());
     final Messenger mMPMessenger = new Messenger(new AudioPlayerActivity.MusicHandler());
     final Messenger mMPMessengerToList = new Messenger(new AudioFileListActivity.MusicHandler());
@@ -74,7 +73,7 @@ public class AudioMessengerService extends Service
     private Bundle extraAudioService;
     private Intent intentAudioService;
 
-    // Handler of incoming messages from clients
+    // 클라이언트(clients)에서 메시지가 오는 것을 처리하는 메소드(Handler)
     class IncomingHandler extends Handler {
 
         @Override
@@ -102,8 +101,6 @@ public class AudioMessengerService extends Service
 
     @Override
     public void onCreate() {
-//        showLog("onCreate");
-
         mNotiManager = NotificationManagerCompat.from(getApplicationContext());
 
         registerCallReceiverService();
@@ -119,7 +116,6 @@ public class AudioMessengerService extends Service
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
         if (!setSongList) {
             musicList = intent.getParcelableArrayListExtra("songInfoList");
             setSongList = true;
@@ -157,14 +153,12 @@ public class AudioMessengerService extends Service
         }
     }
 
-    // When binding to the service,
-    // we return an interface to our messenger for sending messages to the service
+    // 서비스에 연결 되었을 때, 서비스에 메시지를 보내기 위해 메신저에게 인터페이스를 리턴함.
     @Override
     public IBinder onBind(Intent intent) {
         if (intent == null) {
             return mMessenger.getBinder();
         }
-
         return mMessenger.getBinder();
     }
 
@@ -187,7 +181,7 @@ public class AudioMessengerService extends Service
         if (mCurrentPosition > 0 && mCurrentPosition < musicList.size()) {
             mCurrentPosition  -= 1;
             setMusic();
-        } else if (mCurrentPosition == 0) {                     // wrap around
+        } else if (mCurrentPosition == 0) {
             mCurrentPosition = musicList.size() - 1;
             setMusic();
         }
@@ -197,7 +191,7 @@ public class AudioMessengerService extends Service
         if (mCurrentPosition >= 0 && mCurrentPosition < musicList.size()) {
             mCurrentPosition  += 1;
             setMusic();
-        } else if (mCurrentPosition >= musicList.size()) {     // wrap around
+        } else if (mCurrentPosition >= musicList.size()) {
             mCurrentPosition = 0;
             setMusic();
         }
@@ -215,7 +209,7 @@ public class AudioMessengerService extends Service
             intentPlay.putExtra("currentPosition", mCurrentPosition);
             sendBroadcast(intentPlay);
         } else if (mCurrentPosition < 0 || mCurrentPosition >= musicList.size()){
-                mCurrentPosition = 0;       // wrap around
+                mCurrentPosition = 0;
                 playSong = musicList.get(mCurrentPosition);
                 playMusic();
 
@@ -309,10 +303,10 @@ public class AudioMessengerService extends Service
         isPaused = false;
     }
 
-    private static int sTimer = 1000 * 60 * 5;      // 5 minutes
+    private static int sTimer = 1000 * 60 * 5;      // 5 분
     private static int sSec = 0;
 
-    // service will be terminated after certain times (now 5 minutes)
+    // 서비스가 일정 시간 후에 종료되도록 함. (현재는 5분)
     private static Thread mPausedThread = new Thread(new Runnable() {
         @Override
         public void run() {
@@ -331,7 +325,8 @@ public class AudioMessengerService extends Service
         Intent intent = new Intent(getApplicationContext(), AudioFileListActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), NOTI_MUSIC_SERVICE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
+                NOTI_MUSIC_SERVICE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         mNotiBuilder = new NotificationCompat.Builder(getApplicationContext());
         mNotiBuilder.setSmallIcon(R.drawable.audio_play_button);
@@ -344,13 +339,17 @@ public class AudioMessengerService extends Service
         setNotificationUI();
 
         Intent intentClose = new Intent(HOME + "AudioMessengerService.Close");
-        PendingIntent pendingIntentClose = PendingIntent.getBroadcast(this, NOTI_MUSIC_SERVICE, intentClose, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntentClose = PendingIntent.getBroadcast(this, NOTI_MUSIC_SERVICE,
+                intentClose, PendingIntent.FLAG_UPDATE_CURRENT);
         Intent intentPlay = new Intent(HOME + "AudioMessengerService.Play");
-        PendingIntent pendingIntentPlay = PendingIntent.getBroadcast(this, NOTI_MUSIC_SERVICE, intentPlay, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntentPlay = PendingIntent.getBroadcast(this, NOTI_MUSIC_SERVICE,
+                intentPlay, PendingIntent.FLAG_UPDATE_CURRENT);
         Intent intentPrevious = new Intent(HOME + "AudioMessengerService.Previous");
-        PendingIntent pendingIntentPrevious = PendingIntent.getBroadcast(this, NOTI_MUSIC_SERVICE, intentPrevious, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntentPrevious = PendingIntent.getBroadcast(this, NOTI_MUSIC_SERVICE,
+                intentPrevious, PendingIntent.FLAG_UPDATE_CURRENT);
         Intent intentNext = new Intent(HOME + "AudioMessengerService.Next");
-        PendingIntent pendingIntentNext = PendingIntent.getBroadcast(this, NOTI_MUSIC_SERVICE, intentNext, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntentNext = PendingIntent.getBroadcast(this, NOTI_MUSIC_SERVICE,
+                intentNext, PendingIntent.FLAG_UPDATE_CURRENT);
 
         mRemoteViews.setOnClickPendingIntent(R.id.ib_messenger_stop, pendingIntentClose);
         mRemoteViews.setOnClickPendingIntent(R.id.ib_messenger_play, pendingIntentPlay);
@@ -366,12 +365,14 @@ public class AudioMessengerService extends Service
         Bitmap bm = FileAdapter.getAudioThumbnail(getApplicationContext(), playSong.getTitle());
         if (bm != null) {
             if (playSong.getTitle().toLowerCase().lastIndexOf(".mp3") == -1) {
-                mRemoteViews.setImageViewResource(R.id.messenger_album_picture, R.drawable.audio_music_small);
+                mRemoteViews.setImageViewResource(R.id.messenger_album_picture,
+                        R.drawable.audio_music_small);
             } else {
                 mRemoteViews.setBitmap(R.id.messenger_album_picture, "setImageBitmap", bm);
             }
         } else {
-            mRemoteViews.setImageViewResource(R.id.messenger_album_picture, R.drawable.audio_music_small);
+            mRemoteViews.setImageViewResource(R.id.messenger_album_picture,
+                    R.drawable.audio_music_small);
         }
 
         mRemoteViews.setTextViewText(R.id.messenger_title, playSong.getTitle());
@@ -389,11 +390,13 @@ public class AudioMessengerService extends Service
                     if (isPaused) {
                         restart(mMediaPlayer);
                         mNotiBuilder.setSmallIcon(R.drawable.audio_play_button);
-                        mRemoteViews.setImageViewResource(R.id.ib_messenger_play, android.R.drawable.ic_media_pause);
+                        mRemoteViews.setImageViewResource(R.id.ib_messenger_play,
+                                android.R.drawable.ic_media_pause);
                     } else {
                         pause(mMediaPlayer);
                         mNotiBuilder.setSmallIcon(R.drawable.audio_pause_button);
-                        mRemoteViews.setImageViewResource(R.id.ib_messenger_play, android.R.drawable.ic_media_play);
+                        mRemoteViews.setImageViewResource(R.id.ib_messenger_play,
+                                android.R.drawable.ic_media_play);
                     }
                 } else if ((HOME + "AudioMessengerService.Previous").equals(action)) {
                     setPreviousMusic();
@@ -408,8 +411,6 @@ public class AudioMessengerService extends Service
     };
 
     private void registerCallReceiverService(){
-//        showLog("registerCallReceiverService");
-
         if(!mIsCloseReceiverRegistered){
             IntentFilter filter = new IntentFilter();
             filter.addAction(HOME + "AudioMessengerService.Close");
@@ -423,8 +424,6 @@ public class AudioMessengerService extends Service
     }
 
     private void unregisterCallReceiverService(){
-//        showLog("unregisterCallReceiverService");
-
         if(mIsCloseReceiverRegistered){
             unregisterReceiver(mButtonBroadcastReceiver);
             mIsCloseReceiverRegistered = false;
@@ -432,13 +431,12 @@ public class AudioMessengerService extends Service
     }
 
     private void stopMusicService() {
-//        showLog("stopMusicService");
-
         Intent playerActivity = new Intent(HOME + "AudioPlayerActivity.STOP");
         sendBroadcast(playerActivity);
         Intent songListActivity = new Intent(HOME + "AudioFileListActivity.STOP");
         sendBroadcast(songListActivity);
 
-        boolean result = stopService(new Intent(getApplicationContext(), AudioMessengerService.class));
+        boolean result = stopService(new Intent(getApplicationContext(),
+                AudioMessengerService.class));
     }
 }

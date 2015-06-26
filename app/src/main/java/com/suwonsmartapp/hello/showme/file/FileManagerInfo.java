@@ -2,6 +2,7 @@ package com.suwonsmartapp.hello.showme.file;
 
 public class FileManagerInfo {
 
+    // 초기화면에 표시할 데이터 (아이콘, 이름, 경로명)
     private int iconName;
     private String folderName;
     private String folderPath;
