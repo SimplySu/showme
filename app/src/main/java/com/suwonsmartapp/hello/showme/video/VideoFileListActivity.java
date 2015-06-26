@@ -33,23 +33,23 @@ public class VideoFileListActivity extends AppCompatActivity implements
     private final int MODEimage = 2;
     private final int MODEvideo = 3;
 
-    // ÀÎÅÙÆ®¸¦ ÅëÇØ ¹ŞÀº °æ·Î¸í°ú ÆÄÀÏ¸í.
+    // ì¸í…íŠ¸ë¥¼ í†µí•´ ë°›ì€ ê²½ë¡œëª…ê³¼ íŒŒì¼ëª….
     private String requestedPathname = "";
     private String requestedFilename = "";
 
-    // ºñµğ¿À°¡ ¾Æ´Ñ ÀÚ¸·ÆÄÀÏÀ» Å¬¸¯ÇßÀ» °æ¿ì Ã³¸®¸¦ À§ÇØ.
+    // ë¹„ë””ì˜¤ê°€ ì•„ë‹Œ ìë§‰íŒŒì¼ì„ í´ë¦­í–ˆì„ ê²½ìš° ì²˜ë¦¬ë¥¼ ìœ„í•´.
     private String requestedExternsion = "";
 
     private boolean flagSubTitle = false;
     private String filenameWithoutExt = "";
 
-    // -1Àº ÆÄÀÏÀÌ Æ¯Á¤µÇÁö ¾Ê¾ÒÀ½À» ³ªÅ¸³¿. (ÃÊ±â°ª)
+    // -1ì€ íŒŒì¼ì´ íŠ¹ì •ë˜ì§€ ì•Šì•˜ìŒì„ ë‚˜íƒ€ëƒ„. (ì´ˆê¸°ê°’)
     private static int mCurrentPosition = -1;
 
     private FileAdapter mAdapter;
     private ListView mMovieListView;
 
-    // ÆÄÀÏ ¸Å´ÏÀú¸¦ ÅëÇØ °Ç³×¹ŞÀº ÆÄÀÏ¸í.
+    // íŒŒì¼ ë§¤ë‹ˆì €ë¥¼ í†µí•´ ê±´ë„¤ë°›ì€ íŒŒì¼ëª….
     private String value;
 
     public static final int RESULT_OK = 0x0fff;
@@ -67,18 +67,18 @@ public class VideoFileListActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.video_player_filelist);
 
-        // È­¸éÀ» ¼¼·Î¸ğµå·Î °íÁ¤ÇÔ.
+        // í™”ë©´ì„ ì„¸ë¡œëª¨ë“œë¡œ ê³ ì •í•¨.
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        // ÀÎÅÙÆ®¸¦ ÅëÇØ °æ·Î¸í°ú ÆÄÀÏ¸íÀ» ÀĞÀ½.
+        // ì¸í…íŠ¸ë¥¼ í†µí•´ ê²½ë¡œëª…ê³¼ íŒŒì¼ëª…ì„ ì½ìŒ.
         readIntent();
 
-        // ÀÚ¸· ÆÄÀÏÀ» ÁöÁ¤ÇÑ °æ¿ì ÇØ´çÇÏ´Â ¿µÈ­ ÆÄÀÏÀ» Ã£¾Æ¼­ ½ÇÇàÇÔ.
+        // ìë§‰ íŒŒì¼ì„ ì§€ì •í•œ ê²½ìš° í•´ë‹¹í•˜ëŠ” ì˜í™” íŒŒì¼ì„ ì°¾ì•„ì„œ ì‹¤í–‰í•¨.
         flagSubTitle = (requestedExternsion.equals("smi")) || (requestedExternsion.equals("idx")) ||
                 (requestedExternsion.equals("srt")) || (requestedExternsion.equals("sub")) ||
                 (requestedExternsion.equals("ass")) || (requestedExternsion.equals("ssa"));
 
-        // ½ÇÇàÇÒ ¿µÈ­ ÆÄÀÏ¸¸À» ÃßÃâÇÔ.
+        // ì‹¤í–‰í•  ì˜í™” íŒŒì¼ë§Œì„ ì¶”ì¶œí•¨.
         prepareTitleToPlay();
 
         mMovieListView = (ListView) findViewById(R.id.lv_movies);
@@ -86,11 +86,11 @@ public class VideoFileListActivity extends AppCompatActivity implements
         mMovieListView.setAdapter(mAdapter);
         mMovieListView.setOnItemClickListener(this);
 
-        // Æ¯Á¤ ÆÄÀÏÀ» ÁöÁ¤ÇÑ °æ¿ì ¿©±âºÎÅÍ ½ÇÇàÇÔ.
+        // íŠ¹ì • íŒŒì¼ì„ ì§€ì •í•œ ê²½ìš° ì—¬ê¸°ë¶€í„° ì‹¤í–‰í•¨.
         mCurrentPosition = searchTitleIndex();
         mMovieListView.smoothScrollToPosition(mCurrentPosition);
 
-        // ÁöÁ¤ÇÑ À§Ä¡¸¦ ¼¼ÆÃÇÔ.
+        // ì§€ì •í•œ ìœ„ì¹˜ë¥¼ ì„¸íŒ…í•¨.
         mMovieListView.setSelection(mCurrentPosition);
 
         Intent initialIntent = new Intent(getApplicationContext(), VideoPlayerActivity.class);
@@ -99,7 +99,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
         startActivityForResult(initialIntent, REQUEST_CODE_VIDEO_PLAYER);
     }
 
-    // ÀÎÅÙÆ®¸¦ ÅëÇØ °æ·Î¸í°ú ÆÄÀÏ¸íÀ» ÀĞÀ½.
+    // ì¸í…íŠ¸ë¥¼ í†µí•´ ê²½ë¡œëª…ê³¼ íŒŒì¼ëª…ì„ ì½ìŒ.
     private void readIntent() {
         Intent intent = getIntent();
         if (intent != null) {
@@ -118,40 +118,40 @@ public class VideoFileListActivity extends AppCompatActivity implements
         }
     }
 
-    // ½ÇÇà °¡´ÉÇÑ ¿µÈ­ ÆÄÀÏ¸¸ ¸®½ºÆ®·Î ¸¸µë.
+    // ì‹¤í–‰ ê°€ëŠ¥í•œ ì˜í™” íŒŒì¼ë§Œ ë¦¬ìŠ¤íŠ¸ë¡œ ë§Œë“¬.
     private void prepareTitleToPlay() {
         movieList = new FileLists().getFileList(requestedPathname, MODEvideo);
         if (movieList == null) {
-            showToast(getString(R.string.msg_no_movie));          // Àç»ıÇÒ ÆÄÀÏÀÌ ¾øÀ½.
+            showToast(getString(R.string.msg_no_movie));          // ì¬ìƒí•  íŒŒì¼ì´ ì—†ìŒ.
         }
     }
 
-    // ÁöÁ¤ÇÑ ÆÄÀÏÀÌ Àç»ı °¡´ÉÇÑÁö °Ë»çÇÔ.
+    // ì§€ì •í•œ íŒŒì¼ì´ ì¬ìƒ ê°€ëŠ¥í•œì§€ ê²€ì‚¬í•¨.
     private int searchTitleIndex() {
-        // ÀÚ¸· ÆÄÀÏÀ» Å¬¸¯ÇÑ °æ¿ì
+        // ìë§‰ íŒŒì¼ì„ í´ë¦­í•œ ê²½ìš°
         if (flagSubTitle) {
             for (int i = 0; i < movieList.size(); i++) {
                 FileInfo fileInfo = movieList.get(i);
                 File f = fileInfo.getFile();
                 String temp = f.getName();
-                // È®ÀåÀÚ¸¦ Á¦¿ÜÇÑ ÆÄÀÏ¸íÀ» °Ë»çÇÔ.
+                // í™•ì¥ìë¥¼ ì œì™¸í•œ íŒŒì¼ëª…ì„ ê²€ì‚¬í•¨.
                 if (filenameWithoutExt.equals(temp.substring(0, temp.lastIndexOf('.')))) {
-                    return i;          // ÀÏÄ¡ÇÏ´Â ÀÎµ¦½º¸¦ ¸®ÅÏÇÔ.
+                    return i;          // ì¼ì¹˜í•˜ëŠ” ì¸ë±ìŠ¤ë¥¼ ë¦¬í„´í•¨.
                 }
             }
-            return 0;                  // ÀÏÄ¡ÇÏ´Â ÆÄÀÏÀÌ ¾øÀ¸¸é Ã³À½ºÎÅÍ Àç»ıÇÔ.
+            return 0;                  // ì¼ì¹˜í•˜ëŠ” íŒŒì¼ì´ ì—†ìœ¼ë©´ ì²˜ìŒë¶€í„° ì¬ìƒí•¨.
 
-        // ¿µÈ­ ÆÄÀÏÀ» Å¬¸¯ÇÑ °æ¿ì
+        // ì˜í™” íŒŒì¼ì„ í´ë¦­í•œ ê²½ìš°
         } else {
             for (int i = 0; i < movieList.size(); i++) {
                 FileInfo fileInfo = movieList.get(i);
                 File f = fileInfo.getFile();
-                // È®ÀåÀÚ¸¦ Æ÷ÇÔÇÑ ¸ğµç ÆÄÀÏ¸íÀ» °Ë»çÇÔ.
+                // í™•ì¥ìë¥¼ í¬í•¨í•œ ëª¨ë“  íŒŒì¼ëª…ì„ ê²€ì‚¬í•¨.
                 if (requestedFilename.equals(f.getName())) {
-                    return i;          // ÀÏÄ¡ÇÏ´Â ÀÎµ¦½º¸¦ ¸®ÅÏÇÔ.
+                    return i;          // ì¼ì¹˜í•˜ëŠ” ì¸ë±ìŠ¤ë¥¼ ë¦¬í„´í•¨.
                 }
             }
-            return 0;                  // ÀÏÄ¡ÇÏ´Â ÆÄÀÏÀÌ ¾øÀ¸¸é Ã³À½ºÎÅÍ Àç»ıÇÔ.
+            return 0;                  // ì¼ì¹˜í•˜ëŠ” íŒŒì¼ì´ ì—†ìœ¼ë©´ ì²˜ìŒë¶€í„° ì¬ìƒí•¨.
         }
     }
 

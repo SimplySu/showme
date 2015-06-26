@@ -166,16 +166,9 @@ public class FileAdapter extends BaseAdapter {
                 holder.fileSize.setText(mDecimalFormat.format(size) + "k");
             }
 
-            // 파일 색은 현재 액세스하는 파일이면 청색, 아니면 흰색.
-            if (mCurrentPosition == position) {     // currently focusing ?
-                holder.fileName.setTextColor(Color.parseColor("#ff5050f0"));
-                holder.fileSize.setTextColor(Color.parseColor("#ff5050f0"));
-                holder.modified.setTextColor(Color.parseColor("#ff5050f0"));
-            } else {
-                holder.fileName.setTextColor(Color.parseColor("#fffafa"));
-                holder.fileSize.setTextColor(Color.parseColor("#fffafa"));
-                holder.modified.setTextColor(Color.parseColor("#fffafa"));
-            }
+            holder.fileName.setTextColor(Color.parseColor("#fffafa"));
+            holder.fileSize.setTextColor(Color.parseColor("#fffafa"));
+            holder.modified.setTextColor(Color.parseColor("#fffafa"));
         }
 
         // 최종 업데이트된 날자를 표시함.
@@ -336,11 +329,13 @@ public class FileAdapter extends BaseAdapter {
         try {
             gc = cursor.getCount();
         } catch (NullPointerException e) {
+            cursor.close();
             return null;
         }
 
         // 데이터베이스가 잘 안읽힐 경우 정보 검색이 안되서 섬네일을 표시할 수 없음.
         if (gc == 0) {
+            cursor.close();
             return null;
         }
 
@@ -357,6 +352,7 @@ public class FileAdapter extends BaseAdapter {
         Uri audioUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
 
         if (audioUri == null) {
+            cursor.close();
             return null;
         }
 
@@ -365,15 +361,19 @@ public class FileAdapter extends BaseAdapter {
         try {
             retriever.setDataSource(context, audioUri);
         } catch (RuntimeException e) {
+            cursor.close();
             return null;
         }
         byte data[] = retriever.getEmbeddedPicture();
 
         // 저장된 섬네일이 없을 수도 있음.
         if (data == null) {
+            cursor.close();
             return null;
         }
 
+        // 임시로 사용한 커서는 메모리 해제를 위해 닫아야 함.
+        cursor.close();
         // 섬네일을 찾았을 경우 이를 리턴함.
         return BitmapFactory.decodeByteArray(data, 0, data.length);
     }
@@ -395,6 +395,7 @@ public class FileAdapter extends BaseAdapter {
         try {
             gc = cursor.getCount();
         } catch (NullPointerException e) {
+            cursor.close();
             return null;
         }
 
@@ -417,6 +418,10 @@ public class FileAdapter extends BaseAdapter {
             options.inSampleSize = 8;
             thumbnail = BitmapFactory.decodeFile(file, options);
         }
+
+        // 임시로 사용한 커서는 메모리 해제를 위해 닫아야 함.
+        cursor.close();
+        // 섬네일을 찾았을 경우 이를 리턴함.
         return thumbnail;
     }
 
@@ -433,11 +438,13 @@ public class FileAdapter extends BaseAdapter {
         try {
             gc = cursor.getCount();
         } catch (NullPointerException e) {
+            cursor.close();
             return null;
         }
 
         // 데이터베이스가 잘 안읽힐 경우 정보 검색이 안되서 섬네일을 표시할 수 없음.
         if (gc == 0) {
+            cursor.close();
             return null;
         }
 
@@ -460,6 +467,10 @@ public class FileAdapter extends BaseAdapter {
             options.inSampleSize = 8;
             thumbnail = BitmapFactory.decodeFile(file, options);
         }
+
+        // 임시로 사용한 커서는 메모리 해제를 위해 닫아야 함.
+        cursor.close();
+        // 섬네일을 찾았을 경우 이를 리턴함.
         return thumbnail;
     }
 

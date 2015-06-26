@@ -210,10 +210,7 @@ public class FileManagerActivity extends AppCompatActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         // 액션바 아이템을 다룰 수 있지만 현재는 지원하지 않음.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+        return id == R.id.action_settings || super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -289,7 +286,7 @@ public class FileManagerActivity extends AppCompatActivity implements
     private String getMimeType(File file) {
         String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "wma"};
         String[] video = {"avi", "mkv", "mp4", "wmv", "asf", "mov", "mpg", "flv", "tp", "3gp", "m4v", "rmvb", "webm"};
-        String[] image = {"jpg", "gif", "png", "bmp", "tif", "tiff", "jpeg", "webp"};
+        String[] image = {"jpg", "gif", "png", "bmp", "jpeg", "webp"};
         String[] title = {"smi", "srt", "sub", "idx", "ass", "ssa"};
 
         int i = file.getAbsolutePath().lastIndexOf('.');
@@ -402,18 +399,30 @@ public class FileManagerActivity extends AppCompatActivity implements
             case REQUEST_CODE_AUDIO:
                 if (resultCode == RESULT_OK) {
                     mCurrentPosition = data.getExtras().getInt("CurrentPosition");
+//                    fileAdapter = new FileAdapter(getApplicationContext(), fileList);
+//                    fileAdapter.setmCurrentPosition(mCurrentPosition);
+//                    mListView.setAdapter(fileAdapter);
+//                    fileAdapter.notifyDataSetChanged();
                 }
                 break;
 
             case REQUEST_CODE_VIDEO:
                 if (resultCode == RESULT_OK) {
                     mCurrentPosition = data.getExtras().getInt("CurrentPosition");
+//                    fileAdapter = new FileAdapter(getApplicationContext(), fileList);
+//                    fileAdapter.setmCurrentPosition(mCurrentPosition);
+//                    mListView.setAdapter(fileAdapter);
+//                    fileAdapter.notifyDataSetChanged();
                 }
                 break;
 
             case REQUEST_CODE_IMAGE:
                 if (resultCode == RESULT_OK) {
                     mCurrentPosition = data.getExtras().getInt("CurrentPosition");
+//                    fileAdapter = new FileAdapter(getApplicationContext(), fileList);
+//                    fileAdapter.setmCurrentPosition(mCurrentPosition);
+//                    mListView.setAdapter(fileAdapter);
+//                    fileAdapter.notifyDataSetChanged();
                 }
                 break;
         }
@@ -425,18 +434,23 @@ public class FileManagerActivity extends AppCompatActivity implements
     public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        builder.setTitle(getString(R.string.msg_confirm_delete));
+        Object item = mListView.getAdapter().getItem(position);
+        FileInfo fileData = (FileInfo) item;
+        String ap = fileData.getFile().getAbsolutePath();
+        String f = ap.substring(ap.lastIndexOf("/") + 1, ap.length());
+
+        builder.setTitle(getString(R.string.msg_confirm_delete) + " : " + f);
         builder.setMessage(getString(R.string.msg_are_you_sure));
 
         builder.setPositiveButton(getString(R.string.msg_yes), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 if (fAllowded) {            // 현재 삭제 기능을 수행할 수 있는지?
                     Object item = mListView.getAdapter().getItem(position);
-                    if (item instanceof File) {
-                        File fileData = (File) item;
+                    if (item instanceof FileInfo) {
+                        FileInfo fileData = (FileInfo) item;
 
-                            String absPath = fileData.getAbsolutePath();
-                            if (fileData.isDirectory()) {
+                            String absPath = fileData.getFile().getAbsolutePath();
+                            if (fileData.getFile().isDirectory()) {
                                 // 디렉토리 안의 모든 파일을 지우고 폴더도 지움.
                                 boolean wellDeleted = deleteDir(absPath);
                                 fileList.remove(position);

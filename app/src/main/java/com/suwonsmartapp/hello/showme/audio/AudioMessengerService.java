@@ -252,13 +252,6 @@ public class AudioMessengerService extends Service
 
         mNotiManager.cancel(NOTI_MUSIC_SERVICE);
         unregisterCallReceiverService();
-
-        extraAudioService = new Bundle();
-        intentAudioService = new Intent();
-        extraAudioService.putInt("CurrentPosition", mCurrentPosition);
-        intentAudioService.putExtras(extraAudioService);
-        this.setResult(RESULT_OK, intentAudioService);
-
         super.onDestroy();
     }
 
@@ -377,7 +370,9 @@ public class AudioMessengerService extends Service
                     R.drawable.audio_music_small);
         }
 
-        mRemoteViews.setTextViewText(R.id.messenger_title, playSong.getTitle());
+        String song = playSong.getTitle();
+        mRemoteViews.setTextViewText(R.id.messenger_title,
+                song.substring(song.lastIndexOf("/") + 1, song.length()));
     }
 
     private BroadcastReceiver mButtonBroadcastReceiver = new BroadcastReceiver() {

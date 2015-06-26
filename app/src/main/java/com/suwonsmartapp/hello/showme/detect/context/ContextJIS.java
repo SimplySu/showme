@@ -32,9 +32,7 @@ public abstract class ContextJIS {
     }
 
     public void handleData(final byte[] buf, int offset, int length) {
-        if (this.done) {
-            return;
-        }
+        if (this.done) { return; }
 
         // The buffer we got is byte oriented, and a character may span in more than one
         // buffers. In case the last one or two byte in last buffer is not complete, we
@@ -65,18 +63,11 @@ public abstract class ContextJIS {
     }
 
     public void handleOneChar(final byte[] buf, int offset, int charLength) {
-        if (this.totalRel > MAX_REL_THRESHOLD) {
-            this.done = true;
-        }
-        if (this.done) {
-            return;
-        }
-
+        if (this.totalRel > MAX_REL_THRESHOLD) { this.done = true; }
+        if (this.done) { return; }
 
         int orderNum = -1;
-        if (charLength == 2) {
-            orderNum = getOrder(buf, offset);
-        }
+        if (charLength == 2) { orderNum = getOrder(buf, offset); }
         if (orderNum != -1 && this.lastCharOrder != -1) {
             ++this.totalRel;
             ++this.relSample[jp2CharContext[this.lastCharOrder][orderNum]];
@@ -102,8 +93,7 @@ public abstract class ContextJIS {
         this.done = false;
     }
 
-    public void setOption() {
-    }
+    public void setOption() { }
 
     public boolean gotEnoughData() {
         return (this.totalRel > ENOUGH_REL_THRESHOLD);

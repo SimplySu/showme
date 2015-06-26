@@ -16,16 +16,11 @@ public abstract class DistributeChar {
         reset();
     }
 
-    public void handleData(final byte[] buf, int offset, int length) {
-    }
+    public void handleData(final byte[] buf, int offset, int length) { }
 
     public void handleOneChar(final byte[] buf, int offset, int charLength) {
         int order = -1;
-
-        if (charLength == 2) {
-            order = getOrder(buf, offset);
-        }
-
+        if (charLength == 2) { order = getOrder(buf, offset); }
         if (order >= 0) {
             ++this.totalChars;
             if (order < this.charToFreqOrder.length) {
@@ -37,18 +32,12 @@ public abstract class DistributeChar {
     }
 
     public float getConfidence() {
-        if (this.totalChars <= 0 || this.freqChars <= MINIMUM_DATA_THRESHOLD) {
-            return SURE_NO;
-        }
+        if (this.totalChars <= 0 || this.freqChars <= MINIMUM_DATA_THRESHOLD) { return SURE_NO; }
 
         if (this.totalChars != this.freqChars) {
             float r = this.freqChars / (this.totalChars - this.freqChars) * this.typicalDistributionRatio;
-
-            if (r < SURE_YES) {
-                return r;
-            }
+            if (r < SURE_YES) { return r; }
         }
-
         return SURE_YES;
     }
 
@@ -58,8 +47,7 @@ public abstract class DistributeChar {
         this.freqChars = 0;
     }
 
-    public void setOption() {
-    }
+    public void setOption() { }
 
     public boolean gotEnoughData() {
         return (this.totalChars > ENOUGH_DATA_THRESHOLD);

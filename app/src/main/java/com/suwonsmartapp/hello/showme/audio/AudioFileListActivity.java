@@ -375,7 +375,8 @@ public class AudioFileListActivity extends AppCompatActivity
         }
 
         mLlMiniMiniPlayer.setVisibility(View.VISIBLE);
-        mTvSongTitle.setText(playSong.getTitle());
+        String song = playSong.getTitle();
+        mTvSongTitle.setText(song.substring(song.lastIndexOf("/") + 1, song.length()));
 
         if (mMediaPlayer != null && !mMediaPlayer.isPlaying()) {
             mBtnPlay.setText("PLAY");

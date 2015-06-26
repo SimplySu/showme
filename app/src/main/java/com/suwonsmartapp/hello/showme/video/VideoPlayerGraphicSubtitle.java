@@ -9,7 +9,7 @@ class VideoPlayerGraphicSubtitle {
         this.filepos = filepos;
     }
 
-    // ±×·¡ÇÈ ÀÚ¸· (.sub) À» Áö¿øÇÏ±â À§ÇÑ ÀÚ¸· µ¥ÀÌÅÍ ±¸Á¶.
+    // ê·¸ë˜í”½ ìë§‰ (.sub) ì„ ì§€ì›í•˜ê¸° ìœ„í•œ ìë§‰ ë°ì´í„° êµ¬ì¡°.
     public long getTime() { return time; }
     public void setTime(long time) { this.time = time; }
 

@@ -45,10 +45,7 @@ public class CodeDetector {
         this.listener = listener;
         this.escProberCharset = null;
         this.probers = new ProberCharset[3];
-        for (int i = 0; i < this.probers.length; ++i) {
-            this.probers[i] = null;
-        }
-
+        for (int i = 0; i < this.probers.length; ++i) { this.probers[i] = null; }
         reset();
     }
 
@@ -73,13 +70,9 @@ public class CodeDetector {
     }
 
     public void handleData(final byte[] buf, int offset, int length) {
-        if (this.done) {
-            return;
-        }
+        if (this.done) { return; }
 
-        if (length > 0) {
-            this.gotData = true;
-        }
+        if (length > 0) { this.gotData = true; }
 
         if (this.start) {
             this.start = false;
@@ -91,28 +84,28 @@ public class CodeDetector {
 
                 switch (b1) {
                     case 0xEF:
-                        if (b2 == 0xBB && b3 == 0xBF) {
+                        if (b2 == 0xBB && b3 == 0xBF) {     // ef bb bf xx
                             this.detectedCharset = Constants.CHARSET_UTF_8;
                         }
                         break;
                     case 0xFE:
-                        if (b2 == 0xFF && b3 == 0x00 && b4 == 0x00) {
+                        if (b2 == 0xFF && b3 == 0x00 && b4 == 0x00) {   // fe ff 00 00
                             this.detectedCharset = Constants.CHARSET_X_ISO_10646_UCS_4_3412;
-                        } else if (b2 == 0xFF) {
+                        } else if (b2 == 0xFF) {                        // fe ff xx xx
                             this.detectedCharset = Constants.CHARSET_UTF_16BE;
                         }
                         break;
                     case 0x00:
-                        if (b2 == 0x00 && b3 == 0xFE && b4 == 0xFF) {
+                        if (b2 == 0x00 && b3 == 0xFE && b4 == 0xFF) {   // 00 00 fe ff
                             this.detectedCharset = Constants.CHARSET_UTF_32BE;
-                        } else if (b2 == 0x00 && b3 == 0xFF && b4 == 0xFE) {
+                        } else if (b2 == 0x00 && b3 == 0xFF && b4 == 0xFE) {    // 00 00 ff fe
                             this.detectedCharset = Constants.CHARSET_X_ISO_10646_UCS_4_2143;
                         }
                         break;
                     case 0xFF:
-                        if (b2 == 0xFE && b3 == 0x00 && b4 == 0x00) {
+                        if (b2 == 0xFE && b3 == 0x00 && b4 == 0x00) {   // ff fe 00 00
                             this.detectedCharset = Constants.CHARSET_UTF_32LE;
-                        } else if (b2 == 0xFE) {
+                        } else if (b2 == 0xFE) {                        // ff fe xx xx
                             this.detectedCharset = Constants.CHARSET_UTF_16LE;
                         }
                         break;
@@ -131,20 +124,10 @@ public class CodeDetector {
             if ((c & 0x80) != 0 && c != 0xA0) {
                 if (this.inputState != InputState.HIGHBYTE) {
                     this.inputState = InputState.HIGHBYTE;
-
-                    if (this.escProberCharset != null) {
-                        this.escProberCharset = null;
-                    }
-
-                    if (this.probers[0] == null) {
-                        this.probers[0] = new ProberMBCSgroup();
-                    }
-                    if (this.probers[1] == null) {
-                        this.probers[1] = new ProberSBCSgroup();
-                    }
-                    if (this.probers[2] == null) {
-                        this.probers[2] = new ProberLatin1();
-                    }
+                    if (this.escProberCharset != null) { this.escProberCharset = null; }
+                    if (this.probers[0] == null) { this.probers[0] = new ProberMBCSgroup(); }
+                    if (this.probers[1] == null) { this.probers[1] = new ProberSBCSgroup(); }
+                    if (this.probers[2] == null) { this.probers[2] = new ProberLatin1(); }
                 }
             } else {
                 if (this.inputState == InputState.PURE_ASCII &&
@@ -157,20 +140,18 @@ public class CodeDetector {
 
         ProberCharset.ProbingState st;
         if (this.inputState == InputState.ESC_ASCII) {
-            if (this.escProberCharset == null) {
-                this.escProberCharset = new ProberEsc();
-            }
+            if (this.escProberCharset == null) { this.escProberCharset = new ProberEsc(); }
             st = this.escProberCharset.handleData(buf, offset, length);
             if (st == ProberCharset.ProbingState.FOUND_IT) {
                 this.done = true;
                 this.detectedCharset = this.escProberCharset.getCharSetName();
             }
         } else if (this.inputState == InputState.HIGHBYTE) {
-            for (int i = 0; i < this.probers.length; ++i) {
-                st = this.probers[i].handleData(buf, offset, length);
+            for (ProberCharset prober : this.probers) {
+                st = prober.handleData(buf, offset, length);
                 if (st == ProberCharset.ProbingState.FOUND_IT) {
                     this.done = true;
-                    this.detectedCharset = this.probers[i].getCharSetName();
+                    this.detectedCharset = prober.getCharSetName();
                     return;
                 }
             }
@@ -180,15 +161,11 @@ public class CodeDetector {
     }
 
     public void dataEnd() {
-        if (!this.gotData) {
-            return;
-        }
+        if (!this.gotData) { return; }
 
         if (this.detectedCharset != null) {
             this.done = true;
-            if (this.listener != null) {
-                this.listener.report(this.detectedCharset);
-            }
+            if (this.listener != null) { this.listener.report(this.detectedCharset); }
             return;
         }
 
@@ -226,14 +203,10 @@ public class CodeDetector {
         this.inputState = InputState.PURE_ASCII;
         this.lastChar = 0;
 
-        if (this.escProberCharset != null) {
-            this.escProberCharset.reset();
-        }
+        if (this.escProberCharset != null) { this.escProberCharset.reset(); }
 
-        for (int i = 0; i < this.probers.length; ++i) {
-            if (this.probers[i] != null) {
-                this.probers[i].reset();
-            }
+        for (ProberCharset prober : this.probers) {
+            if (prober != null) { prober.reset(); }
         }
     }
 }

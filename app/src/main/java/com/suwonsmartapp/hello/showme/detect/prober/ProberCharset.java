@@ -19,8 +19,7 @@ public abstract class ProberCharset {
         NOT_ME
     }
 
-    public ProberCharset() {
-    }
+    public ProberCharset() { }
 
     public abstract String getCharSetName();
 
@@ -67,10 +66,7 @@ public abstract class ProberCharset {
             }
         }
 
-        if (meetMSB && curPtr > prevPtr) {
-            out.put(buf, prevPtr, (curPtr - prevPtr));
-        }
-
+        if (meetMSB && curPtr > prevPtr) { out.put(buf, prevPtr, (curPtr - prevPtr)); }
         return out;
     }
 
@@ -108,10 +104,7 @@ public abstract class ProberCharset {
 
         // If the current segment contains more than just a symbol
         // and it is not inside a tag then keep it.
-        if (!isInTag && curPtr > prevPtr) {
-            out.put(buf, prevPtr, (curPtr - prevPtr));
-        }
-
+        if (!isInTag && curPtr > prevPtr) { out.put(buf, prevPtr, (curPtr - prevPtr)); }
         return out;
     }
 

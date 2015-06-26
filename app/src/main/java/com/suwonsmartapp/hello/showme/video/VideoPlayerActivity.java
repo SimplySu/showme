@@ -106,7 +106,8 @@ public class VideoPlayerActivity extends Activity implements
         FileInfo videoFileInfo = mVideoFileInfoList.get(mCurrentPosition);
         fullPathname = videoFileInfo.getTitle();
         String requestedPathname = fullPathname.substring(0, fullPathname.lastIndexOf('/'));
-        String requestedFilename = fullPathname.substring(fullPathname.lastIndexOf('/') + 1, fullPathname.length());
+        String requestedFilename = fullPathname.substring(fullPathname.lastIndexOf('/') + 1,
+                fullPathname.length());
 
         mVV_show = (VideoView) findViewById(R.id.vv_show);
         mTV_subtitle = (TextView)findViewById(R.id.vv_subtitle);

@@ -1,10 +1,10 @@
 <resources>
     <string name="app_name">ShowMe</string>
     <string name="action_settings">Settings</string>
-    <string name="title_activity_file">ShowMe(File)</string>
-    <string name="title_activity_audio">ShowMe(Audio)</string>
-    <string name="title_activity_video">ShowMe(Video)</string>
-    <string name="title_activity_image">ShowMe(Image)</string>
+    <string name="title_activity_file">ShowMe</string>
+    <string name="title_activity_audio">ShowMe</string>
+    <string name="title_activity_video">ShowMe</string>
+    <string name="title_activity_image">ShowMe</string>
 
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_media_player">MediaPlayerActivity</string>

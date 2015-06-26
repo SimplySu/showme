@@ -189,7 +189,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
 
     private void setMusicUI() {
         FileInfo playSong = musicList.get(mCurrentPosition);
-        mTvAudioPlayerTitle.setText(playSong.getTitle());
+        String song = playSong.getTitle();
+        mTvAudioPlayerTitle.setText(song.substring(song.lastIndexOf("/") + 1, song.length()));
         Bitmap bm = FileAdapter.getAudioThumbnail(getApplicationContext(), playSong.getTitle());
 
         if (bm != null) {
@@ -326,6 +327,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
                     mBoundMessenger = false;
                 }
                 finish();
+
             } else if ((HOME + "AudioPlayerActivity.songChanged").equals(action)) {
                 mCurrentPosition = intent.getIntExtra("currentPosition", -1);
                 playSong = musicList.get(mCurrentPosition);

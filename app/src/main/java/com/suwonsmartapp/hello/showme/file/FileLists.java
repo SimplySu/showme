@@ -15,35 +15,34 @@ public class FileLists {
     private final int MODEvideo = 3;
 
     public ArrayList<FileInfo> getFileList(String path, int mode) {
-        mPath = path;                               // ¿äÃ»¹ŞÀº °æ·Î(path)¸¦ ÀúÀåÇÔ.
+        mPath = path;                               // ìš”ì²­ë°›ì€ ê²½ë¡œ(path)ë¥¼ ì €ì¥í•¨.
         mMode = mode;                               // 0 = all, 1 = audio, 2 = image, 3 = video
-        File currentPath = new File(path);          // ÇöÀç °æ·Î¸í ¹Ø¿¡ ÀÖ´Â
-        File[] files = currentPath.listFiles();     // ¸ğµç ÆÄÀÏ ¸®½ºÆ®¸¦ °Ë»öÇÔ.
+        File currentPath = new File(path);          // í˜„ì¬ ê²½ë¡œëª… ë°‘ì— ìˆëŠ”
+        File[] files = currentPath.listFiles();     // ëª¨ë“  íŒŒì¼ ë¦¬ìŠ¤íŠ¸ë¥¼ ê²€ìƒ‰í•¨.
 
-        ArrayList<FileInfo> mFileInfo = new ArrayList<>();     // °á°ú°ªÀ» Àü´ŞÇÒ ¾î·¹ÀÌ ÇÒ´ç.
+        ArrayList<FileInfo> mFileInfo = new ArrayList<>();     // ê²°ê³¼ê°’ì„ ì „ë‹¬í•  ì–´ë ˆì´ í• ë‹¹.
 
         if (files != null) {
-            for (int i = 0; i < files.length; i++) {
-                File file = files[i];                           // °æ·Î¿¡ ÀÖ´Â ¸ğµç ÆÄÀÏÀ» °Ë»çÇØ¼­
-                if (modeMatch(file, mMode)) {                   // ¸ğµå°¡ ¸Â´Â °Í¸¸ Ãß·Á¼­
-                    if (matchFolder(file)) {                    // °æ·Î°¡ °°À¸¸é °á°ú¿¡ Æ÷ÇÔ½ÃÅ´.
+            for (File file : files) {
+                if (modeMatch(file, mMode)) {                   // ëª¨ë“œê°€ ë§ëŠ” ê²ƒë§Œ ì¶”ë ¤ì„œ
+                    if (matchFolder(file)) {                    // ê²½ë¡œê°€ ê°™ìœ¼ë©´ ê²°ê³¼ì— í¬í•¨ì‹œí‚´.
                         FileInfo fileInfo = new FileInfo();
-                        fileInfo.setFile(file);                         // ÆÄÀÏ Á¤º¸ ÀÚÃ¼
-                        fileInfo.setTitle(file.getAbsolutePath());      // °æ·Î¸í
-                        fileInfo.setSize(file.length());                // ÆÄÀÏ Å©±â
-                        fileInfo.setModified(file.lastModified());      // ÃÖÁ¾ ¾÷µ¥ÀÌÆ®µÈ ³¯ÀÚ
-                        mFileInfo.add(fileInfo);                        // ÆÄÀÏ´ç 4°³ Á¤º¸¸¦ ÀúÀåÇÔ
+                        fileInfo.setFile(file);                         // íŒŒì¼ ì •ë³´ ìì²´
+                        fileInfo.setTitle(file.getAbsolutePath());      // ê²½ë¡œëª…
+                        fileInfo.setSize(file.length());                // íŒŒì¼ í¬ê¸°
+                        fileInfo.setModified(file.lastModified());      // ìµœì¢… ì—…ë°ì´íŠ¸ëœ ë‚ ì
+                        mFileInfo.add(fileInfo);                        // íŒŒì¼ë‹¹ 4ê°œ ì •ë³´ë¥¼ ì €ì¥í•¨
                     }
                 }
             }
-            Collections.sort(mFileInfo, mAscComparator);            // ³»¸² Â÷¼øÀ¸·Î Á¤·ÄÇÏ°í
-            Collections.sort(mFileInfo, mFolderAscComparator);      // µğ·ºÅä¸®´Â ¸Ç¾ÕÀ¸·Î º¸³¿
+            Collections.sort(mFileInfo, mAscComparator);            // ë‚´ë¦¼ ì°¨ìˆœìœ¼ë¡œ ì •ë ¬í•˜ê³ 
+            Collections.sort(mFileInfo, mFolderAscComparator);      // ë””ë ‰í† ë¦¬ëŠ” ë§¨ì•ìœ¼ë¡œ ë³´ëƒ„
         }
 
-    return mFileInfo;       // °á°ú¸¦ ¸®ÅÏÇÔ. °á°ú°ªÀÌ nullÀÏ ¼öµµ ÀÖÀ½.
+    return mFileInfo;       // ê²°ê³¼ë¥¼ ë¦¬í„´í•¨. ê²°ê³¼ê°’ì´ nullì¼ ìˆ˜ë„ ìˆìŒ.
     }
 
-    // ÆÄÀÏ Á¤·Ä ¹æ¹ı : ³»¸²Â÷¼ø Á¤·Ä.
+    // íŒŒì¼ ì •ë ¬ ë°©ë²• : ë‚´ë¦¼ì°¨ìˆœ ì •ë ¬.
     Comparator<FileInfo> mAscComparator = new Comparator<FileInfo>() {
         @Override
         public int compare(FileInfo lhs, FileInfo rhs) {
@@ -53,13 +52,13 @@ public class FileLists {
         }
     };
 
-    // ¿ŞÂÊ, ¿À¸¥ÂÊ
-    // file, file = 0 ¸®ÅÏ : º¯È­ ¾øÀ½
-    // file, directory = 1 ¸®ÅÏ : ÁÂ¿ì ¹Ù²Ş
-    // directory, file = -1 ¸®ÅÏ : ÁÂ¿ì ¹Ù²Ş
-    // directory, directory = 0 ¸®ÅÏ : º¯È­ ¾øÀ½
+    // ì™¼ìª½, ì˜¤ë¥¸ìª½
+    // file, file = 0 ë¦¬í„´ : ë³€í™” ì—†ìŒ
+    // file, directory = 1 ë¦¬í„´ : ì¢Œìš° ë°”ê¿ˆ
+    // directory, file = -1 ë¦¬í„´ : ì¢Œìš° ë°”ê¿ˆ
+    // directory, directory = 0 ë¦¬í„´ : ë³€í™” ì—†ìŒ
 
-    // µğ·ºÅä¸®ÀÎ °æ¿ì ¸®½ºÆ®ÀÇ ¸Ç À§·Î Á¤·ÄÇÔ.
+    // ë””ë ‰í† ë¦¬ì¸ ê²½ìš° ë¦¬ìŠ¤íŠ¸ì˜ ë§¨ ìœ„ë¡œ ì •ë ¬í•¨.
     Comparator<FileInfo> mFolderAscComparator = new Comparator<FileInfo>() {
         @Override
         public int compare(FileInfo lhs, FileInfo rhs) {
@@ -72,7 +71,7 @@ public class FileLists {
         }
     };
 
-    // ¸ğµå¿¡ µû¸¥ ÆÄÀÏ¸¸ ÃßÃâÇÏ¿© ¸®ÅÏÇÔ. (true = ¸ğµå¿Í µ¿ÀÏ, false = ¸ğµå¿Í ´Ù¸§)
+    // ëª¨ë“œì— ë”°ë¥¸ íŒŒì¼ë§Œ ì¶”ì¶œí•˜ì—¬ ë¦¬í„´í•¨. (true = ëª¨ë“œì™€ ë™ì¼, false = ëª¨ë“œì™€ ë‹¤ë¦„)
     private boolean modeMatch(File file, int mode) {
 
         String[] audio = {"mp3", "ogg", "wav", "flac", "mid", "m4a", "wma"};
@@ -80,72 +79,72 @@ public class FileLists {
                 "m4v", "rmvb", "webm", "smi", "srt", "sub", "idx", "ass", "ssa"};
         String[] image = {"jpg", "jpeg", "gif", "png", "bmp", "tif", "tiff", "webp"};
 
-        // ¸ğµç ÆÄÀÏÀÌ Çã¿ëµÇ¸é Ç×»ó trueÀÓ.
+        // ëª¨ë“  íŒŒì¼ì´ í—ˆìš©ë˜ë©´ í•­ìƒ trueì„.
         if (mode == MODEall) {
             return true;
         }
 
-        // È®ÀåÀÚ°¡ ¾øÀ¸¸é Ç×»ó falseÀÓ.
+        // í™•ì¥ìê°€ ì—†ìœ¼ë©´ í•­ìƒ falseì„.
         int result = file.getName().lastIndexOf('.');
         if ((result == -1) || (result == 0)) {
             return false;
         }
 
-        // ÆÄÀÏ¸íÀ¸·ÎºÎÅÍ È®ÀåÀÚ¸¦ ÃßÃâÇÔ.
+        // íŒŒì¼ëª…ìœ¼ë¡œë¶€í„° í™•ì¥ìë¥¼ ì¶”ì¶œí•¨.
         int length = file.getName().length();
         String ext = file.getName().substring(result + 1, length).toLowerCase();
 
-        // ¿Àµğ¿À ÆÄÀÏÀÎÁö °Ë»çÇÔ.
+        // ì˜¤ë””ì˜¤ íŒŒì¼ì¸ì§€ ê²€ì‚¬í•¨.
         if (mode == MODEaudio) {
-            for (int i = 0; i < audio.length; i++) {
-                if (ext.equals(audio[i])) {
+            for (String anAudio : audio) {
+                if (ext.equals(anAudio)) {
                     return true;
                 }
             }
             return false;
 
-        // ±×¸² ÆÄÀÏÀÎÁö °Ë»çÇÔ.
+        // ê·¸ë¦¼ íŒŒì¼ì¸ì§€ ê²€ì‚¬í•¨.
         } else if (mode == MODEimage) {
-            for (int i = 0; i < image.length; i++) {
-                if (ext.equals(image[i])) {
+            for (String anImage : image) {
+                if (ext.equals(anImage)) {
                     return true;
                 }
             }
             return false;
 
-        // ºñµğ¿À ÆÄÀÏÀÎÁö °Ë»çÇÔ.
+        // ë¹„ë””ì˜¤ íŒŒì¼ì¸ì§€ ê²€ì‚¬í•¨.
         } else if (mode == MODEvideo) {
-            for (int i = 0; i < video.length; i++) {
-                if (ext.equals(video[i])) {
+            for (String aVideo : video) {
+                if (ext.equals(aVideo)) {
                     return true;
                 }
             }
             return false;
 
-        // ¿Àµğ¿À, ±×¸², ºñµğ¿À°¡ ¾Æ´Ñ °æ¿ì all ·Î °£ÁÖÇÔ.
+        // ì˜¤ë””ì˜¤, ê·¸ë¦¼, ë¹„ë””ì˜¤ê°€ ì•„ë‹Œ ê²½ìš° all ë¡œ ê°„ì£¼í•¨.
         } else {
             return true;
         }
     }
 
-    // ÁöÁ¤ÇÑ ÆÄÀÏÀÌ ¿äÃ»µÈ µğ·ºÅä¸®¿Í °°Àº °æ¿ì¸¸ true·Î ¸®ÅÏÇÔ.
+    // ì§€ì •í•œ íŒŒì¼ì´ ìš”ì²­ëœ ë””ë ‰í† ë¦¬ì™€ ê°™ì€ ê²½ìš°ë§Œ trueë¡œ ë¦¬í„´í•¨.
     private boolean matchFolder(File file) {
         String fullPath = file.getAbsolutePath();
         int index = fullPath.lastIndexOf('/');
 
-        // ·çÆ®ÀÌ¸é °­Á¦·Î "/"·Î ¸¸µé¾î ÁÜ.
+        // ë£¨íŠ¸ì´ë©´ ê°•ì œë¡œ "/"ë¡œ ë§Œë“¤ì–´ ì¤Œ.
         if (index == 0) {
             index = 1;
         }
 
-        // ÇöÀç °æ·Î¸íÀÌ ¿äÃ»µÈ °æ·Î¸íº¸´Ù ÂªÀ¸¸é °°Àº µğ·ºÅä¸®ÀÏ °¡´É¼ºÀÌ ¾øÀ½.
+        // í˜„ì¬ ê²½ë¡œëª…ì´ ìš”ì²­ëœ ê²½ë¡œëª…ë³´ë‹¤ ì§§ìœ¼ë©´ ê°™ì€ ë””ë ‰í† ë¦¬ì¼ ê°€ëŠ¥ì„±ì´ ì—†ìŒ.
         String pathname = fullPath.substring(0, index);
         if (pathname.length() < mPath.length()) {
             return false;
         }
 
-        // ¼­ºê µğ·ºÅä¸®¸íÀ» °Ë»çÇÔ.
+        // ì„œë¸Œ ë””ë ‰í† ë¦¬ëª…ì„ ê²€ì‚¬í•¨.
         String s = pathname.substring(0, mPath.length());
-        return s.equals(mPath);     // µğ·ºÅä¸®¸íÀÌ °°ÀºÁö °Ë»çÇÑ °á°ú¸¦ ¸®ÅÏÇÔ.
+        return s.equals(mPath);     // ë””ë ‰í† ë¦¬ëª…ì´ ê°™ì€ì§€ ê²€ì‚¬í•œ ê²°ê³¼ë¥¼ ë¦¬í„´í•¨.
     }
 }
