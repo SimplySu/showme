@@ -116,7 +116,7 @@ public class AudioFileListActivity extends AppCompatActivity
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    mMediaPlayer.seekTo(progress);      // change progress if user changed seekbar
+                    mMediaPlayer.seekTo(progress);
                 }
             }
 

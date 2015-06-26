@@ -68,7 +68,8 @@ public class VideoPlayerActivity extends Activity implements
 
         // 타이틀바를 지우고 전체 스크린을 사용함.
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.video_player_activity);
 
@@ -209,7 +210,6 @@ public class VideoPlayerActivity extends Activity implements
 
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
-
         mVV_show.seekTo(0);
         mVV_show.start();       // 준비가 되면 자동 시작.
 

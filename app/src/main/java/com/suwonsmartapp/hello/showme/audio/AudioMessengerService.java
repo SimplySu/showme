@@ -204,10 +204,11 @@ public class AudioMessengerService extends Service
 
             sendMessageToPlayerActivity();
 
-            // broadcast that we've changed title
+            // 곡명이 바뀌었음을 브로드캐스팅(방송)함.
             Intent intentPlay = new Intent(HOME + "AudioPlayerActivity.songChanged");
             intentPlay.putExtra("currentPosition", mCurrentPosition);
             sendBroadcast(intentPlay);
+
         } else if (mCurrentPosition < 0 || mCurrentPosition >= musicList.size()){
                 mCurrentPosition = 0;
                 playSong = musicList.get(mCurrentPosition);
@@ -215,7 +216,7 @@ public class AudioMessengerService extends Service
 
                 sendMessageToPlayerActivity();
 
-                // broadcast that we've changed title
+                // 곡명이 바뀌었음을 브로드캐스팅(방송)함.
                 Intent intentPlay = new Intent(HOME + "AudioPlayerActivity.songChanged");
                 intentPlay.putExtra("currentPosition", mCurrentPosition);
                 sendBroadcast(intentPlay);
@@ -231,7 +232,8 @@ public class AudioMessengerService extends Service
             mMediaPlayer.reset();
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mMediaPlayer.setOnPreparedListener(this);
-            // for sleep mode, do not sleep. go on playing music
+
+            // 슬립 모드에서도 노래를 재생함.
             mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
             mMediaPlayer.setDataSource(getApplicationContext(), Uri.parse(playSong.getTitle()));
             mMediaPlayer.prepare();
@@ -251,11 +253,11 @@ public class AudioMessengerService extends Service
         mNotiManager.cancel(NOTI_MUSIC_SERVICE);
         unregisterCallReceiverService();
 
-//        extraAudioService = new Bundle();
-//        intentAudioService = new Intent();
-//        extraAudioService.putInt("CurrentPosition", 0);
-//        intentAudioService.putExtras(extraAudioService);
-//        this.setResult(RESULT_OK, intentAudioService);
+        extraAudioService = new Bundle();
+        intentAudioService = new Intent();
+        extraAudioService.putInt("CurrentPosition", mCurrentPosition);
+        intentAudioService.putExtras(extraAudioService);
+        this.setResult(RESULT_OK, intentAudioService);
 
         super.onDestroy();
     }

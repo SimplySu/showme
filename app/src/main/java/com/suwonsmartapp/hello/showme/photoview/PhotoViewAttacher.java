@@ -28,7 +28,8 @@ import static android.view.MotionEvent.ACTION_CANCEL;
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_UP;
 
-public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener, OnGestureListener, ViewTreeObserver.OnGlobalLayoutListener {
+public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener, OnGestureListener,
+        ViewTreeObserver.OnGlobalLayoutListener {
 
     static final Interpolator sInterpolator = new AccelerateDecelerateInterpolator();
     int ZOOM_DURATION = DEFAULT_ZOOM_DURATION;
@@ -295,7 +296,8 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener, OnGe
 
     @Override
     public float getScale() {
-        return (float) Math.sqrt((float) Math.pow(getValue(mSuppMatrix, Matrix.MSCALE_X), 2) + (float) Math.pow(getValue(mSuppMatrix, Matrix.MSKEW_Y), 2));
+        return (float) Math.sqrt((float) Math.pow(getValue(mSuppMatrix, Matrix.MSCALE_X), 2)
+                + (float) Math.pow(getValue(mSuppMatrix, Matrix.MSKEW_Y), 2));
     }
 
     @Override
@@ -320,7 +322,8 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener, OnGe
 
         ViewParent parent = imageView.getParent();
         if (mAllowParentInterceptOnEdge && !mScaleDragDetector.isScaling() && !mBlockParentIntercept) {
-            if (mScrollEdge == EDGE_BOTH || (mScrollEdge == EDGE_LEFT && dx >= 1f) || (mScrollEdge == EDGE_RIGHT && dx <= -1f)) {
+            if (mScrollEdge == EDGE_BOTH || (mScrollEdge == EDGE_LEFT && dx >= 1f) ||
+                    (mScrollEdge == EDGE_RIGHT && dx <= -1f)) {
                 if (null != parent)
                     parent.requestDisallowInterceptTouchEvent(false);
             }
@@ -335,7 +338,8 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener, OnGe
     public void onFling(float startX, float startY, float velocityX, float velocityY) {
         ImageView imageView = getImageView();
         mCurrentFlingRunnable = new FlingRunnable(imageView.getContext());
-        mCurrentFlingRunnable.fling(getImageViewWidth(imageView), getImageViewHeight(imageView), (int) velocityX, (int) velocityY);
+        mCurrentFlingRunnable.fling(getImageViewWidth(imageView), getImageViewHeight(imageView),
+                (int) velocityX, (int) velocityY);
         imageView.post(mCurrentFlingRunnable);
     }
 
@@ -409,7 +413,8 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener, OnGe
                     if (getScale() < mMinScale) {
                         RectF rect = getDisplayRect();
                         if (null != rect) {
-                            v.post(new AnimatedZoomRunnable(getScale(), mMinScale, rect.centerX(), rect.centerY()));
+                            v.post(new AnimatedZoomRunnable(getScale(), mMinScale,
+                                    rect.centerX(), rect.centerY()));
                             handled = true;
                         }
                     }
@@ -772,17 +777,20 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener, OnGe
         final float heightScale = viewHeight / drawableHeight;
 
         if (mScaleType == ScaleType.CENTER) {
-            mBaseMatrix.postTranslate((viewWidth - drawableWidth) / 2F, (viewHeight - drawableHeight) / 2F);
+            mBaseMatrix.postTranslate((viewWidth - drawableWidth) / 2F,
+                    (viewHeight - drawableHeight) / 2F);
 
         } else if (mScaleType == ScaleType.CENTER_CROP) {
             float scale = Math.max(widthScale, heightScale);
             mBaseMatrix.postScale(scale, scale);
-            mBaseMatrix.postTranslate((viewWidth - drawableWidth * scale) / 2F, (viewHeight - drawableHeight * scale) / 2F);
+            mBaseMatrix.postTranslate((viewWidth - drawableWidth * scale) / 2F,
+                    (viewHeight - drawableHeight * scale) / 2F);
 
         } else if (mScaleType == ScaleType.CENTER_INSIDE) {
             float scale = Math.min(1.0f, Math.min(widthScale, heightScale));
             mBaseMatrix.postScale(scale, scale);
-            mBaseMatrix.postTranslate((viewWidth - drawableWidth * scale) / 2F, (viewHeight - drawableHeight * scale) / 2F);
+            mBaseMatrix.postTranslate((viewWidth - drawableWidth * scale) / 2F,
+                    (viewHeight - drawableHeight * scale) / 2F);
 
         } else {
             RectF mTempSrc = new RectF(0, 0, drawableWidth, drawableHeight);
@@ -859,7 +867,8 @@ public class PhotoViewAttacher implements IPhotoView, View.OnTouchListener, OnGe
         private final long mStartTime;
         private final float mZoomStart, mZoomEnd;
 
-        public AnimatedZoomRunnable(final float currentZoom, final float targetZoom, final float focalX, final float focalY) {
+        public AnimatedZoomRunnable(final float currentZoom, final float targetZoom,
+                                    final float focalX, final float focalY) {
             mFocalX = focalX;
             mFocalY = focalY;
             mStartTime = System.currentTimeMillis();

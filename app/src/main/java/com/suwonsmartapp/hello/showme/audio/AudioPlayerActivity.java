@@ -85,25 +85,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
         mCurrentPosition = intent.getIntExtra("currentPosition", -1);
         playSong = musicList.get(mCurrentPosition);
 
-//        SeekBar seekVolumn = (SeekBar) findViewById(R.id.SeekBar_Volumn);
-//        final AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
-//        int nMax = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-//        int nCurrentVolumn = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-//        seekVolumn.setMax(nMax); seekVolumn.setProgress(nCurrentVolumn);
-//        seekVolumn.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-//
-//            @Override
-//            public void onStopTrackingTouch(SeekBar seekBar) {
-//            }
-//            @Override
-//            public void onStartTrackingTouch(SeekBar seekBar) {
-//            }
-//            @Override
-//            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-//                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0);
-//            }
-//        });
-
         // 이벤트 핸들러를 씨크바에 연결함.
         mSbAudioPlayerSeekbar = (SeekBar) findViewById(R.id.audio_player_seekbar);
         mSbAudioPlayerSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
