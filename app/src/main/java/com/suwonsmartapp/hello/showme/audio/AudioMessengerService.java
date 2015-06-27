@@ -147,18 +147,14 @@ public class AudioMessengerService extends Service
     public void onPrepared(MediaPlayer mp) {
         if (!doRestart) {
             mp.start();
-            if (mp.isPlaying()) {
-                sendMessageToPlayerActivity();
-            }
+            if (mp.isPlaying()) { sendMessageToPlayerActivity(); }
         }
     }
 
     // 서비스에 연결 되었을 때, 서비스에 메시지를 보내기 위해 메신저에게 인터페이스를 리턴함.
     @Override
     public IBinder onBind(Intent intent) {
-        if (intent == null) {
-            return mMessenger.getBinder();
-        }
+        if (intent == null) { return mMessenger.getBinder(); }
         return mMessenger.getBinder();
     }
 
@@ -224,9 +220,7 @@ public class AudioMessengerService extends Service
     }
 
     private void playMusic() {
-        if (mMediaPlayer.isPlaying()) {
-            mMediaPlayer.stop();
-        }
+        if (mMediaPlayer.isPlaying()) { mMediaPlayer.stop(); }  // 토글 방식으로 동작.
 
         try {
             mMediaPlayer.reset();
@@ -237,9 +231,7 @@ public class AudioMessengerService extends Service
             mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
             mMediaPlayer.setDataSource(getApplicationContext(), Uri.parse(playSong.getTitle()));
             mMediaPlayer.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        } catch (IOException e) { e.printStackTrace(); }
     }
 
     @Override
@@ -258,11 +250,8 @@ public class AudioMessengerService extends Service
     private void sendMessageToPlayerActivity() {
         Message msg = Message.obtain(null, AudioMessengerService.MSG_GET_MP, 0, 0);
         msg.obj = mMediaPlayer;
-        try {
-            mMPMessenger.send(msg);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+        try { mMPMessenger.send(msg); }
+        catch (RemoteException e) { e.printStackTrace(); }
     }
 
     private void sendMessageArgsToSongListActivity() {
@@ -270,20 +259,14 @@ public class AudioMessengerService extends Service
         msg.obj = mMediaPlayer;
         msg.arg1 = mCurrentPosition;
 
-        try {
-            mMPMessengerToList.send(msg);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+        try { mMPMessengerToList.send(msg); }
+        catch (RemoteException e) { e.printStackTrace(); }
     }
 
     private void sendMessageStopService() {
         Message msg = Message.obtain(null, AudioMessengerService.MSG_STOP_SERVICE, 0, 0);
-        try {
-            mMessenger.send(msg);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+        try { mMessenger.send(msg); }
+        catch (RemoteException e) { e.printStackTrace(); }
     }
 
     public static boolean isPaused = false;
@@ -306,13 +289,9 @@ public class AudioMessengerService extends Service
         @Override
         public void run() {
             try {
-                if (sSec != sTimer) {
-                    sSec++;
-                }
+                if (sSec != sTimer) { sSec++; }
                 mPausedThread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            } catch (InterruptedException e) { e.printStackTrace(); }
         }
     });
 
@@ -433,6 +412,7 @@ public class AudioMessengerService extends Service
         Intent songListActivity = new Intent(HOME + "AudioFileListActivity.STOP");
         sendBroadcast(songListActivity);
 
+        // 중지된 이후 결과는 볼 필요가 없지만 제대로 중지되었는지 디버깅을 위해서...
         boolean result = stopService(new Intent(getApplicationContext(),
                 AudioMessengerService.class));
     }

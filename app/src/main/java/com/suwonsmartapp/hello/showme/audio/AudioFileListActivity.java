@@ -89,6 +89,8 @@ public class AudioFileListActivity extends AppCompatActivity
     public static final int REQUEST_CODE_VIDEO_PLAYER = 0x0020;
     public static final int REQUEST_CODE_IMAGE = 0x0100;
     public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
+    private Bundle extraAudioService;
+    private Intent intentAudioService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,19 +117,14 @@ public class AudioFileListActivity extends AppCompatActivity
         mSbMiniPlayer.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser) {
-                    mMediaPlayer.seekTo(progress);
-                }
+                if (fromUser) { mMediaPlayer.seekTo(progress); }
             }
-
+           @Override
+            public void onStartTrackingTouch(SeekBar seekBar) { }
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
+            public void onStopTrackingTouch(SeekBar seekBar) { }
         });
+
         registerCallReceiver();
 
         // 특정 파일을 지정한 경우 여기부터 실행함.
@@ -190,7 +187,24 @@ public class AudioFileListActivity extends AppCompatActivity
 
     @Override
     protected void onResume() {
+        // 실행할 음악 파일만을 추출함.
+        prepareTitleToPlay();
+        setupViews();
+
+        mFileAdapter = new FileAdapter(getApplicationContext(), musicList);
+        mLvMusicList = (ListView) findViewById(R.id.lv_music_list);
+        mLvMusicList.setAdapter(mFileAdapter);
+        mLvMusicList.setOnItemClickListener(this);
+
+        registerCallReceiver();
+
+        // 특정 파일을 지정한 경우 여기부터 실행함.
+        mCurrentPosition = searchTitleIndex();
+        updateTitleListView();
+        mLvMusicList.smoothScrollToPosition(mCurrentPosition);
+
         super.onResume();
+
         if (isAudioPlayerServiceRunning()) {
             setMiniPlayer();
         }
@@ -198,6 +212,12 @@ public class AudioFileListActivity extends AppCompatActivity
 
     @Override
     protected void onDestroy() {
+        extraAudioService = new Bundle();
+        intentAudioService = new Intent();
+        extraAudioService.putInt("CurrentPosition", mCurrentPosition);
+        intentAudioService.putExtras(extraAudioService);
+        this.setResult(RESULT_OK, intentAudioService);
+
         super.onDestroy();
 
         if (mBoundMessenger) {
@@ -216,10 +236,10 @@ public class AudioFileListActivity extends AppCompatActivity
         mCurrentPosition = position;
         updateTitleListView();
 
-        Intent intent = new Intent(getApplicationContext(), AudioPlayerActivity.class);
-        intent.putExtra("currentPosition", mCurrentPosition);
-        intent.putParcelableArrayListExtra("songInfoList", musicList);
-        startActivity(intent);
+        Intent initialIntent = new Intent(getApplicationContext(), AudioPlayerActivity.class);
+        initialIntent.putExtra("currentPosition", mCurrentPosition);
+        initialIntent.putParcelableArrayListExtra("songInfoList", musicList);
+        startActivity(initialIntent);
     }
 
     @Override

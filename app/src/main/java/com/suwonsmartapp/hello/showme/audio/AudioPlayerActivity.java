@@ -69,6 +69,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     public static final int REQUEST_CODE_VIDEO_PLAYER = 0x0020;
     public static final int REQUEST_CODE_IMAGE = 0x0100;
     public static final int REQUEST_CODE_IMAGE_PLAYER = 0x0200;
+    Bundle extraAudioPlayerService;
+    Intent intentAudioPlayerService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,28 +82,29 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
 
         setupViews();
 
+        // 인텐트를 통해 경로명과 파일명을 읽음.
         Intent intent = getIntent();
-        musicList = intent.getParcelableArrayListExtra("songInfoList");
-        mCurrentPosition = intent.getIntExtra("currentPosition", -1);
-        playSong = musicList.get(mCurrentPosition);
+        if (intent != null) {
+            mCurrentPosition = intent.getIntExtra("currentPosition", -1);
+            musicList = intent.getParcelableArrayListExtra("songInfoList");
+        } else {
+            showToast(getString(R.string.msg_wrong_file));
+            finish();
+        }
 
         // 이벤트 핸들러를 씨크바에 연결함.
         mSbAudioPlayerSeekbar = (SeekBar) findViewById(R.id.audio_player_seekbar);
         mSbAudioPlayerSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser)
-                    mMediaPlayer.seekTo(progress);
+                if (fromUser) { mMediaPlayer.seekTo(progress); }
             }
-
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
+            public void onStartTrackingTouch(SeekBar seekBar) { }
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
+            public void onStopTrackingTouch(SeekBar seekBar) { }
         });
+
         registerCallReceiver();
     }
 
@@ -130,6 +133,9 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
     protected void onStart() {
         super.onStart();
 
+        registerCallReceiver();         // 리시버가 이미 등록되어 있으면 재등록은 하지 않음
+
+        // 처음 스타트되면 서비스에 알려 곡을 재생토록 해야 함.
         Intent serviceIPC = new Intent(getApplicationContext(), AudioMessengerService.class);
         serviceIPC.putExtra("currentPosition", mCurrentPosition);
         serviceIPC.putParcelableArrayListExtra("songInfoList", musicList);
@@ -144,9 +150,25 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
 
     @Override
     protected void onResume() {
+
+        registerCallReceiver();         // 리시버가 이미 등록되어 있으면 재등록은 하지 않음
+
+        // 리줌 후에 폴더를 바꾸어 곡을 변경할 경우 서비스에도 알려야 함.
+        // 스타트인 경우(onStart)와 musicList가 변경되었을 수도 있음.
+        Intent serviceIPC = new Intent(getApplicationContext(), AudioMessengerService.class);
+        serviceIPC.putExtra("currentPosition", mCurrentPosition);
+        serviceIPC.putParcelableArrayListExtra("songInfoList", musicList);
+        startService(serviceIPC);
+
+        bindService(serviceIPC, mConnectionMessenger, Context.BIND_ADJUST_WITH_ACTIVITY);
+
+        if (AudioMessengerService.isPaused) {
+            mIbAudioPlayerPlay.setImageResource(android.R.drawable.ic_media_play);
+        }
+
         super.onResume();
 
-//        For volume control...
+//      볼륨 조절을 위해서...
 //        AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
 //        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
 //                      audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
@@ -164,11 +186,13 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
         if (mMusicThread != null && mMusicThread.isAlive()) {
             mMusicThread.interrupt();
         }
+
         unregisterCallReceiver();
     }
 
     // 서비스와 통신을 하기 위한 메신저
     private static Messenger mServiceMessenger;
+
     // 서비스에 연결(bind)을 요청받았는지 알려주는 플래그
     private boolean mBoundMessenger;
 
