@@ -10,7 +10,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 
 public class FileThumbnail {
-    // ÄÁÅØ½ºÆ®¿Í ÆÄÀÏ¸íÀ¸·ÎºÎÅÍ ¹Ìµğ¾î½ºÅä¾î¸¦ °Ë»öÇÏ¿© ¿Àµğ¿À ÆÄÀÏÀÇ ¾ÆÀÌÄÜÀ» °¡Áö°í ¿È.
+    // ì»¨í…ìŠ¤íŠ¸ì™€ íŒŒì¼ëª…ìœ¼ë¡œë¶€í„° ë¯¸ë””ì–´ìŠ¤í† ì–´ë¥¼ ê²€ìƒ‰í•˜ì—¬ ì˜¤ë””ì˜¤ íŒŒì¼ì˜ ì•„ì´ì½˜ì„ ê°€ì§€ê³  ì˜´.
     public static Bitmap getAudioThumbnail(Context context, String file) {
         final Cursor cursor = context.getContentResolver().query(
                 MediaStore.Files.getContentUri("external"),
@@ -19,7 +19,7 @@ public class FileThumbnail {
                 new String[]{ file },
                 "_display_name ASC");
 
-        int gc;     // getCount°¡ ¿¡·¯¸¦ ¸®ÅÏÇÒ °Í¿¡ ´ëºñÇÏ¿©.
+        int gc;     // getCountê°€ ì—ëŸ¬ë¥¼ ë¦¬í„´í•  ê²ƒì— ëŒ€ë¹„í•˜ì—¬.
         try {
             gc = cursor.getCount();
         } catch (NullPointerException e) {
@@ -27,22 +27,22 @@ public class FileThumbnail {
             return null;
         }
 
-        // µ¥ÀÌÅÍº£ÀÌ½º°¡ Àß ¾ÈÀĞÈú °æ¿ì Á¤º¸ °Ë»öÀÌ ¾ÈµÇ¼­ ¼¶³×ÀÏÀ» Ç¥½ÃÇÒ ¼ö ¾øÀ½.
+        // ë°ì´í„°ë² ì´ìŠ¤ê°€ ì˜ ì•ˆì½í ê²½ìš° ì •ë³´ ê²€ìƒ‰ì´ ì•ˆë˜ì„œ ì„¬ë„¤ì¼ì„ í‘œì‹œí•  ìˆ˜ ì—†ìŒ.
         if (gc == 0) {
             cursor.close();
             return null;
         }
 
-        // ¸¸Á·ÇÏ´Â ÆÄÀÏÀÌ ÇÑ °³¹Û¿¡ ¾ø¾î¾ß Á¤»óÀÓ.
+        // ë§Œì¡±í•˜ëŠ” íŒŒì¼ì´ í•œ ê°œë°–ì— ì—†ì–´ì•¼ ì •ìƒì„.
         cursor.moveToFirst();
         int index = cursor.getColumnIndex("_id");
         long id = cursor.getLong(index);
 
-        // ¿É¼Ç°ªÀÌ 1ÀÌ¸é ¼¶³×ÀÏÀÇ È®´ë/Ãà¼Ò¸¦ ÇÏÁö ¾ÊÀ½.
+        // ì˜µì…˜ê°’ì´ 1ì´ë©´ ì„¬ë„¤ì¼ì˜ í™•ëŒ€/ì¶•ì†Œë¥¼ í•˜ì§€ ì•ŠìŒ.
         BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 8;   // 1 = È®´ë/Ãà¼Ò ¾øÀ½, 2^n = Á¡Á¡ ÀÛÀº ¼¶³×ÀÏ
+        options.inSampleSize = 8;   // 1 = í™•ëŒ€/ì¶•ì†Œ ì—†ìŒ, 2^n = ì ì  ì‘ì€ ì„¬ë„¤ì¼
 
-        // ÇØ´ç ¿Àµğ¿À ÆÄÀÏÀÇ Uri °ªÀ» °¡Á®¿È.
+        // í•´ë‹¹ ì˜¤ë””ì˜¤ íŒŒì¼ì˜ Uri ê°’ì„ ê°€ì ¸ì˜´.
         Uri audioUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
 
         if (audioUri == null) {
@@ -50,7 +50,7 @@ public class FileThumbnail {
             return null;
         }
 
-        // Uri ÁÖ¼Ò·ÎºÎÅÍ ÀúÀåµÈ ¼¶³×ÀÏÀ» ÀĞ¾î¿È.
+        // Uri ì£¼ì†Œë¡œë¶€í„° ì €ì¥ëœ ì„¬ë„¤ì¼ì„ ì½ì–´ì˜´.
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         try {
             retriever.setDataSource(context, audioUri);
@@ -60,19 +60,19 @@ public class FileThumbnail {
         }
         byte data[] = retriever.getEmbeddedPicture();
 
-        // ÀúÀåµÈ ¼¶³×ÀÏÀÌ ¾øÀ» ¼öµµ ÀÖÀ½.
+        // ì €ì¥ëœ ì„¬ë„¤ì¼ì´ ì—†ì„ ìˆ˜ë„ ìˆìŒ.
         if (data == null) {
             cursor.close();
             return null;
         }
 
-        // ÀÓ½Ã·Î »ç¿ëÇÑ Ä¿¼­´Â ¸Ş¸ğ¸® ÇØÁ¦¸¦ À§ÇØ ´İ¾Æ¾ß ÇÔ.
+        // ì„ì‹œë¡œ ì‚¬ìš©í•œ ì»¤ì„œëŠ” ë©”ëª¨ë¦¬ í•´ì œë¥¼ ìœ„í•´ ë‹«ì•„ì•¼ í•¨.
         cursor.close();
-        // ¼¶³×ÀÏÀ» Ã£¾ÒÀ» °æ¿ì ÀÌ¸¦ ¸®ÅÏÇÔ.
+        // ì„¬ë„¤ì¼ì„ ì°¾ì•˜ì„ ê²½ìš° ì´ë¥¼ ë¦¬í„´í•¨.
         return BitmapFactory.decodeByteArray(data, 0, data.length);
     }
 
-    // ÄÁÅØ½ºÆ®¿Í ÆÄÀÏ¸íÀ¸·ÎºÎÅÍ ¹Ìµğ¾î½ºÅä¾î¸¦ °Ë»öÇÏ¿© ±×¸² ÆÄÀÏÀÇ ¾ÆÀÌÄÜÀ» °¡Áö°í ¿È.
+    // ì»¨í…ìŠ¤íŠ¸ì™€ íŒŒì¼ëª…ìœ¼ë¡œë¶€í„° ë¯¸ë””ì–´ìŠ¤í† ì–´ë¥¼ ê²€ìƒ‰í•˜ì—¬ ê·¸ë¦¼ íŒŒì¼ì˜ ì•„ì´ì½˜ì„ ê°€ì§€ê³  ì˜´.
     public static Bitmap getImageThumbnail(Context context, String file) {
         final Cursor cursor = context.getContentResolver().query(
                 MediaStore.Files.getContentUri("external"),
@@ -81,11 +81,11 @@ public class FileThumbnail {
                 new String[] { file },
                 "_display_name ASC");
 
-        // ¼¶³×ÀÏÀÌ ¾øÀ» °æ¿ì ¸¸µé±â À§ÇØ ÃÊ±âÈ­ÇÔ.
+        // ì„¬ë„¤ì¼ì´ ì—†ì„ ê²½ìš° ë§Œë“¤ê¸° ìœ„í•´ ì´ˆê¸°í™”í•¨.
         Bitmap thumbnail = null;
         BitmapFactory.Options options = new BitmapFactory.Options();
 
-        int gc;     // getCount°¡ ¿¡·¯¸¦ ¸®ÅÏÇÒ °Í¿¡ ´ëºñÇÏ¿©.
+        int gc;     // getCountê°€ ì—ëŸ¬ë¥¼ ë¦¬í„´í•  ê²ƒì— ëŒ€ë¹„í•˜ì—¬.
         try {
             gc = cursor.getCount();
         } catch (NullPointerException e) {
@@ -93,33 +93,33 @@ public class FileThumbnail {
             return null;
         }
 
-        // µ¥ÀÌÅÍº£ÀÌ½º°¡ Àß ¾ÈÀĞÈú °æ¿ì Á¤º¸ °Ë»öÀÌ ¾ÈµÇ¼­ ¼¶³×ÀÏÀ» Ç¥½ÃÇÒ ¼ö ¾øÀ½.
+        // ë°ì´í„°ë² ì´ìŠ¤ê°€ ì˜ ì•ˆì½í ê²½ìš° ì •ë³´ ê²€ìƒ‰ì´ ì•ˆë˜ì„œ ì„¬ë„¤ì¼ì„ í‘œì‹œí•  ìˆ˜ ì—†ìŒ.
         if (gc != 0) {
             cursor.moveToFirst();
             int index = cursor.getColumnIndex("_id");
             long id = cursor.getLong(index);
 
-            options.inSampleSize = 8;   // 1 = È®´ë/Ãà¼Ò ¾øÀ½, 2^n = Á¡Á¡ ÀÛÀº ¼¶³×ÀÏ
+            options.inSampleSize = 8;   // 1 = í™•ëŒ€/ì¶•ì†Œ ì—†ìŒ, 2^n = ì ì  ì‘ì€ ì„¬ë„¤ì¼
 
-            // ¼¶³×ÀÏÀÌ ÀÖ´Â °æ¿ì ÀÌ¸¦ ÀĞ¾î¿È.
+            // ì„¬ë„¤ì¼ì´ ìˆëŠ” ê²½ìš° ì´ë¥¼ ì½ì–´ì˜´.
             thumbnail = MediaStore.Images.Thumbnails.getThumbnail(
                     context.getContentResolver(), id,
                     MediaStore.Images.Thumbnails.MINI_KIND, options);
         }
 
-        // ¼¶³×ÀÏÀÌ ¾øÀ¸¸é ÀÌ¹ÌÁö ÆÄÀÏ·ÎºÎÅÍ »õ·Î ¸¸µë.
+        // ì„¬ë„¤ì¼ì´ ì—†ìœ¼ë©´ ì´ë¯¸ì§€ íŒŒì¼ë¡œë¶€í„° ìƒˆë¡œ ë§Œë“¬.
         if (thumbnail == null) {
             options.inSampleSize = 8;
             thumbnail = BitmapFactory.decodeFile(file, options);
         }
 
-        // ÀÓ½Ã·Î »ç¿ëÇÑ Ä¿¼­´Â ¸Ş¸ğ¸® ÇØÁ¦¸¦ À§ÇØ ´İ¾Æ¾ß ÇÔ.
+        // ì„ì‹œë¡œ ì‚¬ìš©í•œ ì»¤ì„œëŠ” ë©”ëª¨ë¦¬ í•´ì œë¥¼ ìœ„í•´ ë‹«ì•„ì•¼ í•¨.
         cursor.close();
-        // ¼¶³×ÀÏÀ» Ã£¾ÒÀ» °æ¿ì ÀÌ¸¦ ¸®ÅÏÇÔ.
+        // ì„¬ë„¤ì¼ì„ ì°¾ì•˜ì„ ê²½ìš° ì´ë¥¼ ë¦¬í„´í•¨.
         return thumbnail;
     }
 
-    // ÄÁÅØ½ºÆ®¿Í ÆÄÀÏ¸íÀ¸·ÎºÎÅÍ ¹Ìµğ¾î½ºÅä¾î¸¦ °Ë»öÇÏ¿© ºñµğ¿À ÆÄÀÏÀÇ ¾ÆÀÌÄÜÀ» °¡Áö°í ¿È.
+    // ì»¨í…ìŠ¤íŠ¸ì™€ íŒŒì¼ëª…ìœ¼ë¡œë¶€í„° ë¯¸ë””ì–´ìŠ¤í† ì–´ë¥¼ ê²€ìƒ‰í•˜ì—¬ ë¹„ë””ì˜¤ íŒŒì¼ì˜ ì•„ì´ì½˜ì„ ê°€ì§€ê³  ì˜´.
     public static Bitmap getVideoThumbnail(Context context, String file) {
         final Cursor cursor = context.getContentResolver().query(
                 MediaStore.Files.getContentUri("external"),
@@ -128,7 +128,7 @@ public class FileThumbnail {
                 new String[] { file },
                 "_display_name ASC");
 
-        int gc;     // getCount°¡ ¿¡·¯¸¦ ¸®ÅÏÇÒ °Í¿¡ ´ëºñÇÏ¿©.
+        int gc;     // getCountê°€ ì—ëŸ¬ë¥¼ ë¦¬í„´í•  ê²ƒì— ëŒ€ë¹„í•˜ì—¬.
         try {
             gc = cursor.getCount();
         } catch (NullPointerException e) {
@@ -136,35 +136,35 @@ public class FileThumbnail {
             return null;
         }
 
-        // µ¥ÀÌÅÍº£ÀÌ½º°¡ Àß ¾ÈÀĞÈú °æ¿ì Á¤º¸ °Ë»öÀÌ ¾ÈµÇ¼­ ¼¶³×ÀÏÀ» Ç¥½ÃÇÒ ¼ö ¾øÀ½.
+        // ë°ì´í„°ë² ì´ìŠ¤ê°€ ì˜ ì•ˆì½í ê²½ìš° ì •ë³´ ê²€ìƒ‰ì´ ì•ˆë˜ì„œ ì„¬ë„¤ì¼ì„ í‘œì‹œí•  ìˆ˜ ì—†ìŒ.
         if (gc == 0) {
             cursor.close();
             return null;
         }
 
-        // ¸¸Á·ÇÏ´Â ÆÄÀÏÀÌ ÇÑ °³¹Û¿¡ ¾ø¾î¾ß Á¤»óÀÓ.
+        // ë§Œì¡±í•˜ëŠ” íŒŒì¼ì´ í•œ ê°œë°–ì— ì—†ì–´ì•¼ ì •ìƒì„.
         cursor.moveToFirst();
         int index = cursor.getColumnIndex("_id");
         long id = cursor.getLong(index);
 
-        // ¿É¼Ç°ªÀÌ 1ÀÌ¸é ¼¶³×ÀÏÀÇ È®´ë/Ãà¼Ò¸¦ ÇÏÁö ¾ÊÀ½.
+        // ì˜µì…˜ê°’ì´ 1ì´ë©´ ì„¬ë„¤ì¼ì˜ í™•ëŒ€/ì¶•ì†Œë¥¼ í•˜ì§€ ì•ŠìŒ.
         BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 8;   // 1 = È®´ë/Ãà¼Ò ¾øÀ½, 2^n = Á¡Á¡ ÀÛÀº ¼¶³×ÀÏ
+        options.inSampleSize = 8;   // 1 = í™•ëŒ€/ì¶•ì†Œ ì—†ìŒ, 2^n = ì ì  ì‘ì€ ì„¬ë„¤ì¼
 
-        // ¼¶³×ÀÏÀÌ ÀÖ´Â °æ¿ì ÀÌ¸¦ ÀĞ¾î¿È.
+        // ì„¬ë„¤ì¼ì´ ìˆëŠ” ê²½ìš° ì´ë¥¼ ì½ì–´ì˜´.
         Bitmap thumbnail = MediaStore.Video.Thumbnails.getThumbnail(
                 context.getContentResolver(), id,
                 MediaStore.Video.Thumbnails.MINI_KIND, options);
 
-        // ¼¶³×ÀÏÀÌ ¾øÀ¸¸é ºñµğ¿À ÆÄÀÏ·ÎºÎÅÍ »õ·Î ¸¸µë.
+        // ì„¬ë„¤ì¼ì´ ì—†ìœ¼ë©´ ë¹„ë””ì˜¤ íŒŒì¼ë¡œë¶€í„° ìƒˆë¡œ ë§Œë“¬.
         if (thumbnail == null) {
             options.inSampleSize = 8;
             thumbnail = BitmapFactory.decodeFile(file, options);
         }
 
-        // ÀÓ½Ã·Î »ç¿ëÇÑ Ä¿¼­´Â ¸Ş¸ğ¸® ÇØÁ¦¸¦ À§ÇØ ´İ¾Æ¾ß ÇÔ.
+        // ì„ì‹œë¡œ ì‚¬ìš©í•œ ì»¤ì„œëŠ” ë©”ëª¨ë¦¬ í•´ì œë¥¼ ìœ„í•´ ë‹«ì•„ì•¼ í•¨.
         cursor.close();
-        // ¼¶³×ÀÏÀ» Ã£¾ÒÀ» °æ¿ì ÀÌ¸¦ ¸®ÅÏÇÔ.
+        // ì„¬ë„¤ì¼ì„ ì°¾ì•˜ì„ ê²½ìš° ì´ë¥¼ ë¦¬í„´í•¨.
         return thumbnail;
     }
 }
