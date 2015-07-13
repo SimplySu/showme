@@ -76,13 +76,13 @@ public class ImageFileListActivity extends AppCompatActivity {
         readIntent();
 
         // 표시할 그림 파일만을 추출함.
-        prepareFileToShow();
+        prepareFileToShow(requestedPathname);
 
         mViewPager = (ViewPager)findViewById(R.id.viewPager);
         mViewPager.setOffscreenPageLimit(1);
 
         // 특정 파일을 지정한 경우 여기부터 표시함.
-        mCurrentPosition = searchPictureIndex();
+        mCurrentPosition = searchPictureIndex(requestedFilename);
 
         // 표시할 파일 리스트를 작성하여 어댑터에 전달함.
         mMyAdapter = new MyAdapter(getSupportFragmentManager(), imageList);
@@ -108,19 +108,19 @@ public class ImageFileListActivity extends AppCompatActivity {
     }
 
     // 표시 가능한 그림 파일만 리스트로 만듬.
-    private void prepareFileToShow() {
-        imageList = new FileLists().getFileList(requestedPathname, MODEimage);
+    private void prepareFileToShow(String rp) {
+        imageList = new FileLists().getFileList(rp, MODEimage);
         if (imageList == null) {
             showToast(getString(R.string.msg_no_image));          // 표시할 파일이 없음.
         }
     }
 
     // 지정한 파일이 표시 가능한지 검사함.
-    private int searchPictureIndex() {
+    private int searchPictureIndex(String rf) {
         for (int i = 0; i < imageList.size(); i++) {
             FileInfo fileInfo = imageList.get(i);
             File f = fileInfo.getFile();
-            if (requestedFilename.equals(f.getName())) {
+            if (rf.equals(f.getName())) {
                 return i;          // 일치하는 인덱스를 리턴함.
             }
         }

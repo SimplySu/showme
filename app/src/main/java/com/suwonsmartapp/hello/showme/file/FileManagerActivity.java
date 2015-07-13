@@ -33,6 +33,7 @@ import java.util.Stack;
 public class FileManagerActivity extends AppCompatActivity implements
         AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
 
+    private static final String VERSION = "v1.0.00 : 2015.6.29";    // 초기 버전 넘버
     private static final String TAG = FileManagerActivity.class.getSimpleName();
     private void showLog(String msg) { Log.d(TAG, msg); }
     private void showToast(String toast_msg) { Toast.makeText(this, toast_msg, Toast.LENGTH_LONG).show(); }
@@ -399,30 +400,18 @@ public class FileManagerActivity extends AppCompatActivity implements
             case REQUEST_CODE_AUDIO:
                 if (resultCode == RESULT_OK) {
                     mCurrentPosition = data.getExtras().getInt("CurrentPosition");
-//                    fileAdapter = new FileAdapter(getApplicationContext(), fileList);
-//                    fileAdapter.setmCurrentPosition(mCurrentPosition);
-//                    mListView.setAdapter(fileAdapter);
-//                    fileAdapter.notifyDataSetChanged();
                 }
                 break;
 
             case REQUEST_CODE_VIDEO:
                 if (resultCode == RESULT_OK) {
                     mCurrentPosition = data.getExtras().getInt("CurrentPosition");
-//                    fileAdapter = new FileAdapter(getApplicationContext(), fileList);
-//                    fileAdapter.setmCurrentPosition(mCurrentPosition);
-//                    mListView.setAdapter(fileAdapter);
-//                    fileAdapter.notifyDataSetChanged();
                 }
                 break;
 
             case REQUEST_CODE_IMAGE:
                 if (resultCode == RESULT_OK) {
                     mCurrentPosition = data.getExtras().getInt("CurrentPosition");
-//                    fileAdapter = new FileAdapter(getApplicationContext(), fileList);
-//                    fileAdapter.setmCurrentPosition(mCurrentPosition);
-//                    mListView.setAdapter(fileAdapter);
-//                    fileAdapter.notifyDataSetChanged();
                 }
                 break;
         }

@@ -79,7 +79,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
                 (requestedExternsion.equals("ass")) || (requestedExternsion.equals("ssa"));
 
         // 실행할 영화 파일만을 추출함.
-        prepareTitleToPlay();
+        prepareTitleToPlay(requestedPathname);
 
         mMovieListView = (ListView) findViewById(R.id.lv_movies);
         mAdapter = new FileAdapter(getApplicationContext(), movieList);
@@ -87,7 +87,11 @@ public class VideoFileListActivity extends AppCompatActivity implements
         mMovieListView.setOnItemClickListener(this);
 
         // 특정 파일을 지정한 경우 여기부터 실행함.
-        mCurrentPosition = searchTitleIndex();
+        if (flagSubTitle) {
+            mCurrentPosition = searchTitleIndex(filenameWithoutExt);
+        } else {
+            mCurrentPosition = searchTitleIndex(requestedFilename);
+        }
         mMovieListView.smoothScrollToPosition(mCurrentPosition);
 
         // 지정한 위치를 세팅함.
@@ -119,15 +123,15 @@ public class VideoFileListActivity extends AppCompatActivity implements
     }
 
     // 실행 가능한 영화 파일만 리스트로 만듬.
-    private void prepareTitleToPlay() {
-        movieList = new FileLists().getFileList(requestedPathname, MODEvideo);
+    private void prepareTitleToPlay(String rp) {
+        movieList = new FileLists().getFileList(rp, MODEvideo);
         if (movieList == null) {
             showToast(getString(R.string.msg_no_movie));          // 재생할 파일이 없음.
         }
     }
 
     // 지정한 파일이 재생 가능한지 검사함.
-    private int searchTitleIndex() {
+    private int searchTitleIndex(String rf) {
         // 자막 파일을 클릭한 경우
         if (flagSubTitle) {
             for (int i = 0; i < movieList.size(); i++) {
@@ -135,7 +139,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
                 File f = fileInfo.getFile();
                 String temp = f.getName();
                 // 확장자를 제외한 파일명을 검사함.
-                if (filenameWithoutExt.equals(temp.substring(0, temp.lastIndexOf('.')))) {
+                if (rf.equals(temp.substring(0, temp.lastIndexOf('.')))) {
                     return i;          // 일치하는 인덱스를 리턴함.
                 }
             }
@@ -147,7 +151,7 @@ public class VideoFileListActivity extends AppCompatActivity implements
                 FileInfo fileInfo = movieList.get(i);
                 File f = fileInfo.getFile();
                 // 확장자를 포함한 모든 파일명을 검사함.
-                if (requestedFilename.equals(f.getName())) {
+                if (rf.equals(f.getName())) {
                     return i;          // 일치하는 인덱스를 리턴함.
                 }
             }

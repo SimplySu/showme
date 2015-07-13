@@ -61,7 +61,7 @@ public class AudioFileListActivity extends AppCompatActivity
     private static MediaPlayer mMediaPlayer;
     private static final int MSG_GET_MP_IN_LIST = 3;
 
-    private LinearLayout mLlMiniMiniPlayer;
+    private LinearLayout mLlMiniPlayer;
     private ImageView mIvAlbum;
     private TextView mTvSongTitle;
     private TextView mTvMiniPlayerStartTime;
@@ -104,8 +104,11 @@ public class AudioFileListActivity extends AppCompatActivity
         readIntent();
 
         // 실행할 음악 파일만을 추출함.
-        prepareTitleToPlay();
+        prepareTitleToPlay(requestedPathname);
         setupViews();
+
+        // 오디오 플레이어가 다시 시작되어 새로운 곡을 재생하기 위해 오디오 서비스를 멈춤.
+        close();   // 브로드캐스팅을 통해 명령을 실행하므로 서비스가 실행되지 않고 있어도 문제없음.
 
         mFileAdapter = new FileAdapter(getApplicationContext(), musicList);
         mLvMusicList = (ListView) findViewById(R.id.lv_music_list);
@@ -128,7 +131,7 @@ public class AudioFileListActivity extends AppCompatActivity
         registerCallReceiver();
 
         // 특정 파일을 지정한 경우 여기부터 실행함.
-        mCurrentPosition = searchTitleIndex();
+        mCurrentPosition = searchTitleIndex(requestedFilename);
         updateTitleListView();
         mLvMusicList.smoothScrollToPosition(mCurrentPosition);
 
@@ -155,7 +158,7 @@ public class AudioFileListActivity extends AppCompatActivity
     }
 
     private void setupViews() {
-        mLlMiniMiniPlayer = (LinearLayout) findViewById(R.id.mini_audio_player);
+        mLlMiniPlayer = (LinearLayout) findViewById(R.id.mini_audio_player);
         mIvAlbum = (ImageView) findViewById(R.id.mini_audio_player_icon);
         mTvSongTitle = (TextView) findViewById(R.id.mini_audio_player_title);
         mTvSongTitle.setSelected(true);
@@ -174,21 +177,26 @@ public class AudioFileListActivity extends AppCompatActivity
     }
 
     // 지정한 파일이 재생 가능한지 검사함.
-    private int searchTitleIndex() {
+    private int searchTitleIndex(String rf) {
         for (int i = 0; i < musicList.size(); i++) {
             FileInfo fileInfo = musicList.get(i);
             File f = fileInfo.getFile();
-            if (requestedFilename.equals(f.getName())) {
+            if (rf.equals(f.getName())) {
                 return i;          // 일치하는 인덱스를 리턴함.
             }
         }
         return 0;                  // 일치하는 파일이 없으면 처음부터 재생함.
     }
 
+    private void close() {
+        Intent songListActivity = new Intent(HOME + "AudioMessengerService.Close");
+        sendBroadcast(songListActivity);
+    }
+
     @Override
     protected void onResume() {
         // 실행할 음악 파일만을 추출함.
-        prepareTitleToPlay();
+        prepareTitleToPlay(requestedPathname);
         setupViews();
 
         mFileAdapter = new FileAdapter(getApplicationContext(), musicList);
@@ -199,7 +207,7 @@ public class AudioFileListActivity extends AppCompatActivity
         registerCallReceiver();
 
         // 특정 파일을 지정한 경우 여기부터 실행함.
-        mCurrentPosition = searchTitleIndex();
+        mCurrentPosition = searchTitleIndex(requestedFilename);
         updateTitleListView();
         mLvMusicList.smoothScrollToPosition(mCurrentPosition);
 
@@ -260,8 +268,8 @@ public class AudioFileListActivity extends AppCompatActivity
     }
 
     // 재생 가능한 음악 파일만 리스트로 만듬.
-    private void prepareTitleToPlay() {
-        musicList = new FileLists().getFileList(requestedPathname, MODEaudio);
+    private void prepareTitleToPlay(String rp) {
+        musicList = new FileLists().getFileList(rp, MODEaudio);
         if (musicList == null) {
             showToast(getString(R.string.msg_no_music));          // 재생할 파일이 없음.
         }
@@ -283,7 +291,6 @@ public class AudioFileListActivity extends AppCompatActivity
             mMsgOfListAndService = new Messenger(service);
             mBoundMessenger = true;
 
-            // 오디오 플레이어 아이콘 정보를 가져옴
             Message msg = Message.obtain(null, AudioMessengerService.MSG_GET_MP_IN_LIST, 0, 0);
             try {
                 mMsgOfListAndService.send(msg);
@@ -394,7 +401,7 @@ public class AudioFileListActivity extends AppCompatActivity
             mIvAlbum.setImageResource(R.drawable.audio_music_small);
         }
 
-        mLlMiniMiniPlayer.setVisibility(View.VISIBLE);
+        mLlMiniPlayer.setVisibility(View.VISIBLE);
         String song = playSong.getTitle();
         mTvSongTitle.setText(song.substring(song.lastIndexOf("/") + 1, song.length()));
 
