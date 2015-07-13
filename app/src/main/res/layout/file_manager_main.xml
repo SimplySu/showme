@@ -21,7 +21,7 @@
 
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         ads:adUnitId="ca-app-pub-3269856318358804/3319385778"
         ads:adSize="BANNER"/>

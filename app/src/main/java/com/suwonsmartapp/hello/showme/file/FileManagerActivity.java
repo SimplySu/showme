@@ -97,7 +97,9 @@ public class FileManagerActivity extends AppCompatActivity implements
 
         // 리소스로 AdView를 검색하고 요청을 로드함.
         AdView adView = (AdView) this.findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
+        AdRequest.Builder builder = new AdRequest.Builder();
+//        builder.addTestDevice("F0523D7DFA80156C2B8D4980EF2E3ACB");
+        AdRequest adRequest = builder.build();
         adView.loadAd(adRequest);
 
         // 경로명을 저장할 스택을 초기화함.
