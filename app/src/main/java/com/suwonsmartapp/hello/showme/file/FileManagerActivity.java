@@ -20,6 +20,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.suwonsmartapp.hello.R;
 import com.suwonsmartapp.hello.showme.audio.AudioFileListActivity;
 import com.suwonsmartapp.hello.showme.image.ImageFileListActivity;
@@ -92,6 +94,11 @@ public class FileManagerActivity extends AppCompatActivity implements
 
         mListView = (ListView) findViewById(R.id.lv_filetree);
         mTvCurrentPath = (TextView) findViewById(R.id.tv_currentPath);
+
+        // 리소스로 AdView를 검색하고 요청을 로드함.
+        AdView adView = (AdView) this.findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adView.loadAd(adRequest);
 
         // 경로명을 저장할 스택을 초기화함.
         mFileStack = new Stack<>();

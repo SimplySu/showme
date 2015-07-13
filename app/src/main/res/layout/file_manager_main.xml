@@ -1,11 +1,12 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingLeft="5dp"
-    android:paddingRight="5dp"
-    tools:context="com.suwonsmartapp.hello.showme.file.FileManagerActivity">
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              xmlns:ads="http://schemas.android.com/apk/res-auto"
+              android:orientation="vertical"
+              android:paddingLeft="5dp"
+              android:paddingRight="5dp"
+              tools:context="com.suwonsmartapp.hello.showme.file.FileManagerActivity">
 
     <TextView
         android:id="@+id/tv_currentPath"
@@ -17,4 +18,11 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
+
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        ads:adUnitId="ca-app-pub-3269856318358804/3319385778"
+        ads:adSize="BANNER"/>
 </LinearLayout>
