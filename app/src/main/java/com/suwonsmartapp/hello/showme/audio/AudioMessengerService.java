@@ -24,8 +24,8 @@ import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import com.suwonsmartapp.hello.R;
-import com.suwonsmartapp.hello.showme.file.FileAdapter;
 import com.suwonsmartapp.hello.showme.file.FileInfo;
+import com.suwonsmartapp.hello.showme.file.FileThumbnail;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -336,7 +336,7 @@ public class AudioMessengerService extends Service
 
     private void setNotificationUI() {
         FileInfo playSong = musicList.get(mCurrentPosition);
-        Bitmap bm = FileAdapter.getAudioThumbnail(getApplicationContext(), playSong.getTitle());
+        Bitmap bm = FileThumbnail.getAudioThumbnail(getApplicationContext(), playSong.getTitle());
         if (bm != null) {
             if (playSong.getTitle().toLowerCase().lastIndexOf(".mp3") == -1) {
                 mRemoteViews.setImageViewResource(R.id.messenger_album_picture,

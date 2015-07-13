@@ -32,6 +32,7 @@ import com.suwonsmartapp.hello.R;
 import com.suwonsmartapp.hello.showme.file.FileAdapter;
 import com.suwonsmartapp.hello.showme.file.FileInfo;
 import com.suwonsmartapp.hello.showme.file.FileLists;
+import com.suwonsmartapp.hello.showme.file.FileThumbnail;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -389,7 +390,7 @@ public class AudioFileListActivity extends AppCompatActivity
 
     private void changeMiniPlayerUI() {
         FileInfo playSong = musicList.get(mCurrentPosition);
-        Bitmap albumArt = FileAdapter.getAudioThumbnail(getApplicationContext(), playSong.getTitle());
+        Bitmap albumArt = FileThumbnail.getAudioThumbnail(getApplicationContext(), playSong.getTitle());
 
         if (albumArt != null) {
             if (playSong.getTitle().toLowerCase().lastIndexOf(".mp3") == -1) {

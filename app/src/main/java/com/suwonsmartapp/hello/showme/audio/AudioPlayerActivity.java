@@ -24,8 +24,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.suwonsmartapp.hello.R;
-import com.suwonsmartapp.hello.showme.file.FileAdapter;
 import com.suwonsmartapp.hello.showme.file.FileInfo;
+import com.suwonsmartapp.hello.showme.file.FileThumbnail;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
@@ -215,7 +215,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements View.OnCli
         FileInfo playSong = musicList.get(mCurrentPosition);
         String song = playSong.getTitle();
         mTvAudioPlayerTitle.setText(song.substring(song.lastIndexOf("/") + 1, song.length()));
-        Bitmap bm = FileAdapter.getAudioThumbnail(getApplicationContext(), playSong.getTitle());
+        Bitmap bm = FileThumbnail.getAudioThumbnail(getApplicationContext(), playSong.getTitle());
 
         if (bm != null) {
             if (playSong.getTitle().toLowerCase().lastIndexOf(".mp3") == -1) {
