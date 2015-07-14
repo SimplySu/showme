@@ -3,7 +3,7 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical"
-              tools:context="com.baeflower.hello.multimedia.audio.SolMusicSongListActivity">
+              tools:context="com.askx.showme.audio.AudioFileListActivity">
 
     <ListView
         android:id="@+id/lv_music_list"

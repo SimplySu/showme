@@ -2,11 +2,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.suwonsmartapp.hello.showme.image.ImageFileListActivity">
+    tools:context="com.askx.showme.image.ImageFileListActivity">
 
     <android.support.v4.view.ViewPager
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
 </RelativeLayout>

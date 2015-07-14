@@ -1,5 +1,5 @@
 
-package com.suwonsmartapp.hello;
+package com.suwonsmartapp.askx;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

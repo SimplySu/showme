@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.suwonsmartapp.hello" >
+    package="com.askx.showme" >
 
     <!-- 진동 권한 -->
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -26,8 +26,6 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
-    <uses-library android:name="com.google.android.maps" />
-
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -43,7 +41,7 @@
             android:value="AIzaSyAl0NO9ThZ7wOk_pJp-fLH39_xFUrasuA4" />
 
         <activity
-            android:name=".showme.file.FileManagerActivity"
+            android:name="com.askx.showme.file.FileManagerActivity"
             android:label="@string/title_activity_file" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -52,31 +50,31 @@
         </activity>
 
         <activity
-            android:name=".showme.video.VideoFileListActivity"
+            android:name="com.askx.showme.video.VideoFileListActivity"
             android:label="@string/title_activity_video" >
         </activity>
 
         <activity
-            android:name=".showme.video.VideoPlayerActivity"
+            android:name="com.askx.showme.video.VideoPlayerActivity"
             android:label="@string/title_activity_video" >
         </activity>
 
         <activity
-            android:name=".showme.image.ImageFileListActivity"
+            android:name="com.askx.showme.image.ImageFileListActivity"
             android:theme="@style/AppTheme"
             android:label="@string/title_activity_image" >
         </activity>
 
-        <activity android:name=".showme.audio.AudioFileListActivity"
+        <activity android:name="com.askx.showme.audio.AudioFileListActivity"
             android:label="@string/title_audio_file_list_activity">
         </activity>
 
-        <activity android:name=".showme.audio.AudioPlayerActivity"
+        <activity android:name="com.askx.showme.audio.AudioPlayerActivity"
             android:label="@string/title_audio_player_activity">
         </activity>
 
         <service
-            android:name=".showme.audio.AudioMessengerService"
+            android:name="com.askx.showme.audio.AudioMessengerService"
             android:enabled="true"
             android:exported="true" >
         </service>
